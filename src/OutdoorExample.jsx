@@ -37,9 +37,9 @@ export default function OutdoorExample() {
   const [mapData, setMapData] = useState(null);
   const [atlas, setAtlas] = useState(null);
   const [error, setError] = useState(null);
-  const [terrainStyle, setTerrainStyle] = useState(TERRAIN_STYLES[1]);
-  const [roadStyle, setRoadStyle] = useState(ROAD_STYLES[0]);
-  const [riverStyle, setRiverStyle] = useState(RIVER_STYLES[0]);
+  const [terrainStyle, setTerrainStyle] = useState('');
+  const [roadStyle, setRoadStyle] = useState('');
+  const [riverStyle, setRiverStyle] = useState('');
   const [treeStyle, setTreeStyle] = useState('');
   const [seed, setSeed] = useState(Math.floor(Math.random() * 1000000));
   const [loading, setLoading] = useState(true);
@@ -48,10 +48,12 @@ export default function OutdoorExample() {
   const [showConfig, setShowConfig] = useState(false);
 
   // Dynamically discover styles from atlas
-  const { discoveredTrees, discoveredFloors } = useMemo(() => {
-    if (!atlas?.byName) return { discoveredTrees: [], discoveredFloors: [] };
+  const { discoveredTrees, discoveredFloors, discoveredRoads, discoveredRivers } = useMemo(() => {
+    if (!atlas?.byName) return { discoveredTrees: [], discoveredFloors: [], discoveredRoads: [], discoveredRivers: [] };
     const trees = new Set();
     const floors = new Set();
+    const roads = new Set();
+    const rivers = new Set();
     
     const clean = (name) => {
       const keywords = ['left', 'right', 'up', 'down', 'flat', 'center', 'nw', 'ne', 'sw', 'se', 'dense', 'nwe', 'nswe', 'we', 'nsw', 'ns', 'nse', 'swe', 'c', 'n', 's', 'e', 'w'];
@@ -71,16 +73,26 @@ export default function OutdoorExample() {
         const base = clean(name);
         if (base && base !== 'empty') floors.add(base);
       }
+      if (data.sourceFile === 'Objects/Map') {
+        const base = clean(name);
+        if (base.includes('trail')) roads.add(base);
+        if (base.includes('river') || base.includes('flow')) rivers.add(base);
+      }
     });
     return { 
       discoveredTrees: Array.from(trees).sort(),
-      discoveredFloors: Array.from(floors).sort()
+      discoveredFloors: Array.from(floors).sort(),
+      discoveredRoads: Array.from(roads).sort(),
+      discoveredRivers: Array.from(rivers).sort()
     };
   }, [atlas]);
 
   useEffect(() => {
     if (discoveredTrees.length > 0 && !treeStyle) setTreeStyle(discoveredTrees[0]);
-  }, [discoveredTrees, treeStyle]);
+    if (discoveredFloors.length > 0 && !terrainStyle) setTerrainStyle(discoveredFloors.find(s => s.includes('grass')) || discoveredFloors[0]);
+    if (discoveredRoads.length > 0 && !roadStyle) setRoadStyle(discoveredRoads[0]);
+    if (discoveredRivers.length > 0 && !riverStyle) setRiverStyle(discoveredRivers[0]);
+  }, [discoveredTrees, discoveredFloors, discoveredRoads, discoveredRivers]);
 
   useEffect(() => {
     fetch(resolveAssetPath('/DawnlikeAtlas.json'))
@@ -184,7 +196,7 @@ export default function OutdoorExample() {
       for (let y = 5; y < DISPLAY_HEIGHT - 5; y++) {
         if (data[`${x},${y}`]?.road && !data[`${x},${y}`]?.river) {
           if (data[`${x},${y-1}`] && !data[`${x},${y-1}`].river && !data[`${x},${y-1}`].road && data[`${x},${y-1}`].type !== 'water') {
-             data[`${x},${y-1}`].building = 'homestead';
+             data[`${x},${y-1}`].building = ROT.RNG.getItem(['homestead', 'campsite', 'fort', 'castle wall flat']);
              built = true; break;
           }
         }
@@ -311,6 +323,8 @@ export default function OutdoorExample() {
           <div className="control-card">
             <h3>Outdoor Config</h3>
             <div className="field-group"><label>Terrain</label><select value={terrainStyle} onChange={e => setTerrainStyle(e.target.value)}>{discoveredFloors.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+            <div className="field-group"><label>Path Style</label><select value={roadStyle} onChange={e => setRoadStyle(e.target.value)}>{discoveredRoads.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+            <div className="field-group"><label>River Style</label><select value={riverStyle} onChange={e => setRiverStyle(e.target.value)}>{discoveredRivers.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div className="field-group"><label>Tree Style</label><select value={treeStyle} onChange={e => setTreeStyle(e.target.value)}>{discoveredTrees.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <button className="primary-button" onClick={() => setSeed(Math.floor(Math.random() * 1000000))}>🌲 Re-generate</button>
           </div>
