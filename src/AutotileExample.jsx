@@ -136,9 +136,8 @@ export default function AutotileExample() {
       };
 
       if (!isSurfaceWall(x, y)) {
-        // Deep interior wall
-        const fallback = atlas.byName[`${wallStyle} left right up down`] || atlas.byName[`${wallStyle} flat`] || atlas.byName[`${wallStyle} center`];
-        return fallback ? fallback.name : null;
+        // Deep interior wall (not connected to a room or hall)
+        return null;
       }
 
       const isOpen = (tx, ty) => outOfBounds(tx, ty) || !isWall(tx, ty);
