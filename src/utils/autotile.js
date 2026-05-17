@@ -29,29 +29,59 @@ export function resolveDawnLikeWallName(baseName, { n, s, e, w }, byName = {}) {
   }
 
   // 4-way
-  if (n && s && e && w) return getFullName('up down left right') || `${baseName} left right up down`;
+  if (n && s && e && w) suffix = "left right up down";
+  else if (!n && s && e && w) suffix = "left right down";
+  else if (n && !s && e && w) suffix = "left right up";
+  else if (n && s && !e && w) suffix = "left up down";
+  else if (n && s && e && !w) suffix = "right up down";
+  else if (n && s && !e && !w) suffix = "up down";
+  else if (!n && !s && e && w) suffix = "left right";
+  else if (s && e && !n && !w) suffix = "right down";
+  else if (s && w && !n && !e) suffix = "left down";
+  else if (n && e && !s && !w) suffix = "right up";
+  else if (n && w && !s && !e) suffix = "left up";
+  else if (n && !s && !e && !w) suffix = "up down"; // reuse vertical straight for caps
+  else if (s && !n && !e && !w) suffix = "up down"; 
+  else if (w && !n && !s && !e) suffix = "left right"; // reuse horizontal straight for caps
+  else if (e && !n && !s && !w) suffix = "left right";
+  else suffix = "flat";
 
-  // 3-way
-  if (!n && s && e && w) return getFullName('down left right') || `${baseName} left right down`;
-  if (n && !s && e && w) return getFullName('up left right') || `${baseName} left right up`;
-  if (n && s && !e && w) return getFullName('up down left') || `${baseName} left up down`;
-  if (n && s && e && !w) return getFullName('up down right') || `${baseName} right up down`;
+  // Try permutations in priority order
+  const getFullName = (suff) => {
+    const dirs = suff.split(' ');
+    if (dirs.length === 0) return null;
+    
+    const standard = ['up', 'down', 'left', 'right'].filter(d => dirs.includes(d)).join(' ');
+    const fullName = `${baseName} ${standard}`.trim();
+    if (byName[fullName]) return fullName;
+    
+    const alt = ['left', 'right', 'up', 'down'].filter(d => dirs.includes(d)).join(' ');
+    const fullAlt = `${baseName} ${alt}`.trim();
+    if (byName[fullAlt]) return fullAlt;
+    
+    // Reverse
+    const rev = [...dirs].reverse().join(' ');
+    const fullRev = `${baseName} ${rev}`.trim();
+    if (byName[fullRev]) return fullRev;
 
-  // 2-way Straights
-  if (n && s && !e && !w) return getFullName('up down') || `${baseName} up down`;
-  if (!n && !s && e && w) return getFullName('left right') || `${baseName} left right`;
+    return null;
+  };
 
-  // 2-way Corners
-  if (s && e) return getFullName('down right') || `${baseName} right down`;
-  if (s && w) return getFullName('down left') || `${baseName} left down`;
-  if (n && e) return getFullName('up right') || `${baseName} right up`;
-  if (n && w) return getFullName('up left') || `${baseName} left up`;
+  const found = getFullName(suffix);
+  if (found) return found;
 
-  // 1-way (End caps - DawnLike usually reuses straights)
-  if (n || s) return getFullName('up down') || `${baseName} up down`;
-  if (e || w) return getFullName('left right') || `${baseName} left right`;
+  // Fallbacks if the specific directional sprite doesn't exist (e.g. pools missing 4-way)
+  const fallbackOrder = [`${baseName} center`, `${baseName} flat`, `${baseName} c`, baseName];
+  for (const fb of fallbackOrder) {
+    if (byName[fb]) return fb;
+  }
 
-  return byName[`${baseName} flat`] || byName[`${baseName} center`] || baseName;
+  // Final desperate fallback: find anything that starts with baseName
+  const anything = Object.keys(byName).find(k => k.startsWith(baseName));
+  if (anything) return anything;
+
+  // If all fails, just return baseName and hope it exists or gets caught
+  return baseName;
 }
 
 /**

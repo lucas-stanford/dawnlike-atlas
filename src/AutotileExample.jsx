@@ -117,18 +117,38 @@ export default function AutotileExample() {
       const name = `${floorStyle} c`;
       return atlas.byName[name] ? name : `${floorStyle} center`;
     } else {
-      const touchesFloor = [
-        [-1, -1], [0, -1], [1, -1],
-        [-1, 0],           [1, 0],
-        [-1, 1],  [0, 1],  [1, 1]
-      ].some(([dx, dy]) => mapData[`${x + dx},${y + dy}`] === 0);
+      const isWall = (tx, ty) => mapData[`${tx},${ty}`] === 1;
+      
+      const isSurfaceWall = (tx, ty) => {
+        if (!isWall(tx, ty)) return false;
+        // Check 8-way neighbors for open space (0)
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            // Out of bounds is treated as open in saga for surface detection if needed, 
+            // but for a closed dungeon, OOB is usually wall.
+            // Let's treat undefined as Wall (not open) to keep boundaries solid.
+            if (mapData[`${tx + dx},${ty + dy}`] === 0) return true;
+          }
+        }
+        return false;
+      };
 
-      if (!touchesFloor) return null;
+      if (!isSurfaceWall(x, y)) {
+        // Deep interior wall
+        const fallback = atlas.byName[`${wallStyle} left right up down`] || atlas.byName[`${wallStyle} flat`] || atlas.byName[`${wallStyle} center`];
+        return fallback ? fallback.name : null;
+      }
 
-      const n = mapData[`${x},${y-1}`] === 1;
-      const s = mapData[`${x},${y+1}`] === 1;
-      const w = mapData[`${x-1},${y}`] === 1;
-      const e = mapData[`${x+1},${y}`] === 1;
+      const isOpen = (tx, ty) => mapData[`${tx},${ty}`] === 0;
+
+      const lateralOpen = (ny) => isOpen(x - 1, y) || isOpen(x + 1, y) || isOpen(x - 1, ny) || isOpen(x + 1, ny);
+      const verticalOpen = (nx) => isOpen(x, y - 1) || isOpen(x, y + 1) || isOpen(nx, y - 1) || isOpen(nx, y + 1);
+
+      const n = isSurfaceWall(x, y - 1) && lateralOpen(y - 1);
+      const s = isSurfaceWall(x, y + 1) && lateralOpen(y + 1);
+      const w = isSurfaceWall(x - 1, y) && verticalOpen(x - 1);
+      const e = isSurfaceWall(x + 1, y) && verticalOpen(x + 1);
 
       return resolveDawnLikeWallName(wallStyle, { n, s, e, w }, atlas.byName);
     }
