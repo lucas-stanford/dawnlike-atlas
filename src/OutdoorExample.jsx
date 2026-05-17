@@ -104,15 +104,21 @@ export default function OutdoorExample() {
     for (let y = 0; y < DISPLAY_HEIGHT; y++) {
       for (let x = 0; x < DISPLAY_WIDTH; x++) {
         const noise = simplex.get(x / 12, y / 12);
-        const isForest = noise > 0.35;
+        const secNoise = simplex.get(x / 8 + 100, y / 8 + 100);
+        
+        let type = 'ground';
+        if (noise > 0.35) type = 'forest';
+        else if (secNoise > 0.4) type = 'dirt';
+        else if (secNoise < -0.4) type = 'water';
+
         const tileData = { 
-          type: isForest ? 'forest' : 'ground',
+          type,
           // FILL the forest with trees
-          tree: isForest
+          tree: type === 'forest'
         };
 
-        // Procedural Decorations on empty ground (Scatter)
-        if (!isForest && ROT.RNG.getUniform() > 0.85) {
+        // Procedural Decorations on empty ground (Scatter, reduced density)
+        if (type !== 'forest' && type !== 'water' && ROT.RNG.getUniform() > 0.96) {
           const decors = ['white flowers', 'sparse white flowers', 'blue flowers', 'sparse blue flowers', 'gold flowers', 'sparse gold flowers', 'red flowers', 'sparse red flowers', 'pebble', 'pebbles', 'rock'];
           tileData.decor = ROT.RNG.getItem(decors);
         }
@@ -178,10 +184,25 @@ export default function OutdoorExample() {
     // Layer 0: Ground (Biome matching)
     // Trees have baked-in grass, so use grass where there are trees or roads or rivers
     const useGrass = tile.tree || tile.road || tile.river || tile.type === 'forest';
-    const effectiveTerrain = useGrass ? 'day grass floor' : terrainStyle;
+    let effectiveTerrain = terrainStyle;
+    let reason = 'Biome';
+    
+    if (useGrass) {
+      effectiveTerrain = 'day grass floor';
+      reason = 'Forced grass';
+    } else if (tile.type === 'dirt') {
+      effectiveTerrain = 'day dirt floor';
+      reason = 'Dirt patch';
+    } else if (tile.type === 'water') {
+      effectiveTerrain = 'shallow water tile';
+      reason = 'Water patch';
+    }
+
     let terrainName = `${effectiveTerrain} c`;
     if (!atlas.byName[terrainName]) terrainName = `${effectiveTerrain} center`;
-    layers.push({ name: terrainName, z: 0, reason: `Ground: ${useGrass?'Grass forced':'Biome'}` });
+    if (!atlas.byName[terrainName]) terrainName = effectiveTerrain; // fallback for standalone tiles like "shallow water tile"
+    
+    layers.push({ name: terrainName, z: 0, reason: `Ground: ${reason}` });
 
     // Layer 0.5: Decorations
     if (tile.decor && !tile.road && !tile.river && !tile.building) {
