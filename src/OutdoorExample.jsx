@@ -162,7 +162,7 @@ export default function OutdoorExample() {
     for (let x = 5; x < DISPLAY_WIDTH - 5 && !built; x++) {
       for (let y = 5; y < DISPLAY_HEIGHT - 5; y++) {
         if (data[`${x},${y}`]?.road && !data[`${x},${y}`]?.river) {
-          if (data[`${x},${y-1}`] && !data[`${x},${y-1}`].river && !data[`${x},${y-1}`].road) {
+          if (data[`${x},${y-1}`] && !data[`${x},${y-1}`].river && !data[`${x},${y-1}`].road && data[`${x},${y-1}`].type !== 'water') {
              data[`${x},${y-1}`].building = 'homestead';
              built = true; break;
           }
