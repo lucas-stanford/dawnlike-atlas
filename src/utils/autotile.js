@@ -11,23 +11,11 @@ export function resolveDawnLikeWallName(baseName, { n, s, e, w }, byName = {}) {
   if (w) dirs.push('left');
   if (e) dirs.push('right');
 
-  // Priority order for DawnLike naming permutations
-  const getFullName = (suffix) => {
-    const standard = ['up', 'down', 'left', 'right'].filter(d => suffix.includes(d)).join(' ');
-    const fullName = `${baseName} ${standard}`.trim();
-    if (byName[fullName]) return fullName;
-    
-    const alt = ['left', 'right', 'up', 'down'].filter(d => suffix.includes(d)).join(' ');
-    const fullAlt = `${baseName} alt`.trim();
-    if (byName[fullAlt]) return fullAlt;
-
-    return null;
-  };
-
   if (dirs.length === 0) {
     return byName[`${baseName} flat`] || byName[`${baseName} center`] || baseName;
   }
 
+  let suffix = "flat";
   // 4-way
   if (n && s && e && w) suffix = "left right up down";
   else if (!n && s && e && w) suffix = "left right down";
@@ -44,23 +32,22 @@ export function resolveDawnLikeWallName(baseName, { n, s, e, w }, byName = {}) {
   else if (s && !n && !e && !w) suffix = "up down"; 
   else if (w && !n && !s && !e) suffix = "left right"; // reuse horizontal straight for caps
   else if (e && !n && !s && !w) suffix = "left right";
-  else suffix = "flat";
 
   // Try permutations in priority order
   const getFullName = (suff) => {
-    const dirs = suff.split(' ');
-    if (dirs.length === 0) return null;
+    const dArray = suff.split(' ');
+    if (dArray.length === 0) return null;
     
-    const standard = ['up', 'down', 'left', 'right'].filter(d => dirs.includes(d)).join(' ');
+    const standard = ['up', 'down', 'left', 'right'].filter(d => dArray.includes(d)).join(' ');
     const fullName = `${baseName} ${standard}`.trim();
     if (byName[fullName]) return fullName;
     
-    const alt = ['left', 'right', 'up', 'down'].filter(d => dirs.includes(d)).join(' ');
+    const alt = ['left', 'right', 'up', 'down'].filter(d => dArray.includes(d)).join(' ');
     const fullAlt = `${baseName} ${alt}`.trim();
     if (byName[fullAlt]) return fullAlt;
     
     // Reverse
-    const rev = [...dirs].reverse().join(' ');
+    const rev = [...dArray].reverse().join(' ');
     const fullRev = `${baseName} ${rev}`.trim();
     if (byName[fullRev]) return fullRev;
 
