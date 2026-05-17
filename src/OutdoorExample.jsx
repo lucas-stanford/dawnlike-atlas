@@ -104,11 +104,20 @@ export default function OutdoorExample() {
     for (let y = 0; y < DISPLAY_HEIGHT; y++) {
       for (let x = 0; x < DISPLAY_WIDTH; x++) {
         const noise = simplex.get(x / 12, y / 12);
-        data[`${x},${y}`] = { 
-          type: noise > 0.35 ? 'forest' : 'ground',
-          // ONLY spawn trees in forest biomes
-          tree: noise > 0.45 && ROT.RNG.getUniform() > 0.3
+        const isForest = noise > 0.35;
+        const tileData = { 
+          type: isForest ? 'forest' : 'ground',
+          // FILL the forest with trees
+          tree: isForest
         };
+
+        // Procedural Decorations on empty ground (Scatter)
+        if (!isForest && ROT.RNG.getUniform() > 0.85) {
+          const decors = ['white flowers', 'sparse white flowers', 'blue flowers', 'sparse blue flowers', 'gold flowers', 'sparse gold flowers', 'red flowers', 'sparse red flowers', 'pebble', 'pebbles', 'rock'];
+          tileData.decor = ROT.RNG.getItem(decors);
+        }
+        
+        data[`${x},${y}`] = tileData;
       }
     }
 
@@ -120,17 +129,14 @@ export default function OutdoorExample() {
     while (rx < DISPLAY_WIDTH) {
       if (data[`${rx},${ry}`]) data[`${rx},${ry}`].road = true;
       
-      // Near river crossing, go strictly horizontal
       const nearRiver = Math.abs(rx - riverX) < 4;
       const move = nearRiver ? 0 : ROT.RNG.getItem([-1, 0, 0, 0, 1]);
       
       if (move !== 0 && ry + move >= 0 && ry + move < DISPLAY_HEIGHT) {
-        // Vertical step first
         ry += move;
         if (data[`${rx},${ry}`]) data[`${rx},${ry}`].road = true;
       }
       
-      // Then horizontal step
       rx++;
       if (rx < DISPLAY_WIDTH && data[`${rx},${ry}`]) data[`${rx},${ry}`].road = true;
     }
@@ -149,14 +155,15 @@ export default function OutdoorExample() {
     let built = false;
     for (let x = 5; x < DISPLAY_WIDTH - 5 && !built; x++) {
       for (let y = 5; y < DISPLAY_HEIGHT - 5; y++) {
-        if (data[`${x},y`]?.road && !data[`${x},y`]?.river) {
-          if (data[`${x},${y-1}`] && !data[`${x},${y-1}`].river) {
+        if (data[`${x},${y}`]?.road && !data[`${x},${y}`]?.river) {
+          if (data[`${x},${y-1}`] && !data[`${x},${y-1}`].river && !data[`${x},${y-1}`].road) {
              data[`${x},${y-1}`].building = 'homestead';
              built = true; break;
           }
         }
       }
     }
+
     
     setMapData(data);
   }, [seed, atlas]);
@@ -169,12 +176,19 @@ export default function OutdoorExample() {
     const layers = [];
 
     // Layer 0: Ground (Biome matching)
-    // Trees have baked-in grass, so use grass where there are trees or roads
+    // Trees have baked-in grass, so use grass where there are trees or roads or rivers
     const useGrass = tile.tree || tile.road || tile.river || tile.type === 'forest';
     const effectiveTerrain = useGrass ? 'day grass floor' : terrainStyle;
     let terrainName = `${effectiveTerrain} c`;
     if (!atlas.byName[terrainName]) terrainName = `${effectiveTerrain} center`;
     layers.push({ name: terrainName, z: 0, reason: `Ground: ${useGrass?'Grass forced':'Biome'}` });
+
+    // Layer 0.5: Decorations
+    if (tile.decor && !tile.road && !tile.river && !tile.building) {
+      if (atlas.byName[tile.decor]) {
+        layers.push({ name: tile.decor, z: 0.5, reason: "Decoration: Procedural scatter" });
+      }
+    }
 
     // Layer 1: River
     if (tile.river) {
@@ -212,8 +226,8 @@ export default function OutdoorExample() {
       const s = mapData[`${x},${y+1}`]?.tree;
       const w = mapData[`${x-1},${y}`]?.tree;
       const e = mapData[`${x+1},${y}`]?.tree;
-      const { name, reason } = resolveDawnLikeForestName(treeStyle || "light oak", { n, s, e, w }, atlas.byName);
-      layers.push({ name, z: 4, reason });
+      const { name: treeName, reason } = resolveDawnLikeForestName(treeStyle || "light oak", { n, s, e, w }, atlas.byName);
+      layers.push({ name: treeName, z: 4, reason });
     }
 
     return layers;
