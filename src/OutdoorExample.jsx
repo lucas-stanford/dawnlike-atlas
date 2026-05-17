@@ -147,12 +147,34 @@ export default function OutdoorExample() {
       if (rx < DISPLAY_WIDTH && data[`${rx},${ry}`]) data[`${rx},${ry}`].road = true;
     }
 
-    // 3. Generate River (Strict Vertical)
+    // 3. Generate River (Meandering but strictly moving down overall to prevent forks)
+    let rvX = riverX;
     let rvY = 0;
+    let intersectionLocked = 0;
     while (rvY < DISPLAY_HEIGHT) {
-      if (data[`${riverX},${rvY}`]) {
-        data[`${riverX},${rvY}`].river = true;
-        if (data[`${riverX},${rvY}`].road) data[`${riverX},${rvY}`].bridge = true;
+      if (data[`${rvX},${rvY}`]) {
+        data[`${rvX},${rvY}`].river = true;
+        if (data[`${rvX},${rvY}`].road) {
+          data[`${rvX},${rvY}`].bridge = true;
+          intersectionLocked = 4; // Keep straight near bridge
+        }
+      }
+      
+      if (intersectionLocked > 0) {
+        intersectionLocked--;
+      } else {
+        // Meander left or right
+        const move = ROT.RNG.getItem([-1, 0, 0, 0, 0, 1]);
+        if (move !== 0 && rvX + move >= 0 && rvX + move < DISPLAY_WIDTH) {
+          rvX += move;
+          if (data[`${rvX},${rvY}`]) {
+            data[`${rvX},${rvY}`].river = true;
+            if (data[`${rvX},${rvY}`].road) {
+              data[`${rvX},${rvY}`].bridge = true;
+              intersectionLocked = 4;
+            }
+          }
+        }
       }
       rvY++;
     }
