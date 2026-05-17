@@ -1,64 +1,45 @@
-# DawnLike Atlas
+# DawnLike Semantic Atlas
 
-This repository contains the bin-packed mega-atlas and category-specific atlases for the [DawnLike](https://dragondeplatino.itch.io/dawnlike) roguelike tileset.
+This repository contains a bin-packed **Mega-Atlas** and rich metadata for the [DawnLike](https://dragondeplatino.itch.io/dawnlike) roguelike tileset.
 
 ## Contents
 
-- `atlas/`: Generated PNG atlases and JSON metadata (Phaser format).
-- `source/`: Raw 16x16 sprite sheets and metadata used to build the atlases.
+- `atlas/`: The production-ready Mega-Atlas.
+  - `DawnlikeAtlas0.png`: Primary frames (3,844 sprites).
+  - `DawnlikeAtlas1.png`: Animation pair frames.
+  - `DawnlikeAtlas.json`: Rich metadata including **AI-generated tags** and semantic connection data.
 - `react/`: React components and constants for easy usage in web projects.
-- `tools/`: Build scripts for generating the atlases from source.
-- `.claude/skills/`: Claude skills for looking up sprite data.
+- `src/`: Core logic for semantic autotiling and example components.
+- `stories/`: Interactive Storybook examples.
 
-## Mega Atlas
+## Key Features
 
-The `DawnlikeAtlas` contains all 3,844 sprites from the Characters, Items, Objects, and GUI categories in a single tightly-packed atlas.
-
-- `atlas/DawnlikeAtlas0.png`: Primary frames.
-- `atlas/DawnlikeAtlas1.png`: Alternative animation frames.
-- `atlas/DawnlikeAtlas.json`: Full metadata with frame names and coordinates.
-
-## Category Atlases
-
-Individual atlases are also provided for:
-- Characters
-- Items
-- Objects
-- ObjectsTerrain
-- GUI
+- **Semantic Lookup**: Assets are keyed by human-readable names (e.g., `"fighting fish"`, `"bright brick wall left right down"`).
+- **AI-Generated Tags**: Over 3,700 sprites have been analyzed and tagged with descriptive keywords (e.g., `creature`, `metallic`, `glowing`).
+- **16-Way Autotiling**: Built-in support for standard cardinal autotiling for walls, paths, and forest canopies.
+- **Phaser 4 Ready**: Built specifically for high-performance usage in modern web game engines.
 
 ## Usage
 
-### Phaser 3
+### Storybook (Examples & Browser)
+
+Start the interactive asset browser and see the autotile generators in action:
+```bash
+bun install
+bun run dev
+```
+
+### Semantic Autotiling
 
 ```javascript
-this.load.atlas('dawnlike', 'atlas/DawnlikeAtlas0.png', 'atlas/DawnlikeAtlas.json');
-```
+import { resolveDawnLikeWallName } from './src/utils/autotile';
 
-### React
-
-```jsx
-import { DawnLikeIcon } from './react';
-
-function App() {
-  return <DawnLikeIcon name="heartFull" scale={3} />;
-}
-```
-
-## Building
-
-Install dependencies:
-```bash
-npm install sharp
-```
-
-Run build scripts:
-```bash
-npm run build:mega
-npm run build:categories
+// Automatically construct the correct sprite name based on neighbors
+const name = resolveDawnLikeWallName("bright brick wall", { n, s, e, w }, atlas.byName);
+// Result: "bright brick wall left right down"
 ```
 
 ## Credits
 
 Assets by DragonDePlatino and DawnBringer.
-Atlas generation tools by Claude.
+Metadata and semantic tools by Gemini CLI.

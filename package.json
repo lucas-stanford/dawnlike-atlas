@@ -2,13 +2,10 @@
   "name": "dawnlike-atlas",
   "version": "1.0.0",
   "type": "module",
-  "description": "Bin-packed mega-atlas and category atlases for the DawnLike tileset",
+  "description": "Semantic Mega-Atlas for the DawnLike tileset with 16-way autotiling and AI tagging",
   "main": "react/index.js",
   "scripts": {
     "dev": "bun run storybook",
-    "build:mega": "bun tools/build-mega-atlas.mjs --input source/Characters --input source/Items --input source/Objects --input source/GUI --output atlas --name Dawnlike",
-    "build:categories": "bun tools/build-atlas.mjs --input source/Characters --output atlas --name Characters && bun tools/build-atlas.mjs --input source/Items --output atlas --name Items && bun tools/build-atlas.mjs --input source/Objects --output atlas --name Objects && bun tools/build-atlas.mjs --input source/GUI --output atlas --name GUI",
-    "gen:batches": "bun tools/generate-attributes.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
@@ -16,8 +13,7 @@
     "phaser": "4",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "rot-js": "^2.2.1",
-    "sharp": "^0.34.5"
+    "rot-js": "^2.2.1"
   },
   "license": "CC-BY-4.0",
   "private": true,
