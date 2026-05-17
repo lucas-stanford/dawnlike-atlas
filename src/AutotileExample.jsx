@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as ROT from 'rot-js';
 import { resolveAssetPath } from './utils/paths';
-import { resolveDawnLikeWallName } from './utils/autotile';
+import { resolveDawnLikeWallName, resolveDawnLikeFloorName } from './utils/autotile';
 import './Autotile.css';
 
 const TILE_SIZE = 16;
@@ -114,8 +114,13 @@ export default function AutotileExample() {
     const value = mapData[`${x},${y}`];
     
     if (value === 0) {
-      const name = `${floorStyle} c`;
-      return atlas.byName[name] ? name : `${floorStyle} center`;
+      const outOfBounds = (tx, ty) => tx < 0 || tx >= DISPLAY_WIDTH || ty < 0 || ty >= DISPLAY_HEIGHT;
+      const isFloor = (tx, ty) => !outOfBounds(tx, ty) && mapData[`${tx},${ty}`] === 0;
+      const n = isFloor(x, y - 1);
+      const s = isFloor(x, y + 1);
+      const w = isFloor(x - 1, y);
+      const e = isFloor(x + 1, y);
+      return resolveDawnLikeFloorName(floorStyle, { n, s, e, w }, atlas.byName).name;
     } else {
       const outOfBounds = (tx, ty) => tx < 0 || tx >= DISPLAY_WIDTH || ty < 0 || ty >= DISPLAY_HEIGHT;
       const isWall = (tx, ty) => outOfBounds(tx, ty) || mapData[`${tx},${ty}`] === 1;
