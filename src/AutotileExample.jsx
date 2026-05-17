@@ -65,10 +65,16 @@ export default function AutotileExample() {
     };
   }, [atlas]);
 
-  // Set initial styles once discovered
+  // Set initial styles once discovered. Prefer 'bright mine wall' + 'day brick
+  // floor' since they show off the autotile rules nicely; fall back to the
+  // first discovered option if those bases aren't present in the atlas.
   useEffect(() => {
-    if (discoveredWalls.length > 0 && !wallStyle) setWallStyle(discoveredWalls[0]);
-    if (discoveredFloors.length > 0 && !floorStyle) setFloorStyle(discoveredFloors[0]);
+    if (discoveredWalls.length > 0 && !wallStyle) {
+      setWallStyle(discoveredWalls.includes('bright mine wall') ? 'bright mine wall' : discoveredWalls[0]);
+    }
+    if (discoveredFloors.length > 0 && !floorStyle) {
+      setFloorStyle(discoveredFloors.includes('day brick floor') ? 'day brick floor' : discoveredFloors[0]);
+    }
   }, [discoveredWalls, discoveredFloors]);
 
   // Load atlas metadata
