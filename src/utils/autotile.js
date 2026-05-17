@@ -129,6 +129,47 @@ export function resolveDawnLikeFloorName(baseName, { n, s, e, w }, byName = {}) 
   return { name: baseName, reason: 'Floor fallback' };
 }
 /**
+ * resolveDawnLikePoolName
+ * 
+ * Maps pool neighbors (e.g. "stone clear pool") to specific variants.
+ * Uses flipY for missing variants.
+ */
+export function resolveDawnLikePoolName(baseName, { n, s, e, w }, byName = {}) {
+  const get = (suffix, opts = {}) => {
+    const name = `${baseName} ${suffix}`.trim();
+    if (byName[name]) return { name, ...opts };
+    return { name: byName[`${baseName} center`] ? `${baseName} center` : baseName, ...opts };
+  };
+
+  // 4-way
+  if (n && s && e && w) return get('center');
+
+  // 3-way
+  if (!n && s && e && w) return get('left right up', { flipY: true }); // Missing "down" 3-way
+  if (n && !s && e && w) return get('left right up');
+  if (n && s && !e && w) return get('divider'); // Missing side 3-way
+  if (n && s && e && !w) return get('divider'); // Missing side 3-way
+
+  // 2-way Straights
+  if (n && s && !e && !w) return get('divider');
+  if (!n && !s && e && w) return get('left right');
+
+  // 2-way Corners
+  if (s && e) return get('right down');
+  if (s && w) return get('left down');
+  if (n && e) return get('right up');
+  if (n && w) return get('left up');
+
+  // 1-way
+  if (n) return get('up');
+  if (s) return get('up', { flipY: true }); // Missing down endcap
+  if (e) return get('right');
+  if (w) return get('left');
+
+  // 0-way
+  return get('center'); // Best fallback for isolated pool
+}
+/**
  * resolveDawnLikeRiverName
  */
 export function resolveDawnLikeRiverName(baseName, { n, s, e, w }, byName = {}) {

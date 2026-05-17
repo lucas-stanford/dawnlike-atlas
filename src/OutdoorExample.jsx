@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import * as ROT from 'rot-js';
 import { resolveAssetPath } from './utils/paths';
-import { resolveDawnLikeWallName, resolveDawnLikeForestName, resolveDawnLikeRiverName, resolveDawnLikeFloorName } from './utils/autotile';
+import { resolveDawnLikeWallName, resolveDawnLikeForestName, resolveDawnLikeRiverName, resolveDawnLikeFloorName, resolveDawnLikePoolName } from './utils/autotile';
 import './Autotile.css';
 
 const TILE_SIZE = 16;
@@ -223,14 +223,13 @@ export default function OutdoorExample() {
 
     let terrainNameObj;
     if (layerType === 'water') {
-       // Pools use the wall naming scheme (e.g., "left up", "up down")
-       terrainNameObj = { name: resolveDawnLikeWallName(effectiveTerrain, { n, s, e, w }, atlas.byName), reason: 'Water autotile' };
+       terrainNameObj = resolveDawnLikePoolName(effectiveTerrain, { n, s, e, w }, atlas.byName);
+       terrainNameObj.reason = 'Water autotile';
     } else {
-       // Floors use the missing-neighbor suffix scheme (e.g., "nw", "nswe")
        terrainNameObj = resolveDawnLikeFloorName(effectiveTerrain, { n, s, e, w }, atlas.byName);
     }
     
-    layers.push({ name: terrainNameObj.name, z: 0, reason: `Ground: ${reason} (${terrainNameObj.reason})` });
+    layers.push({ name: terrainNameObj.name, z: 0, flipY: terrainNameObj.flipY, reason: `Ground: ${reason} (${terrainNameObj.reason})` });
 
     // Layer 0.5: Decorations
     if (tile.decor && !tile.road && !tile.river && !tile.building) {
@@ -319,6 +318,7 @@ export default function OutdoorExample() {
                     if (!sprite) return null;
                     const trans = [];
                     if (layer.flipX) trans.push('scaleX(-1)');
+                    if (layer.flipY) trans.push('scaleY(-1)');
                     if (layer.rotate) trans.push(`rotate(${layer.rotate}deg)`);
                     return (
                       <div key={idx} style={{ position: 'absolute', inset: 0, backgroundImage: `url(${resolveAssetPath('/DawnlikeAtlas0.png')})`, backgroundPosition: `-${sprite.x * SCALE}px -${sprite.y * SCALE}px`, backgroundSize: `${atlas.meta.size.w * SCALE}px ${atlas.meta.size.h * SCALE}px`, zIndex: layer.z * 10, transform: trans.join(' ') }} />
