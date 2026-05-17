@@ -2,6 +2,8 @@
 
 A bin-packed **mega-atlas** and rich metadata for the [DawnLike](https://dragondeplatino.itch.io/dawnlike) 16×16 roguelike tileset, plus a small React/Storybook playground that demonstrates semantic lookup, 16-way autotiling, and integration with rendering libraries.
 
+**🔗 Live demo:** https://lucas-stanford.github.io/dawnlike-atlas/
+
 ## Contents
 
 - `atlas/`
@@ -19,6 +21,9 @@ A bin-packed **mega-atlas** and rich metadata for the [DawnLike](https://dragond
 - **16-way autotiling**: cardinal-neighbor resolvers for walls, floors, rivers, pools, and forest canopies.
 
 ## Getting Started
+
+The hosted Storybook is available at https://lucas-stanford.github.io/dawnlike-atlas/.
+To run it locally:
 
 ```bash
 bun install
