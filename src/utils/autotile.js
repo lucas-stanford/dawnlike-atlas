@@ -73,19 +73,25 @@ export function resolveDawnLikeWallName(baseName, { n, s, e, w }, byName = {}) {
 
 /**
  * resolveDawnLikeForestName
- * 
- * Maps 8-way tree neighbors to the definitive 16-way DawnLike tree set.
+ *
+ * Maps 8-way tree neighbors to the DawnLike 16-tile tree set. Each suffix
+ * (`nw`, `ne`, `sw`, `se`) names a corner where the canopy curves away —
+ * i.e. a direction that is NOT cleanly filled. `dense` is used when the
+ * tile is completely surrounded (all 8 neighbors present).
+ *
+ * Rule (standard 8-way "blob" autotile): a corner is filled iff its
+ * diagonal AND both adjacent cardinals all have trees. If any of those
+ * three is missing, the corner curves away.
  */
 export function resolveDawnLikeForestName(baseName, { n, s, e, w, nw, ne, sw, se }, byName = {}) {
   const emptyQuadrants = [];
-  
-  // A quadrant is EMPTY if it lacks a cardinal neighbor OR its specific diagonal neighbor.
-  // This flawlessly maps the 8-way neighborhood into DawnLike's 16-sprite quadrant system.
-  if (!n || !w || !nw) emptyQuadrants.push('nw');
-  if (!n || !e || !ne) emptyQuadrants.push('ne');
-  if (!s || !w || !sw) emptyQuadrants.push('sw');
-  if (!s || !e || !se) emptyQuadrants.push('se');
 
+  if (!nw || !n || !w) emptyQuadrants.push('nw');
+  if (!ne || !n || !e) emptyQuadrants.push('ne');
+  if (!sw || !s || !w) emptyQuadrants.push('sw');
+  if (!se || !s || !e) emptyQuadrants.push('se');
+
+  // All corners filled → completely surrounded (this implies all 8 are present).
   if (emptyQuadrants.length === 0) {
     const dense = `${baseName} dense`;
     if (byName[dense]) return { name: dense, reason: 'Forest interior' };
@@ -95,10 +101,10 @@ export function resolveDawnLikeForestName(baseName, { n, s, e, w, nw, ne, sw, se
   const fullOrder = ['nw', 'ne', 'sw', 'se'];
   const nameParts = [baseName, ...fullOrder.filter(q => emptyQuadrants.includes(q))];
   const fullName = nameParts.join(' ').trim();
-  
+
   if (byName[fullName]) return { name: fullName, reason: `Canopy: ${emptyQuadrants.join(',')}` };
-  
-  return { 
+
+  return {
     name: byName[`${baseName} dense`] ? `${baseName} dense` : Object.keys(byName).find(k => k.startsWith(baseName)),
     reason: 'Forest: fallback'
   };
