@@ -275,7 +275,12 @@ export default function OutdoorExample() {
       const s = mapData[`${x},${y+1}`]?.tree;
       const w = mapData[`${x-1},${y}`]?.tree;
       const e = mapData[`${x+1},${y}`]?.tree;
-      const { name: treeName, reason } = resolveDawnLikeForestName(treeStyle || "light oak", { n, s, e, w }, atlas.byName);
+      const nw = mapData[`${x-1},${y-1}`]?.tree;
+      const ne = mapData[`${x+1},${y-1}`]?.tree;
+      const sw = mapData[`${x-1},${y+1}`]?.tree;
+      const se = mapData[`${x+1},${y+1}`]?.tree;
+      
+      const { name: treeName, reason } = resolveDawnLikeForestName(treeStyle || "light oak", { n, s, e, w, nw, ne, sw, se }, atlas.byName);
       layers.push({ name: treeName, z: 4, reason });
     }
 

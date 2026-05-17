@@ -57,37 +57,34 @@ export function resolveDawnLikeWallName(baseName, { n, s, e, w }, byName = {}) {
 /**
  * resolveDawnLikeForestName
  * 
- * Maps tree neighbors to the definitive 16-way DawnLike tree set.
+ * Maps 8-way tree neighbors to the definitive 16-way DawnLike tree set.
  */
-export function resolveDawnLikeForestName(baseName, { n, s, e, w }, byName = {}) {
-  // Logic derived from Tree0.frames.json:
-  // Standalone: nw ne sw se
-  // Edges: nw ne (N), sw se (S), nw sw (W), ne se (E)
-  // Corners (missing the inner quadrant): 
-  //   TL (E+S): nw ne sw (missing SE)
-  //   TR (W+S): nw ne se (missing SW)
-  //   BL (E+N): nw sw se (missing NE)
-  //   BR (W+N): ne sw se (missing NW)
-  // Diagonals: nw se, ne sw
-  // Isolated corners: nw, ne, sw, se
-  // Center: dense
+export function resolveDawnLikeForestName(baseName, { n, s, e, w, nw, ne, sw, se }, byName = {}) {
+  const emptyQuadrants = [];
+  
+  // A quadrant is EMPTY if it lacks a cardinal neighbor OR its specific diagonal neighbor.
+  // This flawlessly maps the 8-way neighborhood into DawnLike's 16-sprite quadrant system.
+  if (!n || !w || !nw) emptyQuadrants.push('nw');
+  if (!n || !e || !ne) emptyQuadrants.push('ne');
+  if (!s || !w || !sw) emptyQuadrants.push('sw');
+  if (!s || !e || !se) emptyQuadrants.push('se');
 
-  const quadrants = [];
-  if (!n || !w) quadrants.push('nw');
-  if (!n || !e) quadrants.push('ne');
-  if (!s || !w) quadrants.push('sw');
-  if (!s || !e) quadrants.push('se');
-
-  if (quadrants.length === 0) {
-    return { name: `${baseName} dense`, reason: 'Interior' };
+  if (emptyQuadrants.length === 0) {
+    const dense = `${baseName} dense`;
+    if (byName[dense]) return { name: dense, reason: 'Forest interior' };
   }
 
   // Join in DawnLike's specific order: nw ne sw se
-  const fullName = [baseName, ...['nw', 'ne', 'sw', 'se'].filter(q => quadrants.includes(q))].join(' ').trim();
+  const fullOrder = ['nw', 'ne', 'sw', 'se'];
+  const nameParts = [baseName, ...fullOrder.filter(q => emptyQuadrants.includes(q))];
+  const fullName = nameParts.join(' ').trim();
   
-  if (byName[fullName]) return { name: fullName, reason: `Canopy: ${quadrants.join(',')}` };
+  if (byName[fullName]) return { name: fullName, reason: `Canopy: ${emptyQuadrants.join(',')}` };
   
-  return { name: `${baseName} dense`, reason: 'Fallback to dense' };
+  return { 
+    name: byName[`${baseName} dense`] ? `${baseName} dense` : Object.keys(byName).find(k => k.startsWith(baseName)),
+    reason: 'Forest: fallback'
+  };
 }
 
 /**
