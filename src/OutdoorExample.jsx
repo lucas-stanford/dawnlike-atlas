@@ -109,7 +109,7 @@ export default function OutdoorExample() {
         let type = 'ground';
         if (noise > 0.35) type = 'forest';
         else if (secNoise > 0.4) type = 'dirt';
-        else if (secNoise < -0.4) type = 'water';
+        else if (secNoise < -0.7) type = 'water'; // Significantly less water patches
 
         const tileData = { 
           type,
