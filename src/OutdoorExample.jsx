@@ -109,7 +109,6 @@ export default function OutdoorExample() {
         let type = 'ground';
         if (noise > 0.35) type = 'forest';
         else if (secNoise > 0.4) type = 'dirt';
-        else if (secNoise < -0.7) type = 'water'; // Significantly less water patches
 
         const tileData = { 
           type,
@@ -118,7 +117,7 @@ export default function OutdoorExample() {
         };
 
         // Procedural Decorations on empty ground (Scatter, reduced density)
-        if (type !== 'forest' && type !== 'water' && ROT.RNG.getUniform() > 0.96) {
+        if (type !== 'forest' && ROT.RNG.getUniform() > 0.96) {
           const decors = ['white flowers', 'sparse white flowers', 'blue flowers', 'sparse blue flowers', 'gold flowers', 'sparse gold flowers', 'red flowers', 'sparse red flowers', 'pebble', 'pebbles', 'rock'];
           tileData.decor = ROT.RNG.getItem(decors);
         }
@@ -224,10 +223,6 @@ export default function OutdoorExample() {
       effectiveTerrain = 'day dirt floor';
       reason = 'Dirt patch';
       layerType = 'dirt';
-    } else if (tile.type === 'water') {
-      effectiveTerrain = 'stone clear pool'; // Pool tiles support 16-way autotiling
-      reason = 'Water patch';
-      layerType = 'water';
     }
 
     // Floor/Pool Autotiling logic matches neighbors of the SAME type
@@ -243,15 +238,8 @@ export default function OutdoorExample() {
     const w = sameType(x - 1, y);
     const e = sameType(x + 1, y);
 
-    let terrainNameObj;
-    if (layerType === 'water') {
-       terrainNameObj = resolveDawnLikePoolName(effectiveTerrain, { n, s, e, w }, atlas.byName);
-       terrainNameObj.reason = 'Water autotile';
-    } else {
-       terrainNameObj = resolveDawnLikeFloorName(effectiveTerrain, { n, s, e, w }, atlas.byName);
-    }
-    
-    layers.push({ name: terrainNameObj.name, z: 0, flipY: terrainNameObj.flipY, reason: `Ground: ${reason} (${terrainNameObj.reason})` });
+    const terrainNameObj = resolveDawnLikeFloorName(effectiveTerrain, { n, s, e, w }, atlas.byName);
+    layers.push({ name: terrainNameObj.name, z: 0, reason: `Ground: ${reason} (${terrainNameObj.reason})` });
 
     // Layer 0.5: Decorations
     if (tile.decor && !tile.road && !tile.river && !tile.building) {
