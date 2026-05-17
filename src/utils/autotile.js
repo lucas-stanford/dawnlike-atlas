@@ -91,6 +91,30 @@ export function resolveDawnLikeForestName(baseName, { n, s, e, w }, byName = {})
 }
 
 /**
+ * resolveDawnLikeFloorName
+ * 
+ * Maps floor neighbors to a specific DawnLike floor sprite.
+ * Floor transitions are defined by their MISSING neighbors.
+ */
+export function resolveDawnLikeFloorName(baseName, { n, s, e, w }, byName = {}) {
+  const missing = [];
+  if (!n) missing.push('n');
+  if (!s) missing.push('s');
+  if (!w) missing.push('w');
+  if (!e) missing.push('e');
+
+  let suffix = missing.join('');
+  if (suffix === '') suffix = 'c';
+
+  const fullName = `${baseName} ${suffix}`.trim();
+  if (byName[fullName]) return { name: fullName, reason: `Floor transition: ${suffix}` };
+
+  // Fallback
+  if (byName[`${baseName} c`]) return { name: `${baseName} c`, reason: 'Floor fallback' };
+  if (byName[`${baseName} center`]) return { name: `${baseName} center`, reason: 'Floor fallback' };
+  return { name: baseName, reason: 'Floor fallback' };
+}
+/**
  * resolveDawnLikeRiverName
  */
 export function resolveDawnLikeRiverName(baseName, { n, s, e, w }, byName = {}) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import * as ROT from 'rot-js';
 import { resolveAssetPath } from './utils/paths';
-import { resolveDawnLikeWallName, resolveDawnLikeForestName, resolveDawnLikeRiverName } from './utils/autotile';
+import { resolveDawnLikeWallName, resolveDawnLikeForestName, resolveDawnLikeRiverName, resolveDawnLikeFloorName } from './utils/autotile';
 import './Autotile.css';
 
 const TILE_SIZE = 16;
@@ -181,28 +181,56 @@ export default function OutdoorExample() {
 
     const layers = [];
 
-    // Layer 0: Ground (Biome matching)
+    // Base Layer -1: Always render a solid block of the selected base terrain to prevent black spots
+    let baseTerrain = `${terrainStyle} c`;
+    if (!atlas.byName[baseTerrain]) baseTerrain = `${terrainStyle} center`;
+    if (!atlas.byName[baseTerrain]) baseTerrain = terrainStyle;
+    layers.push({ name: baseTerrain, z: -1, reason: `Base Terrain` });
+
+    // Layer 0: Ground (Biome autotiling)
     // Trees have baked-in grass, so use grass where there are trees or roads or rivers
     const useGrass = tile.tree || tile.road || tile.river || tile.type === 'forest';
     let effectiveTerrain = terrainStyle;
     let reason = 'Biome';
+    let layerType = 'ground';
     
     if (useGrass) {
       effectiveTerrain = 'day grass floor';
       reason = 'Forced grass';
+      layerType = 'grass';
     } else if (tile.type === 'dirt') {
       effectiveTerrain = 'day dirt floor';
       reason = 'Dirt patch';
+      layerType = 'dirt';
     } else if (tile.type === 'water') {
-      effectiveTerrain = 'shallow water tile';
+      effectiveTerrain = 'stone clear pool'; // Pool tiles support 16-way autotiling
       reason = 'Water patch';
+      layerType = 'water';
     }
 
-    let terrainName = `${effectiveTerrain} c`;
-    if (!atlas.byName[terrainName]) terrainName = `${effectiveTerrain} center`;
-    if (!atlas.byName[terrainName]) terrainName = effectiveTerrain; // fallback for standalone tiles like "shallow water tile"
+    // Floor/Pool Autotiling logic matches neighbors of the SAME type
+    const sameType = (nx, ny) => {
+      const neighbor = mapData[`${nx},${ny}`];
+      if (!neighbor) return false;
+      if (layerType === 'grass') return neighbor.tree || neighbor.road || neighbor.river || neighbor.type === 'forest';
+      return neighbor.type === tile.type && !neighbor.road && !neighbor.river && !neighbor.tree;
+    };
+
+    const n = sameType(x, y - 1);
+    const s = sameType(x, y + 1);
+    const w = sameType(x - 1, y);
+    const e = sameType(x + 1, y);
+
+    let terrainNameObj;
+    if (layerType === 'water') {
+       // Pools use the wall naming scheme (e.g., "left up", "up down")
+       terrainNameObj = { name: resolveDawnLikeWallName(effectiveTerrain, { n, s, e, w }, atlas.byName), reason: 'Water autotile' };
+    } else {
+       // Floors use the missing-neighbor suffix scheme (e.g., "nw", "nswe")
+       terrainNameObj = resolveDawnLikeFloorName(effectiveTerrain, { n, s, e, w }, atlas.byName);
+    }
     
-    layers.push({ name: terrainName, z: 0, reason: `Ground: ${reason}` });
+    layers.push({ name: terrainNameObj.name, z: 0, reason: `Ground: ${reason} (${terrainNameObj.reason})` });
 
     // Layer 0.5: Decorations
     if (tile.decor && !tile.road && !tile.river && !tile.building) {
