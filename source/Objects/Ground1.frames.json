@@ -1,0 +1,138 @@
+{
+  "file": "Ground1.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 8,
+  "rows": 7,
+  "emptyFrames": [
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55
+  ],
+  "categories": [
+    {
+      "name": "grass_tufts_autumn",
+      "aliases": [
+        "autumn grass",
+        "fall grass",
+        "golden grass"
+      ],
+      "row": 0,
+      "frames": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "description": "grass tufts with warmer autumn green/brown tones"
+    },
+    {
+      "name": "flowers_vibrant",
+      "aliases": [
+        "vibrant flowers",
+        "autumn flowers",
+        "rich flowers"
+      ],
+      "row": 1,
+      "frames": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "description": "flowers with richer, deeper autumn colors"
+    },
+    {
+      "name": "rocks_enhanced",
+      "aliases": [
+        "enhanced rocks",
+        "warm stones"
+      ],
+      "row": 2,
+      "frames": [
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "description": "rocks with enhanced shading and warmer gray tones"
+    },
+    {
+      "name": "mushrooms_rich",
+      "aliases": [
+        "autumn mushroom",
+        "rich fungi",
+        "deep mushroom"
+      ],
+      "row": 3,
+      "frames": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      "description": "mushrooms with deeper, richer fungal colors"
+    },
+    {
+      "name": "bushes_autumn",
+      "aliases": [
+        "autumn bush",
+        "fall shrub",
+        "warm bush"
+      ],
+      "row": 4,
+      "frames": [
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39
+      ],
+      "description": "bushes with autumn foliage in warm tones"
+    },
+    {
+      "name": "debris_autumn",
+      "aliases": [
+        "autumn leaves",
+        "fall leaves",
+        "golden debris"
+      ],
+      "row": 5,
+      "frames": [
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47
+      ],
+      "description": "autumn debris with brown/orange leaves"
+    }
+  ]
+}

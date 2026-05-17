@@ -1,0 +1,825 @@
+{
+  "file": "Decor1.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 8,
+  "rows": 22,
+  "emptyFrames": [],
+  "animationPairFor": "Decor0.png",
+  "categories": [
+    {
+      "type": "banners_flags",
+      "aliases": [
+        "banner bright",
+        "flag enhanced",
+        "animated banner"
+      ],
+      "rows": [
+        0,
+        1
+      ],
+      "frames": {
+        "0": {
+          "type": "banner_red",
+          "description": "red banner - brighter shade, animation frame"
+        },
+        "1": {
+          "type": "banner_red_alt",
+          "description": "red banner variant - enhanced animation"
+        },
+        "2": {
+          "type": "banner_blue",
+          "description": "blue banner - lighter tone, animation frame"
+        },
+        "3": {
+          "type": "banner_blue_alt",
+          "description": "blue banner variant - enhanced"
+        },
+        "4": {
+          "type": "banner_green",
+          "description": "green banner - brighter animation frame"
+        },
+        "5": {
+          "type": "banner_purple",
+          "description": "purple banner - enhanced glow"
+        },
+        "6": {
+          "type": "banner_yellow",
+          "description": "yellow banner - golden shine"
+        },
+        "7": {
+          "type": "banner_black",
+          "description": "black banner - deeper shadow"
+        },
+        "8": {
+          "type": "banner_white",
+          "description": "white banner - cleaner animation"
+        },
+        "9": {
+          "type": "banner_orange",
+          "description": "orange banner - warmer tone"
+        },
+        "10": {
+          "type": "flag_pattern_1",
+          "description": "flag design - alternative palette"
+        },
+        "11": {
+          "type": "flag_pattern_2",
+          "description": "flag design - alternative palette"
+        },
+        "12": {
+          "type": "flag_pattern_3",
+          "description": "flag design - alternative palette"
+        },
+        "13": {
+          "type": "flag_pattern_4",
+          "description": "flag design - alternative palette"
+        },
+        "14": {
+          "type": "flag_pattern_5",
+          "description": "flag design - alternative palette"
+        },
+        "15": {
+          "type": "flag_pattern_6",
+          "description": "flag design - alternative palette"
+        }
+      }
+    },
+    {
+      "type": "light_sources",
+      "aliases": [
+        "torch bright",
+        "flickering",
+        "glowing",
+        "flame peak"
+      ],
+      "rows": [
+        2,
+        3
+      ],
+      "frames": {
+        "16": {
+          "type": "torch_wall",
+          "description": "wall torch - flame peak, brighter animation frame"
+        },
+        "17": {
+          "type": "torch_wall_alt",
+          "description": "wall torch variant - intense flame"
+        },
+        "18": {
+          "type": "torch_standing",
+          "description": "standing torch - flame high"
+        },
+        "19": {
+          "type": "brazier_small",
+          "description": "brazier - fire blazing animation"
+        },
+        "20": {
+          "type": "brazier_large",
+          "description": "large brazier - intense heat"
+        },
+        "21": {
+          "type": "lantern_small",
+          "description": "small lantern - bright glow"
+        },
+        "22": {
+          "type": "lantern_large",
+          "description": "large lantern - illuminated"
+        },
+        "23": {
+          "type": "candelabra",
+          "description": "candelabra - candles bright"
+        },
+        "24": {
+          "type": "chandelier_standard",
+          "description": "chandelier - all candles bright"
+        },
+        "25": {
+          "type": "chandelier_crystal",
+          "description": "crystal chandelier - sparkling"
+        },
+        "26": {
+          "type": "candle_single",
+          "description": "candle - flame peak"
+        },
+        "27": {
+          "type": "candle_group",
+          "description": "candle group - bright flames"
+        },
+        "28": {
+          "type": "sconce",
+          "description": "wall sconce - brighter state"
+        },
+        "29": {
+          "type": "lamp_oil",
+          "description": "oil lamp - bright flame"
+        },
+        "30": {
+          "type": "lamp_decorative",
+          "description": "decorative lamp - glowing"
+        },
+        "31": {
+          "type": "light_special",
+          "description": "special lighting - bright state"
+        }
+      }
+    },
+    {
+      "type": "furniture",
+      "aliases": [
+        "table enhanced",
+        "chair polished",
+        "bed variant",
+        "altar glowing"
+      ],
+      "rows": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "frames": {
+        "32": {
+          "type": "table_wooden_small",
+          "description": "wooden table - enhanced wood grain"
+        },
+        "33": {
+          "type": "table_wooden_large",
+          "description": "large wooden table - detailed"
+        },
+        "34": {
+          "type": "table_stone",
+          "description": "stone table - lighter shade"
+        },
+        "35": {
+          "type": "table_fancy",
+          "description": "fancy table - polished shine"
+        },
+        "36": {
+          "type": "table_round",
+          "description": "round table - enhanced"
+        },
+        "37": {
+          "type": "table_dining",
+          "description": "dining table - detailed"
+        },
+        "38": {
+          "type": "table_work",
+          "description": "work table - enhanced"
+        },
+        "39": {
+          "type": "table_ornate",
+          "description": "ornate table - shiny"
+        },
+        "40": {
+          "type": "altar_stone",
+          "description": "stone altar - highlighted, blessed glow"
+        },
+        "41": {
+          "type": "altar_sacrificial",
+          "description": "sacrificial altar - bloodstained variant"
+        },
+        "42": {
+          "type": "altar_prayer",
+          "description": "prayer altar - blessed glow animation"
+        },
+        "43": {
+          "type": "altar_offering",
+          "description": "offering altar - glowing"
+        },
+        "44": {
+          "type": "altar_shrine",
+          "description": "shrine altar - active state"
+        },
+        "45": {
+          "type": "altar_temple",
+          "description": "temple altar - divine light"
+        },
+        "46": {
+          "type": "altar_divine",
+          "description": "divine altar - radiant"
+        },
+        "47": {
+          "type": "altar_ancient",
+          "description": "ancient altar - power emanating"
+        },
+        "48": {
+          "type": "chair_wooden",
+          "description": "wooden chair - detailed grain"
+        },
+        "49": {
+          "type": "throne",
+          "description": "throne - jeweled shine"
+        },
+        "50": {
+          "type": "chair_stone",
+          "description": "stone chair - lighter stone"
+        },
+        "51": {
+          "type": "bench",
+          "description": "bench - polished wood"
+        },
+        "52": {
+          "type": "stool",
+          "description": "stool - enhanced"
+        },
+        "53": {
+          "type": "stool_tall",
+          "description": "tall stool - enhanced"
+        },
+        "54": {
+          "type": "stool_round",
+          "description": "round stool - enhanced"
+        },
+        "55": {
+          "type": "stool_wooden",
+          "description": "wooden stool - detailed"
+        },
+        "56": {
+          "type": "bed_simple",
+          "description": "simple bed - different sheets"
+        },
+        "57": {
+          "type": "bed_large",
+          "description": "large bed - quilted variant"
+        },
+        "58": {
+          "type": "bed_bunk",
+          "description": "bunk bed - alternative color"
+        },
+        "59": {
+          "type": "bed_mat",
+          "description": "sleeping mat - worn variant"
+        },
+        "60": {
+          "type": "desk",
+          "description": "desk - enhanced"
+        },
+        "61": {
+          "type": "desk_writing",
+          "description": "writing desk - detailed"
+        },
+        "62": {
+          "type": "counter",
+          "description": "counter - enhanced"
+        },
+        "63": {
+          "type": "counter_shop",
+          "description": "shop counter - detailed"
+        }
+      }
+    },
+    {
+      "type": "storage_containers",
+      "aliases": [
+        "chest variant",
+        "barrel aged",
+        "crate reinforced"
+      ],
+      "rows": [
+        8,
+        9
+      ],
+      "frames": {
+        "64": {
+          "type": "bookshelf_filled",
+          "description": "bookshelf - different books"
+        },
+        "65": {
+          "type": "bookshelf_empty",
+          "description": "empty bookshelf - lighter wood"
+        },
+        "66": {
+          "type": "shelf_display",
+          "description": "display shelf - items arranged differently"
+        },
+        "67": {
+          "type": "rack_weapon_wall",
+          "description": "weapon rack - different weapons"
+        },
+        "68": {
+          "type": "rack_armor",
+          "description": "armor rack - enhanced"
+        },
+        "69": {
+          "type": "rack_tool",
+          "description": "tool rack - organized"
+        },
+        "70": {
+          "type": "rack_storage",
+          "description": "storage rack - enhanced"
+        },
+        "71": {
+          "type": "rack_display",
+          "description": "display rack - detailed"
+        },
+        "72": {
+          "type": "barrel_wooden",
+          "description": "wooden barrel - aged variant"
+        },
+        "73": {
+          "type": "barrel_metal",
+          "description": "metal barrel - polished"
+        },
+        "74": {
+          "type": "crate_wooden",
+          "description": "wooden crate - reinforced"
+        },
+        "75": {
+          "type": "chest_stone",
+          "description": "stone chest - carved design"
+        },
+        "76": {
+          "type": "cabinet_closed",
+          "description": "cabinet - ornate doors"
+        },
+        "77": {
+          "type": "cabinet_open",
+          "description": "cabinet - open, contents visible"
+        },
+        "78": {
+          "type": "dresser",
+          "description": "dresser - different handles"
+        },
+        "79": {
+          "type": "wardrobe",
+          "description": "wardrobe - decorative"
+        }
+      }
+    },
+    {
+      "type": "decorations",
+      "aliases": [
+        "vase glazed",
+        "statue enhanced",
+        "carpet rich",
+        "painting variant"
+      ],
+      "rows": [
+        10,
+        11,
+        12,
+        13
+      ],
+      "frames": {
+        "80": {
+          "type": "vase_small",
+          "description": "small vase - glazed finish"
+        },
+        "81": {
+          "type": "vase_large",
+          "description": "large vase - decorated pattern"
+        },
+        "82": {
+          "type": "vase_broken",
+          "description": "broken vase - different break pattern"
+        },
+        "83": {
+          "type": "urn",
+          "description": "urn - etched design"
+        },
+        "84": {
+          "type": "vase_flowers",
+          "description": "flower vase - different flowers"
+        },
+        "85": {
+          "type": "flowers_pot_1",
+          "description": "potted flowers - blooming variant"
+        },
+        "86": {
+          "type": "flowers_pot_2",
+          "description": "potted flowers - vibrant variant"
+        },
+        "87": {
+          "type": "flowers_pot_3",
+          "description": "potted flowers - colorful variant"
+        },
+        "88": {
+          "type": "statue_stone_small",
+          "description": "stone statue - lighter stone"
+        },
+        "89": {
+          "type": "statue_hero",
+          "description": "hero statue - highlighted armor"
+        },
+        "90": {
+          "type": "statue_demon",
+          "description": "demon statue - glowing eyes"
+        },
+        "91": {
+          "type": "statue_angel",
+          "description": "angel statue - holy glow"
+        },
+        "92": {
+          "type": "bust",
+          "description": "bust - different angle/lighting"
+        },
+        "93": {
+          "type": "bust_king",
+          "description": "king bust - regal"
+        },
+        "94": {
+          "type": "bust_noble",
+          "description": "noble bust - refined"
+        },
+        "95": {
+          "type": "bust_warrior",
+          "description": "warrior bust - proud"
+        },
+        "96": {
+          "type": "carpet_red",
+          "description": "red carpet - richer color"
+        },
+        "97": {
+          "type": "carpet_blue",
+          "description": "blue carpet - deeper shade"
+        },
+        "98": {
+          "type": "carpet_purple",
+          "description": "purple carpet - royal sheen"
+        },
+        "99": {
+          "type": "rug_green",
+          "description": "green rug - vibrant"
+        },
+        "100": {
+          "type": "painting",
+          "description": "painting - different subject"
+        },
+        "101": {
+          "type": "portrait",
+          "description": "portrait - different person"
+        },
+        "102": {
+          "type": "tapestry",
+          "description": "tapestry - different scene"
+        },
+        "103": {
+          "type": "shield_decoration",
+          "description": "shield decoration - different heraldry"
+        },
+        "104": {
+          "type": "decoration_wall_1",
+          "description": "wall decoration - enhanced"
+        },
+        "105": {
+          "type": "decoration_wall_2",
+          "description": "wall decoration - enhanced variant"
+        },
+        "106": {
+          "type": "decoration_ornament",
+          "description": "ornamental decoration - detailed"
+        },
+        "107": {
+          "type": "decoration_fancy",
+          "description": "fancy decoration - polished"
+        },
+        "108": {
+          "type": "decoration_hanging",
+          "description": "hanging decoration - swaying"
+        },
+        "109": {
+          "type": "decoration_ceiling",
+          "description": "ceiling decoration - detailed"
+        },
+        "110": {
+          "type": "decoration_corner",
+          "description": "corner decoration - enhanced"
+        },
+        "111": {
+          "type": "decoration_special",
+          "description": "special decoration - glowing"
+        }
+      }
+    },
+    {
+      "type": "special_items",
+      "aliases": [
+        "plant flowering",
+        "skull variant",
+        "weapon glowing",
+        "forge blazing"
+      ],
+      "rows": [
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20
+      ],
+      "frames": {
+        "112": {
+          "type": "plant_potted",
+          "description": "potted plant - different plant"
+        },
+        "113": {
+          "type": "plant_large_pot",
+          "description": "large potted plant - flowering"
+        },
+        "114": {
+          "type": "plant_hanging",
+          "description": "hanging plant - trailing vines"
+        },
+        "115": {
+          "type": "plant_flower_pot",
+          "description": "flower pot - blooming"
+        },
+        "116": {
+          "type": "tree_small_indoor",
+          "description": "small tree - fruiting"
+        },
+        "117": {
+          "type": "tree_decorative_1",
+          "description": "decorative tree - lush"
+        },
+        "118": {
+          "type": "tree_decorative_2",
+          "description": "decorative tree - vibrant variant"
+        },
+        "119": {
+          "type": "tree_decorative_3",
+          "description": "decorative tree - flourishing variant"
+        },
+        "120": {
+          "type": "skull_pile",
+          "description": "skull pile - more bones"
+        },
+        "121": {
+          "type": "skull_single",
+          "description": "single skull - different angle"
+        },
+        "122": {
+          "type": "skeleton_ribcage",
+          "description": "ribcage - complete skeleton"
+        },
+        "123": {
+          "type": "bones_pile",
+          "description": "bone pile - larger"
+        },
+        "124": {
+          "type": "coffin_closed",
+          "description": "coffin - carved lid"
+        },
+        "125": {
+          "type": "coffin_open",
+          "description": "coffin - body visible"
+        },
+        "126": {
+          "type": "coffin_ornate",
+          "description": "ornate coffin - detailed"
+        },
+        "127": {
+          "type": "coffin_stone",
+          "description": "stone coffin - ancient"
+        },
+        "128": {
+          "type": "weapon_rack_swords",
+          "description": "weapon rack - enchanted weapons glow"
+        },
+        "129": {
+          "type": "weapon_rack_spears",
+          "description": "spear rack - polished spears"
+        },
+        "130": {
+          "type": "shield_display",
+          "description": "shield display - decorated shields"
+        },
+        "131": {
+          "type": "weapon_rack_axes",
+          "description": "axe rack - sharp axes"
+        },
+        "132": {
+          "type": "weapon_sword_display",
+          "description": "sword display - gleaming"
+        },
+        "133": {
+          "type": "weapon_bow_display",
+          "description": "bow display - strung"
+        },
+        "134": {
+          "type": "weapon_pole_display",
+          "description": "polearm display - ready"
+        },
+        "135": {
+          "type": "weapon_crossed",
+          "description": "crossed weapons - shining"
+        },
+        "136": {
+          "type": "armor_stand_full",
+          "description": "armor stand - shining armor"
+        },
+        "137": {
+          "type": "mannequin_empty",
+          "description": "mannequin - dressed"
+        },
+        "138": {
+          "type": "training_dummy",
+          "description": "training dummy - battle-worn"
+        },
+        "139": {
+          "type": "dummy_combat",
+          "description": "combat dummy - well used"
+        },
+        "140": {
+          "type": "symbol_holy",
+          "description": "holy symbol - glowing with divine power"
+        },
+        "141": {
+          "type": "symbol_unholy",
+          "description": "unholy symbol - pulsing dark energy"
+        },
+        "142": {
+          "type": "symbol_arcane",
+          "description": "arcane symbol - active"
+        },
+        "143": {
+          "type": "symbol_divine",
+          "description": "divine symbol - radiant"
+        },
+        "144": {
+          "type": "treasure_coins",
+          "description": "treasure pile - overflowing coins"
+        },
+        "145": {
+          "type": "gems_pile",
+          "description": "gem pile - sparkling jewels"
+        },
+        "146": {
+          "type": "gems_display",
+          "description": "gem display - glittering"
+        },
+        "147": {
+          "type": "gems_chest",
+          "description": "gems in chest - gleaming"
+        },
+        "148": {
+          "type": "anvil",
+          "description": "anvil - hot metal on top"
+        },
+        "149": {
+          "type": "forge",
+          "description": "forge - fire blazing animation"
+        },
+        "150": {
+          "type": "workbench",
+          "description": "workbench - tools arranged"
+        },
+        "151": {
+          "type": "workbench_tools",
+          "description": "workbench - tools organized"
+        },
+        "152": {
+          "type": "cauldron",
+          "description": "cauldron - bubbling potion animation"
+        },
+        "153": {
+          "type": "alchemy_table",
+          "description": "alchemy table - active experiment"
+        },
+        "154": {
+          "type": "alchemy_apparatus",
+          "description": "alchemy apparatus - working"
+        },
+        "155": {
+          "type": "alchemy_brewing",
+          "description": "brewing station - active"
+        },
+        "156": {
+          "type": "tools_smith",
+          "description": "smithing tools - ready"
+        },
+        "157": {
+          "type": "tools_craft",
+          "description": "crafting tools - organized"
+        },
+        "158": {
+          "type": "tools_work",
+          "description": "work tools - arranged"
+        },
+        "159": {
+          "type": "tools_repair",
+          "description": "repair tools - clean"
+        },
+        "160": {
+          "type": "instrument_lute",
+          "description": "lute - polished"
+        },
+        "161": {
+          "type": "instrument_drum",
+          "description": "drum - decorated"
+        },
+        "162": {
+          "type": "instrument_horn",
+          "description": "horn - shiny"
+        },
+        "163": {
+          "type": "instrument_harp",
+          "description": "harp - golden"
+        },
+        "164": {
+          "type": "display_case",
+          "description": "display case - lit"
+        },
+        "165": {
+          "type": "display_shelf",
+          "description": "display shelf - arranged"
+        },
+        "166": {
+          "type": "display_pedestal",
+          "description": "display pedestal - highlighted"
+        },
+        "167": {
+          "type": "display_stand",
+          "description": "display stand - featured"
+        }
+      }
+    },
+    {
+      "type": "miscellaneous",
+      "aliases": [
+        "misc variant",
+        "display enhanced",
+        "special alt"
+      ],
+      "rows": [
+        21
+      ],
+      "frames": {
+        "168": {
+          "type": "display_misc_1",
+          "description": "miscellaneous display - enhanced variant"
+        },
+        "169": {
+          "type": "display_misc_2",
+          "description": "miscellaneous display - enhanced variant"
+        },
+        "170": {
+          "type": "display_misc_3",
+          "description": "miscellaneous display - enhanced variant"
+        },
+        "171": {
+          "type": "display_misc_4",
+          "description": "miscellaneous display - enhanced variant"
+        },
+        "172": {
+          "type": "display_misc_5",
+          "description": "miscellaneous display - enhanced variant"
+        },
+        "173": {
+          "type": "display_misc_6",
+          "description": "miscellaneous display - enhanced variant"
+        },
+        "174": {
+          "type": "display_misc_7",
+          "description": "miscellaneous display - enhanced variant"
+        },
+        "175": {
+          "type": "display_misc_8",
+          "description": "miscellaneous display - enhanced variant"
+        }
+      }
+    }
+  ]
+}

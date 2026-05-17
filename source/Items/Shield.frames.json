@@ -1,0 +1,16 @@
+{
+  "file": "Shield.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 8,
+  "rows": 2,
+  "frames": {
+    "0": "small shield",
+    "1": "elven shield",
+    "2": "white handed shield",
+    "3": "orcish shield",
+    "4": "large shield",
+    "5": "dwarvish shield",
+    "6": "polished silver shield"
+  }
+}

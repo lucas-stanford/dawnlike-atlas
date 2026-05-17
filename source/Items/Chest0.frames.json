@@ -1,0 +1,25 @@
+{
+  "file": "Chest0.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 8,
+  "rows": 4,
+  "frames": {
+    "0": "closed chest",
+    "1": "closed big chest",
+    "2": "broken chest",
+    "3": "closed safe",
+    "4": "closed big safe",
+    "5": "broken safe",
+    "6": "closed ice chest",
+    "7": "broken ice chest",
+    "8": "closed barrel",
+    "9": "closed keg",
+    "10": "broken barrel",
+    "11": "broken keg",
+    "16": "bag",
+    "17": "waterskin",
+    "18": "magic bag_0",
+    "19": "hungry bag"
+  }
+}

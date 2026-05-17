@@ -1,0 +1,26 @@
+{
+  "file": "Amulet.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 8,
+  "rows": 4,
+  "frames": {
+    "0": "keepsake necklace",
+    "1": "amethyst pendant",
+    "2": "garnet pendant",
+    "3": "ruby pendant",
+    "4": "cow bell",
+    "5": "jade pendant",
+    "6": "aquamarine pendant",
+    "7": "sapphire pendant",
+    "8": "pearl necklace",
+    "9": "squid netsuke",
+    "10": "jasper amulet",
+    "11": "choker necklace",
+    "12": "fuzzy amulet",
+    "13": "balance talisman",
+    "14": "misshapen talisman",
+    "16": "fake amulet of yendor",
+    "17": "amulet of yendor"
+  }
+}

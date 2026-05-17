@@ -1,0 +1,17 @@
+{
+  "file": "Chest1.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 8,
+  "rows": 4,
+  "frames": {
+    "0": "open chest",
+    "1": "open big chest",
+    "3": "open safe",
+    "4": "open big safe",
+    "6": "open ice chest",
+    "8": "open barrel",
+    "9": "open keg",
+    "18": "magic bag_1"
+  }
+}

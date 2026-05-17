@@ -1,0 +1,39 @@
+{
+  "files": [
+    "Misc0.png",
+    "Misc1.png"
+  ],
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 8,
+  "rows": 9,
+  "frames": {
+    "0": "rodent of unusual size",
+    "1": "ratzilla",
+    "2": "snowy owlbear",
+    "3": "owlbear",
+    "4": "spriggan",
+    "5": "pegasus",
+    "6": "kirin",
+    "8": "gremlin",
+    "9": "gargoyle",
+    "10": "winged gargoyle",
+    "11": "uranium imp",
+    "16": "kobold",
+    "17": "large kobold",
+    "18": "kobold shaman",
+    "19": "kobold lord",
+    "24": "monkey",
+    "25": "ape",
+    "26": "carnivorous ape",
+    "32": "jabberwock",
+    "33": "vorpal jabberwock",
+    "40": "umber hulk",
+    "41": "water hulk",
+    "42": "big hallucination",
+    "43": "small hallucination",
+    "48": "baby terror bird",
+    "49": "terror bird",
+    "56": "zruty"
+  }
+}

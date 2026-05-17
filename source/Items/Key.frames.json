@@ -1,0 +1,12 @@
+{
+  "file": "Key.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 8,
+  "rows": 2,
+  "frames": {
+    "0": "key",
+    "1": "lockpicks",
+    "2": "invitation"
+  }
+}

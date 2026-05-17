@@ -1,0 +1,25 @@
+{
+  "files": [
+    "Rodent0.png",
+    "Rodent1.png"
+  ],
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 8,
+  "rows": 5,
+  "frames": {
+    "0": "red squirrel",
+    "1": "gray squirrel",
+    "2": "rabbit",
+    "3": "jackrabbit",
+    "4": "woodchuck",
+    "8": "sewer rat",
+    "9": "giant rat",
+    "10": "rabid rat",
+    "11": "enormous rat",
+    "16": "disintegrator",
+    "17": "rust monster",
+    "18": "rock mole",
+    "24": "wererat"
+  }
+}

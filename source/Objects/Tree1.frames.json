@@ -1,0 +1,886 @@
+{
+  "file": "Tree1.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 12,
+  "rows": 36,
+  "emptyFrames": [],
+  "tileSystem": "modular_stacking",
+  "animationPairFor": "Tree0.png",
+  "categories": [
+    {
+      "type": "autotiling_template",
+      "aliases": [
+        "template animated",
+        "guide swaying"
+      ],
+      "rows": [
+        0
+      ],
+      "description": "Template row for autotiling - animation states",
+      "frames": {
+        "0": {
+          "type": "template_top_left",
+          "description": "top-left canopy corner - swaying animation"
+        },
+        "1": {
+          "type": "template_top_right",
+          "description": "top-right canopy corner - swaying animation"
+        },
+        "2": {
+          "type": "template_bottom_left",
+          "description": "bottom-left canopy/trunk - swaying animation"
+        },
+        "3": {
+          "type": "template_bottom_right",
+          "description": "bottom-right canopy/trunk - swaying animation"
+        },
+        "4": {
+          "type": "template_single_narrow_left",
+          "description": "single narrow left - rustling animation"
+        },
+        "5": {
+          "type": "template_single_narrow_right",
+          "description": "single narrow right - rustling animation"
+        },
+        "6": {
+          "type": "template_isolated",
+          "description": "isolated tree or bush - wind animation"
+        },
+        "7": {
+          "type": "template_unused",
+          "description": "unused template slot"
+        },
+        "8": {
+          "type": "template_unused",
+          "description": "unused template slot"
+        },
+        "9": {
+          "type": "template_unused",
+          "description": "unused template slot"
+        },
+        "10": {
+          "type": "template_unused",
+          "description": "unused template slot"
+        },
+        "11": {
+          "type": "template_unused",
+          "description": "unused template slot"
+        }
+      }
+    },
+    {
+      "type": "oak_deciduous_trees",
+      "aliases": [
+        "oak swaying",
+        "deciduous wind",
+        "summer tree animated"
+      ],
+      "rows": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "treeAssembly": {
+        "row_0": "top canopy - leaves shifted, swaying",
+        "row_1": "middle canopy - wind-blown foliage",
+        "row_2": "lower canopy - rustling leaves",
+        "row_3": "trunk - slight sway animation"
+      },
+      "frames": {
+        "12": {
+          "type": "oak_crown_0",
+          "animationState": "swaying",
+          "description": "oak tree - top canopy left, swaying"
+        },
+        "13": {
+          "type": "oak_crown_1",
+          "animationState": "swaying",
+          "description": "oak tree - top canopy center-left, swaying"
+        },
+        "14": {
+          "type": "oak_crown_2",
+          "animationState": "swaying",
+          "description": "oak tree - top canopy center-right, swaying"
+        },
+        "15": {
+          "type": "oak_crown_3",
+          "animationState": "swaying",
+          "description": "oak tree - top canopy right, swaying"
+        },
+        "24": {
+          "type": "oak_upper_foliage_0",
+          "animationState": "swaying",
+          "description": "oak tree - middle canopy left, wind-blown"
+        },
+        "25": {
+          "type": "oak_upper_foliage_1",
+          "animationState": "swaying",
+          "description": "oak tree - middle canopy center-left, wind-blown"
+        },
+        "26": {
+          "type": "oak_upper_foliage_2",
+          "animationState": "swaying",
+          "description": "oak tree - middle canopy center-right, wind-blown"
+        },
+        "27": {
+          "type": "oak_upper_foliage_3",
+          "animationState": "swaying",
+          "description": "oak tree - middle canopy right, wind-blown"
+        },
+        "36": {
+          "type": "oak_lower_foliage_0",
+          "animationState": "swaying",
+          "description": "oak tree - lower canopy left, rustling"
+        },
+        "37": {
+          "type": "oak_lower_foliage_1",
+          "animationState": "swaying",
+          "description": "oak tree - lower canopy center-left, rustling"
+        },
+        "38": {
+          "type": "oak_lower_foliage_2",
+          "animationState": "swaying",
+          "description": "oak tree - lower canopy center-right, rustling"
+        },
+        "39": {
+          "type": "oak_lower_foliage_3",
+          "animationState": "swaying",
+          "description": "oak tree - lower canopy right, rustling"
+        },
+        "48": {
+          "type": "oak_trunk_0",
+          "animationState": "swaying",
+          "description": "oak tree - trunk base left, animated"
+        },
+        "49": {
+          "type": "oak_trunk_1",
+          "animationState": "swaying",
+          "description": "oak tree - trunk base center-left, animated"
+        },
+        "50": {
+          "type": "oak_trunk_2",
+          "animationState": "swaying",
+          "description": "oak tree - trunk base center-right, animated"
+        },
+        "51": {
+          "type": "oak_trunk_3",
+          "animationState": "swaying",
+          "description": "oak tree - trunk base right, animated"
+        }
+      }
+    },
+    {
+      "type": "pine_evergreen_trees",
+      "aliases": [
+        "pine swaying",
+        "evergreen wind",
+        "conifer animated"
+      ],
+      "rows": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "treeAssembly": {
+        "row_0": "top canopy - needles moved, wind-blown",
+        "row_1": "middle canopy - branches swaying",
+        "row_2": "lower branches - animated foliage",
+        "row_3": "trunk - slight movement"
+      },
+      "frames": {
+        "60": {
+          "type": "pine_crown_0",
+          "animationState": "swaying",
+          "description": "pine tree - top canopy left, swaying"
+        },
+        "61": {
+          "type": "pine_crown_1",
+          "animationState": "swaying",
+          "description": "pine tree - top canopy center-left, swaying"
+        },
+        "62": {
+          "type": "pine_crown_2",
+          "animationState": "swaying",
+          "description": "pine tree - top canopy center-right, swaying"
+        },
+        "63": {
+          "type": "pine_crown_3",
+          "animationState": "swaying",
+          "description": "pine tree - top canopy right, swaying"
+        },
+        "72": {
+          "type": "pine_upper_branches_0",
+          "animationState": "swaying",
+          "description": "pine tree - middle canopy left, wind-blown"
+        },
+        "73": {
+          "type": "pine_upper_branches_1",
+          "animationState": "swaying",
+          "description": "pine tree - middle canopy center-left, wind-blown"
+        },
+        "74": {
+          "type": "pine_upper_branches_2",
+          "animationState": "swaying",
+          "description": "pine tree - middle canopy center-right, wind-blown"
+        },
+        "75": {
+          "type": "pine_upper_branches_3",
+          "animationState": "swaying",
+          "description": "pine tree - middle canopy right, wind-blown"
+        },
+        "84": {
+          "type": "pine_lower_branches_0",
+          "animationState": "swaying",
+          "description": "pine tree - lower branches left, animated"
+        },
+        "85": {
+          "type": "pine_lower_branches_1",
+          "animationState": "swaying",
+          "description": "pine tree - lower branches center-left, animated"
+        },
+        "86": {
+          "type": "pine_lower_branches_2",
+          "animationState": "swaying",
+          "description": "pine tree - lower branches center-right, animated"
+        },
+        "87": {
+          "type": "pine_lower_branches_3",
+          "animationState": "swaying",
+          "description": "pine tree - lower branches right, animated"
+        },
+        "96": {
+          "type": "pine_trunk_0",
+          "animationState": "swaying",
+          "description": "pine tree - trunk base left, animated"
+        },
+        "97": {
+          "type": "pine_trunk_1",
+          "animationState": "swaying",
+          "description": "pine tree - trunk base center-left, animated"
+        },
+        "98": {
+          "type": "pine_trunk_2",
+          "animationState": "swaying",
+          "description": "pine tree - trunk base center-right, animated"
+        },
+        "99": {
+          "type": "pine_trunk_3",
+          "animationState": "swaying",
+          "description": "pine tree - trunk base right, animated"
+        }
+      }
+    },
+    {
+      "type": "dead_autumn_trees",
+      "aliases": [
+        "dead tree swaying",
+        "autumn wind",
+        "leaves falling"
+      ],
+      "rows": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "treeAssembly": {
+        "row_0": "top branches - creaking, leaves falling",
+        "row_1": "middle branches - swaying bare wood",
+        "row_2": "lower branches - autumn leaves drifting",
+        "row_3": "trunk - wind animation"
+      },
+      "frames": {
+        "108": {
+          "type": "dead_autumn_crown_0",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - top branches left, creaking"
+        },
+        "109": {
+          "type": "dead_autumn_crown_1",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - top branches center-left, creaking"
+        },
+        "110": {
+          "type": "dead_autumn_crown_2",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - top branches center-right, creaking"
+        },
+        "111": {
+          "type": "dead_autumn_crown_3",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - top branches right, creaking"
+        },
+        "120": {
+          "type": "dead_autumn_upper_branches_0",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - middle branches left, leaves falling"
+        },
+        "121": {
+          "type": "dead_autumn_upper_branches_1",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - middle branches center-left, leaves falling"
+        },
+        "122": {
+          "type": "dead_autumn_upper_branches_2",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - middle branches center-right, leaves falling"
+        },
+        "123": {
+          "type": "dead_autumn_upper_branches_3",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - middle branches right, leaves falling"
+        },
+        "132": {
+          "type": "dead_autumn_lower_branches_0",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - lower branches left, wind-blown"
+        },
+        "133": {
+          "type": "dead_autumn_lower_branches_1",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - lower branches center-left, wind-blown"
+        },
+        "134": {
+          "type": "dead_autumn_lower_branches_2",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - lower branches center-right, wind-blown"
+        },
+        "135": {
+          "type": "dead_autumn_lower_branches_3",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - lower branches right, wind-blown"
+        },
+        "144": {
+          "type": "dead_autumn_trunk_0",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - trunk base left, animated"
+        },
+        "145": {
+          "type": "dead_autumn_trunk_1",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - trunk base center-left, animated"
+        },
+        "146": {
+          "type": "dead_autumn_trunk_2",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - trunk base center-right, animated"
+        },
+        "147": {
+          "type": "dead_autumn_trunk_3",
+          "animationState": "swaying",
+          "description": "dead/autumn tree - trunk base right, animated"
+        }
+      }
+    },
+    {
+      "type": "tropical_trees",
+      "aliases": [
+        "palm swaying",
+        "tropical wind",
+        "fronds rustling"
+      ],
+      "rows": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "treeAssembly": {
+        "row_0": "top fronds - swaying palm leaves",
+        "row_1": "middle fronds - rustling leaves",
+        "row_2": "lower fronds - tropical breeze",
+        "row_3": "trunk - palm movement"
+      },
+      "frames": {
+        "156": {
+          "type": "tropical_crown_0",
+          "animationState": "swaying",
+          "description": "tropical tree - top fronds left, swaying"
+        },
+        "157": {
+          "type": "tropical_crown_1",
+          "animationState": "swaying",
+          "description": "tropical tree - top fronds center-left, swaying"
+        },
+        "158": {
+          "type": "tropical_crown_2",
+          "animationState": "swaying",
+          "description": "tropical tree - top fronds center-right, swaying"
+        },
+        "159": {
+          "type": "tropical_crown_3",
+          "animationState": "swaying",
+          "description": "tropical tree - top fronds right, swaying"
+        },
+        "168": {
+          "type": "tropical_upper_fronds_0",
+          "animationState": "swaying",
+          "description": "tropical tree - middle fronds left, rustling"
+        },
+        "169": {
+          "type": "tropical_upper_fronds_1",
+          "animationState": "swaying",
+          "description": "tropical tree - middle fronds center-left, rustling"
+        },
+        "170": {
+          "type": "tropical_upper_fronds_2",
+          "animationState": "swaying",
+          "description": "tropical tree - middle fronds center-right, rustling"
+        },
+        "171": {
+          "type": "tropical_upper_fronds_3",
+          "animationState": "swaying",
+          "description": "tropical tree - middle fronds right, rustling"
+        },
+        "180": {
+          "type": "tropical_lower_fronds_0",
+          "animationState": "swaying",
+          "description": "tropical tree - lower fronds left, breeze"
+        },
+        "181": {
+          "type": "tropical_lower_fronds_1",
+          "animationState": "swaying",
+          "description": "tropical tree - lower fronds center-left, breeze"
+        },
+        "182": {
+          "type": "tropical_lower_fronds_2",
+          "animationState": "swaying",
+          "description": "tropical tree - lower fronds center-right, breeze"
+        },
+        "183": {
+          "type": "tropical_lower_fronds_3",
+          "animationState": "swaying",
+          "description": "tropical tree - lower fronds right, breeze"
+        },
+        "192": {
+          "type": "tropical_trunk_0",
+          "animationState": "swaying",
+          "description": "tropical tree - trunk base left, animated"
+        },
+        "193": {
+          "type": "tropical_trunk_1",
+          "animationState": "swaying",
+          "description": "tropical tree - trunk base center-left, animated"
+        },
+        "194": {
+          "type": "tropical_trunk_2",
+          "animationState": "swaying",
+          "description": "tropical tree - trunk base center-right, animated"
+        },
+        "195": {
+          "type": "tropical_trunk_3",
+          "animationState": "swaying",
+          "description": "tropical tree - trunk base right, animated"
+        }
+      }
+    },
+    {
+      "type": "snow_covered_trees",
+      "aliases": [
+        "snow tree swaying",
+        "winter wind",
+        "snow shifting"
+      ],
+      "rows": [
+        17,
+        18,
+        19,
+        20
+      ],
+      "treeAssembly": {
+        "row_0": "top canopy - snow shifting, wind-blown",
+        "row_1": "middle canopy - icicles forming",
+        "row_2": "lower canopy - snow falling",
+        "row_3": "trunk - winter animation"
+      },
+      "frames": {
+        "204": {
+          "type": "snow_crown_0",
+          "animationState": "swaying",
+          "description": "snow tree - top canopy left, snow shifting"
+        },
+        "205": {
+          "type": "snow_crown_1",
+          "animationState": "swaying",
+          "description": "snow tree - top canopy center-left, snow shifting"
+        },
+        "206": {
+          "type": "snow_crown_2",
+          "animationState": "swaying",
+          "description": "snow tree - top canopy center-right, snow shifting"
+        },
+        "207": {
+          "type": "snow_crown_3",
+          "animationState": "swaying",
+          "description": "snow tree - top canopy right, snow shifting"
+        },
+        "216": {
+          "type": "snow_upper_branches_0",
+          "animationState": "swaying",
+          "description": "snow tree - middle branches left, icicles forming"
+        },
+        "217": {
+          "type": "snow_upper_branches_1",
+          "animationState": "swaying",
+          "description": "snow tree - middle branches center-left, icicles forming"
+        },
+        "218": {
+          "type": "snow_upper_branches_2",
+          "animationState": "swaying",
+          "description": "snow tree - middle branches center-right, icicles forming"
+        },
+        "219": {
+          "type": "snow_upper_branches_3",
+          "animationState": "swaying",
+          "description": "snow tree - middle branches right, icicles forming"
+        },
+        "228": {
+          "type": "snow_lower_branches_0",
+          "animationState": "swaying",
+          "description": "snow tree - lower branches left, snow falling"
+        },
+        "229": {
+          "type": "snow_lower_branches_1",
+          "animationState": "swaying",
+          "description": "snow tree - lower branches center-left, snow falling"
+        },
+        "230": {
+          "type": "snow_lower_branches_2",
+          "animationState": "swaying",
+          "description": "snow tree - lower branches center-right, snow falling"
+        },
+        "231": {
+          "type": "snow_lower_branches_3",
+          "animationState": "swaying",
+          "description": "snow tree - lower branches right, snow falling"
+        },
+        "240": {
+          "type": "snow_trunk_0",
+          "animationState": "swaying",
+          "description": "snow tree - trunk base left, animated"
+        },
+        "241": {
+          "type": "snow_trunk_1",
+          "animationState": "swaying",
+          "description": "snow tree - trunk base center-left, animated"
+        },
+        "242": {
+          "type": "snow_trunk_2",
+          "animationState": "swaying",
+          "description": "snow tree - trunk base center-right, animated"
+        },
+        "243": {
+          "type": "snow_trunk_3",
+          "animationState": "swaying",
+          "description": "snow tree - trunk base right, animated"
+        }
+      }
+    },
+    {
+      "type": "cherry_blossom_trees",
+      "aliases": [
+        "cherry blossom swaying",
+        "sakura petals",
+        "petals falling"
+      ],
+      "rows": [
+        21,
+        22,
+        23,
+        24
+      ],
+      "treeAssembly": {
+        "row_0": "top canopy - petals drifting, swaying",
+        "row_1": "middle canopy - flowers swaying",
+        "row_2": "lower canopy - petal shower",
+        "row_3": "trunk - gentle sway"
+      },
+      "frames": {
+        "252": {
+          "type": "cherry_blossom_crown_0",
+          "animationState": "swaying",
+          "description": "cherry blossom - top canopy left, petals drifting"
+        },
+        "253": {
+          "type": "cherry_blossom_crown_1",
+          "animationState": "swaying",
+          "description": "cherry blossom - top canopy center-left, petals drifting"
+        },
+        "254": {
+          "type": "cherry_blossom_crown_2",
+          "animationState": "swaying",
+          "description": "cherry blossom - top canopy center-right, petals drifting"
+        },
+        "255": {
+          "type": "cherry_blossom_crown_3",
+          "animationState": "swaying",
+          "description": "cherry blossom - top canopy right, petals drifting"
+        },
+        "264": {
+          "type": "cherry_blossom_upper_branches_0",
+          "animationState": "swaying",
+          "description": "cherry blossom - middle branches left, flowers swaying"
+        },
+        "265": {
+          "type": "cherry_blossom_upper_branches_1",
+          "animationState": "swaying",
+          "description": "cherry blossom - middle branches center-left, flowers swaying"
+        },
+        "266": {
+          "type": "cherry_blossom_upper_branches_2",
+          "animationState": "swaying",
+          "description": "cherry blossom - middle branches center-right, flowers swaying"
+        },
+        "267": {
+          "type": "cherry_blossom_upper_branches_3",
+          "animationState": "swaying",
+          "description": "cherry blossom - middle branches right, flowers swaying"
+        },
+        "276": {
+          "type": "cherry_blossom_lower_branches_0",
+          "animationState": "swaying",
+          "description": "cherry blossom - lower branches left, petal shower"
+        },
+        "277": {
+          "type": "cherry_blossom_lower_branches_1",
+          "animationState": "swaying",
+          "description": "cherry blossom - lower branches center-left, petal shower"
+        },
+        "278": {
+          "type": "cherry_blossom_lower_branches_2",
+          "animationState": "swaying",
+          "description": "cherry blossom - lower branches center-right, petal shower"
+        },
+        "279": {
+          "type": "cherry_blossom_lower_branches_3",
+          "animationState": "swaying",
+          "description": "cherry blossom - lower branches right, petal shower"
+        },
+        "288": {
+          "type": "cherry_blossom_trunk_0",
+          "animationState": "swaying",
+          "description": "cherry blossom - trunk base left, falling petals"
+        },
+        "289": {
+          "type": "cherry_blossom_trunk_1",
+          "animationState": "swaying",
+          "description": "cherry blossom - trunk base center-left, falling petals"
+        },
+        "290": {
+          "type": "cherry_blossom_trunk_2",
+          "animationState": "swaying",
+          "description": "cherry blossom - trunk base center-right, falling petals"
+        },
+        "291": {
+          "type": "cherry_blossom_trunk_3",
+          "animationState": "swaying",
+          "description": "cherry blossom - trunk base right, falling petals"
+        }
+      }
+    },
+    {
+      "type": "magical_special_trees",
+      "aliases": [
+        "magical tree glowing",
+        "crystal pulsing",
+        "enchanted animated"
+      ],
+      "rows": [
+        25,
+        26,
+        27,
+        28
+      ],
+      "treeAssembly": {
+        "row_0": "top canopy - glowing pulsed, energy flowing",
+        "row_1": "middle canopy - magical shimmer",
+        "row_2": "lower canopy - enchantment waves",
+        "row_3": "trunk - power pulsing"
+      },
+      "frames": {
+        "300": {
+          "type": "magical_crown_0",
+          "animationState": "glowing",
+          "description": "magical tree - top canopy left, pulse bright"
+        },
+        "301": {
+          "type": "magical_crown_1",
+          "animationState": "glowing",
+          "description": "magical tree - top canopy center-left, pulse bright"
+        },
+        "302": {
+          "type": "magical_crown_2",
+          "animationState": "glowing",
+          "description": "magical tree - top canopy center-right, pulse bright"
+        },
+        "303": {
+          "type": "magical_crown_3",
+          "animationState": "glowing",
+          "description": "magical tree - top canopy right, pulse bright"
+        },
+        "312": {
+          "type": "magical_upper_branches_0",
+          "animationState": "glowing",
+          "description": "magical tree - middle canopy left, energy flowing"
+        },
+        "313": {
+          "type": "magical_upper_branches_1",
+          "animationState": "glowing",
+          "description": "magical tree - middle canopy center-left, energy flowing"
+        },
+        "314": {
+          "type": "magical_upper_branches_2",
+          "animationState": "glowing",
+          "description": "magical tree - middle canopy center-right, energy flowing"
+        },
+        "315": {
+          "type": "magical_upper_branches_3",
+          "animationState": "glowing",
+          "description": "magical tree - middle canopy right, energy flowing"
+        },
+        "324": {
+          "type": "magical_lower_branches_0",
+          "animationState": "glowing",
+          "description": "magical tree - lower canopy left, enchantment waves"
+        },
+        "325": {
+          "type": "magical_lower_branches_1",
+          "animationState": "glowing",
+          "description": "magical tree - lower canopy center-left, enchantment waves"
+        },
+        "326": {
+          "type": "magical_lower_branches_2",
+          "animationState": "glowing",
+          "description": "magical tree - lower canopy center-right, enchantment waves"
+        },
+        "327": {
+          "type": "magical_lower_branches_3",
+          "animationState": "glowing",
+          "description": "magical tree - lower canopy right, enchantment waves"
+        },
+        "336": {
+          "type": "magical_trunk_0",
+          "animationState": "glowing",
+          "description": "magical tree - trunk base left, power pulsing"
+        },
+        "337": {
+          "type": "magical_trunk_1",
+          "animationState": "glowing",
+          "description": "magical tree - trunk base center-left, power pulsing"
+        },
+        "338": {
+          "type": "magical_trunk_2",
+          "animationState": "glowing",
+          "description": "magical tree - trunk base center-right, power pulsing"
+        },
+        "339": {
+          "type": "magical_trunk_3",
+          "animationState": "glowing",
+          "description": "magical tree - trunk base right, power pulsing"
+        }
+      }
+    },
+    {
+      "type": "bushes_shrubs",
+      "aliases": [
+        "bush rustling",
+        "shrub animated",
+        "grass bending"
+      ],
+      "rows": [
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35
+      ],
+      "frames": {
+        "348": {
+          "type": "bush_small_green",
+          "animationState": "rustling",
+          "description": "small green bush - leaves rustling"
+        },
+        "349": {
+          "type": "bush_medium_green",
+          "animationState": "rustling",
+          "description": "medium green bush - wind-blown"
+        },
+        "350": {
+          "type": "bush_large_green",
+          "animationState": "rustling",
+          "description": "large green bush - swaying"
+        },
+        "351": {
+          "type": "bush_flowering",
+          "animationState": "rustling",
+          "description": "flowering bush - petals moving"
+        },
+        "360": {
+          "type": "shrub_dense",
+          "animationState": "rustling",
+          "description": "dense shrub - rustling"
+        },
+        "361": {
+          "type": "shrub_sparse",
+          "animationState": "rustling",
+          "description": "sparse shrub - wind-blown"
+        },
+        "362": {
+          "type": "shrub_tall",
+          "animationState": "rustling",
+          "description": "tall shrub - swaying"
+        },
+        "363": {
+          "type": "shrub_round",
+          "animationState": "rustling",
+          "description": "round shrub - animated"
+        },
+        "372": {
+          "type": "grass_tall",
+          "animationState": "bending",
+          "description": "tall grass cluster - bending in wind"
+        },
+        "373": {
+          "type": "grass_patch",
+          "animationState": "bending",
+          "description": "grass patch - wind-blown"
+        },
+        "374": {
+          "type": "fern",
+          "animationState": "rustling",
+          "description": "fern plant - rustling"
+        },
+        "375": {
+          "type": "fern_large",
+          "animationState": "rustling",
+          "description": "large fern - swaying"
+        },
+        "384": {
+          "type": "mushroom_small",
+          "animationState": "pulsing",
+          "description": "small mushroom - subtle pulse"
+        },
+        "385": {
+          "type": "mushroom_medium",
+          "animationState": "pulsing",
+          "description": "medium mushroom - pulsing"
+        },
+        "386": {
+          "type": "mushroom_large",
+          "animationState": "pulsing",
+          "description": "large mushroom cluster - pulsing"
+        },
+        "387": {
+          "type": "mushroom_glowing",
+          "animationState": "glowing",
+          "description": "glowing mushroom - bright glow animation"
+        }
+      }
+    }
+  ]
+}

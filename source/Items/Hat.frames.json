@@ -1,0 +1,24 @@
+{
+  "file": "Hat.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 8,
+  "rows": 5,
+  "frames": {
+    "0": "dented pot",
+    "1": "orcish helm",
+    "2": "plumed helm",
+    "3": "etched helm",
+    "4": "crested helm",
+    "5": "visored helm",
+    "8": "elven leather helm",
+    "9": "helmet",
+    "10": "dwarvish iron helm",
+    "16": "fedora",
+    "17": "wizard hat",
+    "18": "dunce cap",
+    "24": "headband",
+    "25": "princely crown",
+    "26": "kingly crown"
+  }
+}

@@ -1,0 +1,1218 @@
+{
+  "0": {
+    "name": "heart_full_glow",
+    "desc": "Full red heart glowing, pulsing health indicator"
+  },
+  "1": {
+    "name": "heart_75_glow",
+    "desc": "Three-quarter heart glowing, 75% health"
+  },
+  "2": {
+    "name": "heart_half_glow",
+    "desc": "Half heart glowing, 50% health"
+  },
+  "3": {
+    "name": "heart_25_glow",
+    "desc": "Quarter heart glowing, 25% health"
+  },
+  "4": {
+    "name": "heart_empty_glow",
+    "desc": "Empty heart outline highlighted"
+  },
+  "5": {
+    "name": "heart_alt_full_glow",
+    "desc": "Alternate full heart design glowing"
+  },
+  "6": {
+    "name": "icon_checkmark_glow",
+    "desc": "Green checkmark icon glowing, success flash"
+  },
+  "7": {
+    "name": "icon_x_glow",
+    "desc": "Red X icon glowing, failure flash"
+  },
+  "8": {
+    "name": "icon_question_glow",
+    "desc": "Question mark icon glowing"
+  },
+  "9": {
+    "name": "icon_exclaim_glow",
+    "desc": "Exclamation mark icon glowing"
+  },
+  "10": {
+    "name": "icon_star_glow",
+    "desc": "Star icon glowing, bright"
+  },
+  "11": {
+    "name": "icon_skull_glow",
+    "desc": "Skull icon glowing, danger alert"
+  },
+  "12": {
+    "name": "icon_circle_glow",
+    "desc": "Circle icon glowing, active status"
+  },
+  "13": {
+    "name": "icon_diamond_glow",
+    "desc": "Diamond icon glowing, active status"
+  },
+  "14": {
+    "name": "icon_square_glow",
+    "desc": "Square icon glowing, active status"
+  },
+  "15": {
+    "name": "icon_triangle_glow",
+    "desc": "Triangle icon glowing, active status"
+  },
+  "16": {
+    "name": "mana_full_glow",
+    "desc": "Full blue mana orb glowing bright, magic active"
+  },
+  "17": {
+    "name": "mana_75_glow",
+    "desc": "Three-quarter mana orb glowing, 75% mana"
+  },
+  "18": {
+    "name": "mana_half_glow",
+    "desc": "Half mana orb glowing, 50% mana"
+  },
+  "19": {
+    "name": "mana_25_glow",
+    "desc": "Quarter mana orb glowing, 25% mana"
+  },
+  "20": {
+    "name": "mana_empty_glow",
+    "desc": "Empty mana orb outline highlighted"
+  },
+  "21": {
+    "name": "mana_alt_full_glow",
+    "desc": "Alternate full mana orb glowing"
+  },
+  "22": {
+    "name": "icon_lock_glow",
+    "desc": "Closed padlock glowing, locked highlight"
+  },
+  "23": {
+    "name": "icon_unlock_glow",
+    "desc": "Open padlock glowing, unlocked flash"
+  },
+  "24": {
+    "name": "orb_red_glow",
+    "desc": "Red orb indicator glowing"
+  },
+  "25": {
+    "name": "orb_green_glow",
+    "desc": "Green orb indicator glowing"
+  },
+  "26": {
+    "name": "orb_yellow_glow",
+    "desc": "Yellow orb indicator glowing"
+  },
+  "27": {
+    "name": "orb_purple_glow",
+    "desc": "Purple orb indicator glowing"
+  },
+  "28": {
+    "name": "icon_key_glow",
+    "desc": "Key icon glowing"
+  },
+  "29": {
+    "name": "icon_coin_glow",
+    "desc": "Coin icon glowing, currency pickup"
+  },
+  "30": {
+    "name": "icon_clock_glow",
+    "desc": "Clock icon glowing, time alert"
+  },
+  "31": {
+    "name": "icon_compass_glow",
+    "desc": "Compass icon glowing, active direction"
+  },
+  "32": {
+    "name": "icon_swords_crossed_glow",
+    "desc": "Crossed swords glowing, attack buff active"
+  },
+  "33": {
+    "name": "icon_shield_glow",
+    "desc": "Shield glowing, defense buff active"
+  },
+  "34": {
+    "name": "icon_magic_wand_glow",
+    "desc": "Magic wand glowing bright, spell power active"
+  },
+  "35": {
+    "name": "icon_potion_red_glow",
+    "desc": "Red potion flask glowing, health boost"
+  },
+  "36": {
+    "name": "icon_bow_arrow_glow",
+    "desc": "Bow and arrow glowing, ranged ready"
+  },
+  "37": {
+    "name": "icon_armor_glow",
+    "desc": "Armor piece glowing, equipped/active"
+  },
+  "38": {
+    "name": "icon_scroll_glow",
+    "desc": "Scroll glowing, new spell/document"
+  },
+  "39": {
+    "name": "icon_gem_glow",
+    "desc": "Multi-colored gem glowing, treasure found"
+  },
+  "40": {
+    "name": "icon_helmet_glow",
+    "desc": "Helmet glowing, equipped"
+  },
+  "41": {
+    "name": "icon_ring_glow",
+    "desc": "Ring glowing, magical accessory active"
+  },
+  "42": {
+    "name": "icon_amulet_glow",
+    "desc": "Amulet glowing, magical protection"
+  },
+  "43": {
+    "name": "icon_book_glow",
+    "desc": "Book glowing, spell learned"
+  },
+  "44": {
+    "name": "icon_boots_glow",
+    "desc": "Boots glowing, speed active"
+  },
+  "45": {
+    "name": "icon_gloves_glow",
+    "desc": "Gloves glowing, equipped"
+  },
+  "46": {
+    "name": "icon_staff_glow",
+    "desc": "Staff glowing, magic weapon active"
+  },
+  "47": {
+    "name": "icon_axe_glow",
+    "desc": "Axe glowing, weapon equipped"
+  },
+  "48": {
+    "name": "icon_sword_glow",
+    "desc": "Single sword glowing, attack ready"
+  },
+  "49": {
+    "name": "icon_shield_round_glow",
+    "desc": "Round shield glowing, defense ready"
+  },
+  "50": {
+    "name": "icon_spell_burst_glow",
+    "desc": "Magical burst glowing bright, spell casting"
+  },
+  "51": {
+    "name": "icon_bag_glow",
+    "desc": "Bag/pack glowing, inventory active"
+  },
+  "52": {
+    "name": "icon_boot_glow",
+    "desc": "Single boot glowing, movement boost"
+  },
+  "53": {
+    "name": "icon_eye_glow",
+    "desc": "Eye glowing, vision enhanced"
+  },
+  "54": {
+    "name": "icon_ear_glow",
+    "desc": "Ear glowing, hearing enhanced"
+  },
+  "55": {
+    "name": "icon_hand_glow",
+    "desc": "Open palm hand glowing, interaction available"
+  },
+  "56": {
+    "name": "icon_mouth_glow",
+    "desc": "Mouth glowing, speech active"
+  },
+  "57": {
+    "name": "icon_heart_glow",
+    "desc": "Heart glowing, health boost/affection"
+  },
+  "58": {
+    "name": "icon_lightning_glow",
+    "desc": "Lightning bolt glowing, electricity active"
+  },
+  "59": {
+    "name": "icon_fire_glow",
+    "desc": "Fire glowing, elemental damage active"
+  },
+  "60": {
+    "name": "icon_water_glow",
+    "desc": "Water droplet glowing, elemental active"
+  },
+  "61": {
+    "name": "icon_wind_glow",
+    "desc": "Wind swirl glowing, elemental active"
+  },
+  "62": {
+    "name": "icon_earth_glow",
+    "desc": "Earth/rock glowing, elemental active"
+  },
+  "63": {
+    "name": "icon_ice_glow",
+    "desc": "Ice crystal glowing, elemental active"
+  },
+  "64": {
+    "name": "border_top_left_glow",
+    "desc": "Dialog box corner glowing, top-left"
+  },
+  "65": {
+    "name": "border_top_glow",
+    "desc": "Dialog box horizontal edge glowing, top"
+  },
+  "66": {
+    "name": "border_top_right_glow",
+    "desc": "Dialog box corner glowing, top-right"
+  },
+  "67": {
+    "name": "progress_left_glow",
+    "desc": "Progress bar left end cap highlighted"
+  },
+  "68": {
+    "name": "progress_empty_glow",
+    "desc": "Progress bar empty segment highlighted"
+  },
+  "69": {
+    "name": "progress_right_glow",
+    "desc": "Progress bar right end cap highlighted"
+  },
+  "70": {
+    "name": "button_frame_glow",
+    "desc": "Small square button/icon frame glowing"
+  },
+  "71": {
+    "name": "button_frame_alt_glow",
+    "desc": "Alternate button/icon frame glowing"
+  },
+  "72": {
+    "name": "progress_fill_red_glow",
+    "desc": "Progress bar filled segment glowing, red"
+  },
+  "73": {
+    "name": "progress_fill_blue_glow",
+    "desc": "Progress bar filled segment glowing, blue"
+  },
+  "74": {
+    "name": "progress_fill_green_glow",
+    "desc": "Progress bar filled segment glowing, green"
+  },
+  "75": {
+    "name": "progress_fill_yellow_glow",
+    "desc": "Progress bar filled segment glowing, yellow"
+  },
+  "76": {
+    "name": "icon_frame_red_glow",
+    "desc": "Icon frame border glowing, red"
+  },
+  "77": {
+    "name": "icon_frame_blue_glow",
+    "desc": "Icon frame border glowing, blue"
+  },
+  "78": {
+    "name": "icon_frame_green_glow",
+    "desc": "Icon frame border glowing, green"
+  },
+  "79": {
+    "name": "icon_frame_yellow_glow",
+    "desc": "Icon frame border glowing, yellow"
+  },
+  "80": {
+    "name": "border_left_glow",
+    "desc": "Dialog box vertical edge glowing, left"
+  },
+  "81": {
+    "name": "panel_bg_glow",
+    "desc": "Dialog box background fill highlighted, active"
+  },
+  "82": {
+    "name": "border_right_glow",
+    "desc": "Dialog box vertical edge glowing, right"
+  },
+  "83": {
+    "name": "progress_track_glow",
+    "desc": "Progress bar background track highlighted"
+  },
+  "84": {
+    "name": "separator_h_glow",
+    "desc": "Horizontal separator line glowing"
+  },
+  "85": {
+    "name": "separator_v_glow",
+    "desc": "Vertical separator line glowing"
+  },
+  "86": {
+    "name": "panel_dark_glow",
+    "desc": "Small panel background highlighted, dark"
+  },
+  "87": {
+    "name": "panel_light_glow",
+    "desc": "Small panel background highlighted, light"
+  },
+  "88": {
+    "name": "divider_h_glow",
+    "desc": "Horizontal divider glowing, decorative"
+  },
+  "89": {
+    "name": "divider_v_glow",
+    "desc": "Vertical divider glowing, decorative"
+  },
+  "90": {
+    "name": "corner_ornament_glow",
+    "desc": "Corner ornament piece glowing"
+  },
+  "91": {
+    "name": "edge_ornament_glow",
+    "desc": "Edge ornament piece glowing"
+  },
+  "92": {
+    "name": "slot_bg_glow",
+    "desc": "Item slot background highlighted"
+  },
+  "93": {
+    "name": "slot_border_glow",
+    "desc": "Item slot border glowing"
+  },
+  "94": {
+    "name": "grid_cell_glow",
+    "desc": "Grid cell background highlighted"
+  },
+  "95": {
+    "name": "grid_border_glow",
+    "desc": "Grid cell border glowing"
+  },
+  "96": {
+    "name": "border_bottom_left_glow",
+    "desc": "Dialog box corner glowing, bottom-left"
+  },
+  "97": {
+    "name": "border_bottom_glow",
+    "desc": "Dialog box horizontal edge glowing, bottom"
+  },
+  "98": {
+    "name": "border_bottom_right_glow",
+    "desc": "Dialog box corner glowing, bottom-right"
+  },
+  "99": {
+    "name": "tab_active_glow",
+    "desc": "Tab top glowing, active state"
+  },
+  "100": {
+    "name": "tab_inactive_glow",
+    "desc": "Tab top highlighted, inactive hover"
+  },
+  "101": {
+    "name": "divider_glow",
+    "desc": "Tab divider piece glowing"
+  },
+  "102": {
+    "name": "corner_decor_glow",
+    "desc": "Corner decoration piece glowing"
+  },
+  "103": {
+    "name": "edge_decor_glow",
+    "desc": "Edge decoration piece glowing"
+  },
+  "104": {
+    "name": "bracket_left_glow",
+    "desc": "Left bracket ornament glowing"
+  },
+  "105": {
+    "name": "bracket_right_glow",
+    "desc": "Right bracket ornament glowing"
+  },
+  "106": {
+    "name": "ornament_small_glow",
+    "desc": "Small decorative ornament glowing"
+  },
+  "107": {
+    "name": "ornament_medium_glow",
+    "desc": "Medium decorative ornament glowing"
+  },
+  "108": {
+    "name": "ornament_large_glow",
+    "desc": "Large decorative ornament glowing"
+  },
+  "109": {
+    "name": "frame_ornate_glow",
+    "desc": "Ornate frame piece glowing"
+  },
+  "110": {
+    "name": "frame_simple_glow",
+    "desc": "Simple frame piece glowing"
+  },
+  "111": {
+    "name": "frame_corner_glow",
+    "desc": "Frame corner piece glowing"
+  },
+  "112": {
+    "name": "arrow_right_glow",
+    "desc": "Selection arrow pulsing bright, right-pointing"
+  },
+  "113": {
+    "name": "cursor_hand_glow",
+    "desc": "Hand pointer cursor glowing, active"
+  },
+  "114": {
+    "name": "crosshair_glow",
+    "desc": "Targeting crosshair pulsing, locked on"
+  },
+  "115": {
+    "name": "bracket_highlight_left_glow",
+    "desc": "Highlight bracket glowing, left"
+  },
+  "116": {
+    "name": "bracket_highlight_right_glow",
+    "desc": "Highlight bracket glowing, right"
+  },
+  "117": {
+    "name": "selection_corner_glow",
+    "desc": "Selection box corner glowing"
+  },
+  "118": {
+    "name": "selection_circle_glow",
+    "desc": "Circular selection indicator pulsing"
+  },
+  "119": {
+    "name": "star_marker_glow",
+    "desc": "Star selection marker glowing bright yellow"
+  },
+  "120": {
+    "name": "arrow_up_glow",
+    "desc": "Arrow pointing up glowing"
+  },
+  "121": {
+    "name": "arrow_down_glow",
+    "desc": "Arrow pointing down glowing"
+  },
+  "122": {
+    "name": "arrow_left_glow",
+    "desc": "Arrow pointing left glowing"
+  },
+  "123": {
+    "name": "chevron_right_glow",
+    "desc": "Chevron pointing right glowing"
+  },
+  "124": {
+    "name": "chevron_left_glow",
+    "desc": "Chevron pointing left glowing"
+  },
+  "125": {
+    "name": "pointer_up_glow",
+    "desc": "Pointer indicator up glowing"
+  },
+  "126": {
+    "name": "pointer_down_glow",
+    "desc": "Pointer indicator down glowing"
+  },
+  "127": {
+    "name": "selection_square_glow",
+    "desc": "Square selection marker glowing"
+  },
+  "128": {
+    "name": "panel_red_tl_glow",
+    "desc": "Red panel top-left corner glowing"
+  },
+  "129": {
+    "name": "panel_red_t_glow",
+    "desc": "Red panel top edge glowing"
+  },
+  "130": {
+    "name": "panel_red_tr_glow",
+    "desc": "Red panel top-right corner glowing"
+  },
+  "131": {
+    "name": "panel_red_l_glow",
+    "desc": "Red panel left edge glowing"
+  },
+  "132": {
+    "name": "panel_red_bg_glow",
+    "desc": "Red panel solid background glowing"
+  },
+  "133": {
+    "name": "panel_red_r_glow",
+    "desc": "Red panel right edge glowing"
+  },
+  "134": {
+    "name": "panel_red_bl_glow",
+    "desc": "Red panel bottom-left corner glowing"
+  },
+  "135": {
+    "name": "panel_red_b_glow",
+    "desc": "Red panel bottom edge glowing"
+  },
+  "136": {
+    "name": "panel_red_br_glow",
+    "desc": "Red panel bottom-right corner glowing"
+  },
+  "137": {
+    "name": "panel_red_center_glow",
+    "desc": "Red panel center tile glowing"
+  },
+  "138": {
+    "name": "panel_red_highlight_glow",
+    "desc": "Red panel highlight edge glowing"
+  },
+  "139": {
+    "name": "panel_red_shadow_glow",
+    "desc": "Red panel shadow edge glowing"
+  },
+  "140": {
+    "name": "panel_red_fill_1_glow",
+    "desc": "Red panel fill variation 1 glowing"
+  },
+  "141": {
+    "name": "panel_red_fill_2_glow",
+    "desc": "Red panel fill variation 2 glowing"
+  },
+  "142": {
+    "name": "panel_red_border_glow",
+    "desc": "Red panel border piece glowing"
+  },
+  "143": {
+    "name": "panel_red_accent_glow",
+    "desc": "Red panel accent piece glowing"
+  },
+  "144": {
+    "name": "panel_blue_tl_glow",
+    "desc": "Blue panel top-left corner glowing"
+  },
+  "145": {
+    "name": "panel_blue_t_glow",
+    "desc": "Blue panel top edge glowing"
+  },
+  "146": {
+    "name": "panel_blue_tr_glow",
+    "desc": "Blue panel top-right corner glowing"
+  },
+  "147": {
+    "name": "panel_blue_l_glow",
+    "desc": "Blue panel left edge glowing"
+  },
+  "148": {
+    "name": "panel_blue_bg_glow",
+    "desc": "Blue panel solid background glowing"
+  },
+  "149": {
+    "name": "panel_blue_r_glow",
+    "desc": "Blue panel right edge glowing"
+  },
+  "150": {
+    "name": "panel_blue_bl_glow",
+    "desc": "Blue panel bottom-left corner glowing"
+  },
+  "151": {
+    "name": "panel_blue_b_glow",
+    "desc": "Blue panel bottom edge glowing"
+  },
+  "152": {
+    "name": "panel_blue_br_glow",
+    "desc": "Blue panel bottom-right corner glowing"
+  },
+  "153": {
+    "name": "panel_blue_center_glow",
+    "desc": "Blue panel center tile glowing"
+  },
+  "154": {
+    "name": "panel_blue_highlight_glow",
+    "desc": "Blue panel highlight edge glowing"
+  },
+  "155": {
+    "name": "panel_blue_shadow_glow",
+    "desc": "Blue panel shadow edge glowing"
+  },
+  "156": {
+    "name": "panel_blue_fill_1_glow",
+    "desc": "Blue panel fill variation 1 glowing"
+  },
+  "157": {
+    "name": "panel_blue_fill_2_glow",
+    "desc": "Blue panel fill variation 2 glowing"
+  },
+  "158": {
+    "name": "panel_blue_border_glow",
+    "desc": "Blue panel border piece glowing"
+  },
+  "159": {
+    "name": "panel_blue_accent_glow",
+    "desc": "Blue panel accent piece glowing"
+  },
+  "160": {
+    "name": "panel_green_tl_glow",
+    "desc": "Green panel top-left corner glowing"
+  },
+  "161": {
+    "name": "panel_green_t_glow",
+    "desc": "Green panel top edge glowing"
+  },
+  "162": {
+    "name": "panel_green_tr_glow",
+    "desc": "Green panel top-right corner glowing"
+  },
+  "163": {
+    "name": "panel_green_l_glow",
+    "desc": "Green panel left edge glowing"
+  },
+  "164": {
+    "name": "panel_green_bg_glow",
+    "desc": "Green panel solid background glowing"
+  },
+  "165": {
+    "name": "panel_green_r_glow",
+    "desc": "Green panel right edge glowing"
+  },
+  "166": {
+    "name": "panel_green_bl_glow",
+    "desc": "Green panel bottom-left corner glowing"
+  },
+  "167": {
+    "name": "panel_green_b_glow",
+    "desc": "Green panel bottom edge glowing"
+  },
+  "168": {
+    "name": "panel_green_br_glow",
+    "desc": "Green panel bottom-right corner glowing"
+  },
+  "169": {
+    "name": "panel_green_center_glow",
+    "desc": "Green panel center tile glowing"
+  },
+  "170": {
+    "name": "panel_green_highlight_glow",
+    "desc": "Green panel highlight edge glowing"
+  },
+  "171": {
+    "name": "panel_green_shadow_glow",
+    "desc": "Green panel shadow edge glowing"
+  },
+  "172": {
+    "name": "panel_green_fill_1_glow",
+    "desc": "Green panel fill variation 1 glowing"
+  },
+  "173": {
+    "name": "panel_green_fill_2_glow",
+    "desc": "Green panel fill variation 2 glowing"
+  },
+  "174": {
+    "name": "panel_green_border_glow",
+    "desc": "Green panel border piece glowing"
+  },
+  "175": {
+    "name": "panel_green_accent_glow",
+    "desc": "Green panel accent piece glowing"
+  },
+  "176": {
+    "name": "panel_yellow_tl_glow",
+    "desc": "Yellow panel top-left corner glowing"
+  },
+  "177": {
+    "name": "panel_yellow_t_glow",
+    "desc": "Yellow panel top edge glowing"
+  },
+  "178": {
+    "name": "panel_yellow_tr_glow",
+    "desc": "Yellow panel top-right corner glowing"
+  },
+  "179": {
+    "name": "panel_yellow_l_glow",
+    "desc": "Yellow panel left edge glowing"
+  },
+  "180": {
+    "name": "panel_yellow_bg_glow",
+    "desc": "Yellow panel solid background glowing"
+  },
+  "181": {
+    "name": "panel_yellow_r_glow",
+    "desc": "Yellow panel right edge glowing"
+  },
+  "182": {
+    "name": "panel_yellow_bl_glow",
+    "desc": "Yellow panel bottom-left corner glowing"
+  },
+  "183": {
+    "name": "panel_yellow_b_glow",
+    "desc": "Yellow panel bottom edge glowing"
+  },
+  "184": {
+    "name": "panel_yellow_br_glow",
+    "desc": "Yellow panel bottom-right corner glowing"
+  },
+  "185": {
+    "name": "panel_yellow_center_glow",
+    "desc": "Yellow panel center tile glowing"
+  },
+  "186": {
+    "name": "panel_yellow_highlight_glow",
+    "desc": "Yellow panel highlight edge glowing"
+  },
+  "187": {
+    "name": "panel_yellow_shadow_glow",
+    "desc": "Yellow panel shadow edge glowing"
+  },
+  "188": {
+    "name": "panel_yellow_fill_1_glow",
+    "desc": "Yellow panel fill variation 1 glowing"
+  },
+  "189": {
+    "name": "panel_yellow_fill_2_glow",
+    "desc": "Yellow panel fill variation 2 glowing"
+  },
+  "190": {
+    "name": "panel_yellow_border_glow",
+    "desc": "Yellow panel border piece glowing"
+  },
+  "191": {
+    "name": "panel_yellow_accent_glow",
+    "desc": "Yellow panel accent piece glowing"
+  },
+  "192": {
+    "name": "panel_dark_tl_glow",
+    "desc": "Dark panel top-left corner highlighted"
+  },
+  "193": {
+    "name": "panel_dark_t_glow",
+    "desc": "Dark panel top edge highlighted"
+  },
+  "194": {
+    "name": "panel_dark_tr_glow",
+    "desc": "Dark panel top-right corner highlighted"
+  },
+  "195": {
+    "name": "panel_dark_l_glow",
+    "desc": "Dark panel left edge highlighted"
+  },
+  "196": {
+    "name": "panel_dark_bg_glow",
+    "desc": "Dark panel solid background highlighted"
+  },
+  "197": {
+    "name": "panel_dark_r_glow",
+    "desc": "Dark panel right edge highlighted"
+  },
+  "198": {
+    "name": "panel_dark_bl_glow",
+    "desc": "Dark panel bottom-left corner highlighted"
+  },
+  "199": {
+    "name": "panel_dark_b_glow",
+    "desc": "Dark panel bottom edge highlighted"
+  },
+  "200": {
+    "name": "panel_dark_br_glow",
+    "desc": "Dark panel bottom-right corner highlighted"
+  },
+  "201": {
+    "name": "panel_dark_center_glow",
+    "desc": "Dark panel center tile highlighted"
+  },
+  "202": {
+    "name": "panel_dark_highlight_glow",
+    "desc": "Dark panel highlight edge glowing"
+  },
+  "203": {
+    "name": "panel_dark_shadow_glow",
+    "desc": "Dark panel shadow edge highlighted"
+  },
+  "204": {
+    "name": "panel_dark_fill_1_glow",
+    "desc": "Dark panel fill variation 1 highlighted"
+  },
+  "205": {
+    "name": "panel_dark_fill_2_glow",
+    "desc": "Dark panel fill variation 2 highlighted"
+  },
+  "206": {
+    "name": "panel_dark_border_glow",
+    "desc": "Dark panel border piece highlighted"
+  },
+  "207": {
+    "name": "panel_dark_accent_glow",
+    "desc": "Dark panel accent piece highlighted"
+  },
+  "208": {
+    "name": "panel_gray_tl_glow",
+    "desc": "Gray panel top-left corner highlighted"
+  },
+  "209": {
+    "name": "panel_gray_t_glow",
+    "desc": "Gray panel top edge highlighted"
+  },
+  "210": {
+    "name": "panel_gray_tr_glow",
+    "desc": "Gray panel top-right corner highlighted"
+  },
+  "211": {
+    "name": "panel_gray_l_glow",
+    "desc": "Gray panel left edge highlighted"
+  },
+  "212": {
+    "name": "panel_gray_bg_glow",
+    "desc": "Gray panel solid background highlighted"
+  },
+  "213": {
+    "name": "panel_gray_r_glow",
+    "desc": "Gray panel right edge highlighted"
+  },
+  "214": {
+    "name": "panel_gray_bl_glow",
+    "desc": "Gray panel bottom-left corner highlighted"
+  },
+  "215": {
+    "name": "panel_gray_b_glow",
+    "desc": "Gray panel bottom edge highlighted"
+  },
+  "216": {
+    "name": "panel_gray_br_glow",
+    "desc": "Gray panel bottom-right corner highlighted"
+  },
+  "217": {
+    "name": "panel_gray_center_glow",
+    "desc": "Gray panel center tile highlighted"
+  },
+  "218": {
+    "name": "panel_gray_highlight_glow",
+    "desc": "Gray panel highlight edge glowing"
+  },
+  "219": {
+    "name": "panel_gray_shadow_glow",
+    "desc": "Gray panel shadow edge highlighted"
+  },
+  "220": {
+    "name": "panel_gray_fill_1_glow",
+    "desc": "Gray panel fill variation 1 highlighted"
+  },
+  "221": {
+    "name": "panel_gray_fill_2_glow",
+    "desc": "Gray panel fill variation 2 highlighted"
+  },
+  "222": {
+    "name": "panel_gray_border_glow",
+    "desc": "Gray panel border piece highlighted"
+  },
+  "223": {
+    "name": "panel_gray_accent_glow",
+    "desc": "Gray panel accent piece highlighted"
+  },
+  "224": {
+    "name": "reserved_224_glow",
+    "desc": "Reserved frame slot"
+  },
+  "225": {
+    "name": "reserved_225_glow",
+    "desc": "Reserved frame slot"
+  },
+  "226": {
+    "name": "reserved_226_glow",
+    "desc": "Reserved frame slot"
+  },
+  "227": {
+    "name": "reserved_227_glow",
+    "desc": "Reserved frame slot"
+  },
+  "228": {
+    "name": "reserved_228_glow",
+    "desc": "Reserved frame slot"
+  },
+  "229": {
+    "name": "reserved_229_glow",
+    "desc": "Reserved frame slot"
+  },
+  "230": {
+    "name": "reserved_230_glow",
+    "desc": "Reserved frame slot"
+  },
+  "231": {
+    "name": "reserved_231_glow",
+    "desc": "Reserved frame slot"
+  },
+  "232": {
+    "name": "reserved_232_glow",
+    "desc": "Reserved frame slot"
+  },
+  "233": {
+    "name": "reserved_233_glow",
+    "desc": "Reserved frame slot"
+  },
+  "234": {
+    "name": "reserved_234_glow",
+    "desc": "Reserved frame slot"
+  },
+  "235": {
+    "name": "reserved_235_glow",
+    "desc": "Reserved frame slot"
+  },
+  "236": {
+    "name": "reserved_236_glow",
+    "desc": "Reserved frame slot"
+  },
+  "237": {
+    "name": "reserved_237_glow",
+    "desc": "Reserved frame slot"
+  },
+  "238": {
+    "name": "reserved_238_glow",
+    "desc": "Reserved frame slot"
+  },
+  "239": {
+    "name": "reserved_239_glow",
+    "desc": "Reserved frame slot"
+  },
+  "240": {
+    "name": "reserved_240_glow",
+    "desc": "Reserved frame slot"
+  },
+  "241": {
+    "name": "reserved_241_glow",
+    "desc": "Reserved frame slot"
+  },
+  "242": {
+    "name": "reserved_242_glow",
+    "desc": "Reserved frame slot"
+  },
+  "243": {
+    "name": "reserved_243_glow",
+    "desc": "Reserved frame slot"
+  },
+  "244": {
+    "name": "reserved_244_glow",
+    "desc": "Reserved frame slot"
+  },
+  "245": {
+    "name": "reserved_245_glow",
+    "desc": "Reserved frame slot"
+  },
+  "246": {
+    "name": "reserved_246_glow",
+    "desc": "Reserved frame slot"
+  },
+  "247": {
+    "name": "reserved_247_glow",
+    "desc": "Reserved frame slot"
+  },
+  "248": {
+    "name": "reserved_248_glow",
+    "desc": "Reserved frame slot"
+  },
+  "249": {
+    "name": "reserved_249_glow",
+    "desc": "Reserved frame slot"
+  },
+  "250": {
+    "name": "reserved_250_glow",
+    "desc": "Reserved frame slot"
+  },
+  "251": {
+    "name": "reserved_251_glow",
+    "desc": "Reserved frame slot"
+  },
+  "252": {
+    "name": "reserved_252_glow",
+    "desc": "Reserved frame slot"
+  },
+  "253": {
+    "name": "reserved_253_glow",
+    "desc": "Reserved frame slot"
+  },
+  "254": {
+    "name": "reserved_254_glow",
+    "desc": "Reserved frame slot"
+  },
+  "255": {
+    "name": "reserved_255_glow",
+    "desc": "Reserved frame slot"
+  },
+  "256": {
+    "name": "reserved_256_glow",
+    "desc": "Reserved frame slot"
+  },
+  "257": {
+    "name": "reserved_257_glow",
+    "desc": "Reserved frame slot"
+  },
+  "258": {
+    "name": "reserved_258_glow",
+    "desc": "Reserved frame slot"
+  },
+  "259": {
+    "name": "reserved_259_glow",
+    "desc": "Reserved frame slot"
+  },
+  "260": {
+    "name": "reserved_260_glow",
+    "desc": "Reserved frame slot"
+  },
+  "261": {
+    "name": "reserved_261_glow",
+    "desc": "Reserved frame slot"
+  },
+  "262": {
+    "name": "reserved_262_glow",
+    "desc": "Reserved frame slot"
+  },
+  "263": {
+    "name": "reserved_263_glow",
+    "desc": "Reserved frame slot"
+  },
+  "264": {
+    "name": "reserved_264_glow",
+    "desc": "Reserved frame slot"
+  },
+  "265": {
+    "name": "reserved_265_glow",
+    "desc": "Reserved frame slot"
+  },
+  "266": {
+    "name": "reserved_266_glow",
+    "desc": "Reserved frame slot"
+  },
+  "267": {
+    "name": "reserved_267_glow",
+    "desc": "Reserved frame slot"
+  },
+  "268": {
+    "name": "reserved_268_glow",
+    "desc": "Reserved frame slot"
+  },
+  "269": {
+    "name": "reserved_269_glow",
+    "desc": "Reserved frame slot"
+  },
+  "270": {
+    "name": "reserved_270_glow",
+    "desc": "Reserved frame slot"
+  },
+  "271": {
+    "name": "reserved_271_glow",
+    "desc": "Reserved frame slot"
+  },
+  "272": {
+    "name": "reserved_272_glow",
+    "desc": "Reserved frame slot"
+  },
+  "273": {
+    "name": "reserved_273_glow",
+    "desc": "Reserved frame slot"
+  },
+  "274": {
+    "name": "reserved_274_glow",
+    "desc": "Reserved frame slot"
+  },
+  "275": {
+    "name": "reserved_275_glow",
+    "desc": "Reserved frame slot"
+  },
+  "276": {
+    "name": "reserved_276_glow",
+    "desc": "Reserved frame slot"
+  },
+  "277": {
+    "name": "reserved_277_glow",
+    "desc": "Reserved frame slot"
+  },
+  "278": {
+    "name": "reserved_278_glow",
+    "desc": "Reserved frame slot"
+  },
+  "279": {
+    "name": "reserved_279_glow",
+    "desc": "Reserved frame slot"
+  },
+  "280": {
+    "name": "reserved_280_glow",
+    "desc": "Reserved frame slot"
+  },
+  "281": {
+    "name": "reserved_281_glow",
+    "desc": "Reserved frame slot"
+  },
+  "282": {
+    "name": "reserved_282_glow",
+    "desc": "Reserved frame slot"
+  },
+  "283": {
+    "name": "reserved_283_glow",
+    "desc": "Reserved frame slot"
+  },
+  "284": {
+    "name": "reserved_284_glow",
+    "desc": "Reserved frame slot"
+  },
+  "285": {
+    "name": "reserved_285_glow",
+    "desc": "Reserved frame slot"
+  },
+  "286": {
+    "name": "reserved_286_glow",
+    "desc": "Reserved frame slot"
+  },
+  "287": {
+    "name": "reserved_287_glow",
+    "desc": "Reserved frame slot"
+  },
+  "288": {
+    "name": "reserved_288_glow",
+    "desc": "Reserved frame slot"
+  },
+  "289": {
+    "name": "reserved_289_glow",
+    "desc": "Reserved frame slot"
+  },
+  "290": {
+    "name": "reserved_290_glow",
+    "desc": "Reserved frame slot"
+  },
+  "291": {
+    "name": "reserved_291_glow",
+    "desc": "Reserved frame slot"
+  },
+  "292": {
+    "name": "reserved_292_glow",
+    "desc": "Reserved frame slot"
+  },
+  "293": {
+    "name": "reserved_293_glow",
+    "desc": "Reserved frame slot"
+  },
+  "294": {
+    "name": "reserved_294_glow",
+    "desc": "Reserved frame slot"
+  },
+  "295": {
+    "name": "reserved_295_glow",
+    "desc": "Reserved frame slot"
+  },
+  "296": {
+    "name": "reserved_296_glow",
+    "desc": "Reserved frame slot"
+  },
+  "297": {
+    "name": "reserved_297_glow",
+    "desc": "Reserved frame slot"
+  },
+  "298": {
+    "name": "reserved_298_glow",
+    "desc": "Reserved frame slot"
+  },
+  "299": {
+    "name": "reserved_299_glow",
+    "desc": "Reserved frame slot"
+  },
+  "300": {
+    "name": "reserved_300_glow",
+    "desc": "Reserved frame slot"
+  },
+  "301": {
+    "name": "reserved_301_glow",
+    "desc": "Reserved frame slot"
+  },
+  "302": {
+    "name": "reserved_302_glow",
+    "desc": "Reserved frame slot"
+  },
+  "303": {
+    "name": "reserved_303_glow",
+    "desc": "Reserved frame slot"
+  }
+}

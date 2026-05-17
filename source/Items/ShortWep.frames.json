@@ -1,0 +1,29 @@
+{
+  "file": "ShortWep.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 8,
+  "rows": 6,
+  "frames": {
+    "0": "dagger",
+    "1": "elven dagger",
+    "2": "orcish dagger",
+    "3": "silver dagger",
+    "4": "crysknife",
+    "5": "scalpel",
+    "6": "knife",
+    "7": "stiletto",
+    "8": "athame",
+    "9": "silver saber",
+    "10": "unicorn horn",
+    "11": "worm tooth",
+    "16": "aklys",
+    "17": "club",
+    "18": "nunchaku",
+    "24": "hammer",
+    "25": "pick axe",
+    "26": "mattock",
+    "32": "morning star",
+    "33": "flail"
+  }
+}

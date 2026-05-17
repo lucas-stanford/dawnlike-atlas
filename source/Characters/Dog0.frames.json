@@ -1,0 +1,36 @@
+{
+  "files": [
+    "Dog0.png",
+    "Dog1.png"
+  ],
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 8,
+  "rows": 7,
+  "frames": {
+    "0": "jackal",
+    "1": "fox",
+    "2": "dingo",
+    "3": "coyote",
+    "4": "rabid jackal",
+    "5": "werejackal",
+    "8": "wolf",
+    "9": "warg",
+    "10": "baby winter wolf",
+    "11": "winter wolf",
+    "12": "rabid wolf",
+    "13": "werewolf",
+    "16": "little hound",
+    "17": "hound",
+    "18": "big hound",
+    "24": "little cogdog",
+    "25": "cogdog",
+    "26": "big cogdog",
+    "32": "little terrier",
+    "33": "terrier",
+    "34": "big terrier",
+    "40": "heck puppy",
+    "41": "hell hound",
+    "42": "cerberus"
+  }
+}

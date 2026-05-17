@@ -1,0 +1,126 @@
+{
+  "file": "Template.png",
+  "frameWidth": 32,
+  "frameHeight": 32,
+  "columns": 4,
+  "rows": 4,
+  "totalFrames": 16,
+  "emptyFrames": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "type": "template",
+  "description": "Blank canvas for custom character design",
+  "variants": [
+    {
+      "frame": 0,
+      "description": "Empty template cell 1",
+      "position": "row 0, col 0",
+      "status": "empty"
+    },
+    {
+      "frame": 1,
+      "description": "Empty template cell 2",
+      "position": "row 0, col 1",
+      "status": "empty"
+    },
+    {
+      "frame": 2,
+      "description": "Empty template cell 3",
+      "position": "row 0, col 2",
+      "status": "empty"
+    },
+    {
+      "frame": 3,
+      "description": "Empty template cell 4",
+      "position": "row 0, col 3",
+      "status": "empty"
+    },
+    {
+      "frame": 4,
+      "description": "Empty template cell 5",
+      "position": "row 1, col 0",
+      "status": "empty"
+    },
+    {
+      "frame": 5,
+      "description": "Empty template cell 6",
+      "position": "row 1, col 1",
+      "status": "empty"
+    },
+    {
+      "frame": 6,
+      "description": "Empty template cell 7",
+      "position": "row 1, col 2",
+      "status": "empty"
+    },
+    {
+      "frame": 7,
+      "description": "Empty template cell 8",
+      "position": "row 1, col 3",
+      "status": "empty"
+    },
+    {
+      "frame": 8,
+      "description": "Empty template cell 9",
+      "position": "row 2, col 0",
+      "status": "empty"
+    },
+    {
+      "frame": 9,
+      "description": "Empty template cell 10",
+      "position": "row 2, col 1",
+      "status": "empty"
+    },
+    {
+      "frame": 10,
+      "description": "Empty template cell 11",
+      "position": "row 2, col 2",
+      "status": "empty"
+    },
+    {
+      "frame": 11,
+      "description": "Empty template cell 12",
+      "position": "row 2, col 3",
+      "status": "empty"
+    },
+    {
+      "frame": 12,
+      "description": "Empty template cell 13",
+      "position": "row 3, col 0",
+      "status": "empty"
+    },
+    {
+      "frame": 13,
+      "description": "Empty template cell 14",
+      "position": "row 3, col 1",
+      "status": "empty"
+    },
+    {
+      "frame": 14,
+      "description": "Empty template cell 15",
+      "position": "row 3, col 2",
+      "status": "empty"
+    },
+    {
+      "frame": 15,
+      "description": "Empty template cell 16",
+      "position": "row 3, col 3",
+      "status": "empty"
+    }
+  ]
+}

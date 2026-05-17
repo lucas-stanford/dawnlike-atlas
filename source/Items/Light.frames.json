@@ -1,0 +1,16 @@
+{
+  "file": "Light.png",
+  "frameWidth": 16,
+  "frameHeight": 16,
+  "columns": 8,
+  "rows": 2,
+  "frames": {
+    "0": "tallow candle",
+    "1": "wax candle",
+    "2": "candelabrum",
+    "3": "brass lantern",
+    "4": "lamp",
+    "5": "magic lamp",
+    "6": "camera"
+  }
+}

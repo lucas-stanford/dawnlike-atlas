@@ -1,0 +1,49 @@
+{
+  "name": "dawnlike-atlas",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Bin-packed mega-atlas and category atlases for the DawnLike tileset",
+  "main": "react/index.js",
+  "scripts": {
+    "dev": "bun run storybook",
+    "build:mega": "bun tools/build-mega-atlas.mjs --input source/Characters --input source/Items --input source/Objects --input source/GUI --output atlas --name Dawnlike",
+    "build:categories": "bun tools/build-atlas.mjs --input source/Characters --output atlas --name Characters && bun tools/build-atlas.mjs --input source/Items --output atlas --name Items && bun tools/build-atlas.mjs --input source/Objects --output atlas --name Objects && bun tools/build-atlas.mjs --input source/GUI --output atlas --name GUI",
+    "gen:batches": "bun tools/generate-attributes.mjs",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "phaser": "4",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "rot-js": "^2.2.1",
+    "sharp": "^0.34.5"
+  },
+  "license": "CC-BY-4.0",
+  "private": true,
+  "devDependencies": {
+    "@chromatic-com/storybook": "^5.2.1",
+    "@storybook/addon-a11y": "8.6.14",
+    "@storybook/addon-docs": "8.6.14",
+    "@storybook/addon-essentials": "8.6.14",
+    "@storybook/addon-interactions": "8.6.14",
+    "@storybook/addon-links": "8.6.14",
+    "@storybook/addon-mcp": "^0.6.0",
+    "@storybook/addon-vitest": "^10.4.0",
+    "@storybook/blocks": "8.6.14",
+    "@storybook/react": "8.6.14",
+    "@storybook/react-vite": "8.6.14",
+    "@storybook/test": "8.6.14",
+    "@types/bun": "latest",
+    "@vitest/browser-playwright": "^4.1.6",
+    "@vitest/coverage-v8": "^4.1.6",
+    "playwright": "^1.60.0",
+    "prop-types": "^15.8.1",
+    "storybook": "8.6.14",
+    "vite": "^5",
+    "vitest": "^4.1.6"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
