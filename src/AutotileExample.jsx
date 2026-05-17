@@ -117,18 +117,19 @@ export default function AutotileExample() {
       const name = `${floorStyle} c`;
       return atlas.byName[name] ? name : `${floorStyle} center`;
     } else {
-      const isWall = (tx, ty) => mapData[`${tx},${ty}`] === 1;
+      const outOfBounds = (tx, ty) => tx < 0 || tx >= DISPLAY_WIDTH || ty < 0 || ty >= DISPLAY_HEIGHT;
+      const isWall = (tx, ty) => outOfBounds(tx, ty) || mapData[`${tx},${ty}`] === 1;
       
       const isSurfaceWall = (tx, ty) => {
-        if (!isWall(tx, ty)) return false;
-        // Check 8-way neighbors for open space (0)
+        if (outOfBounds(tx, ty) || !isWall(tx, ty)) return false;
+        // Check 8-way neighbors for open space
         for (let dy = -1; dy <= 1; dy++) {
           for (let dx = -1; dx <= 1; dx++) {
             if (dx === 0 && dy === 0) continue;
-            // Out of bounds is treated as open in saga for surface detection if needed, 
-            // but for a closed dungeon, OOB is usually wall.
-            // Let's treat undefined as Wall (not open) to keep boundaries solid.
-            if (mapData[`${tx + dx},${ty + dy}`] === 0) return true;
+            const nx = tx + dx;
+            const ny = ty + dy;
+            if (outOfBounds(nx, ny)) continue; // OOB ignored for surface check
+            if (!isWall(nx, ny)) return true;
           }
         }
         return false;
@@ -140,7 +141,7 @@ export default function AutotileExample() {
         return fallback ? fallback.name : null;
       }
 
-      const isOpen = (tx, ty) => mapData[`${tx},${ty}`] === 0;
+      const isOpen = (tx, ty) => outOfBounds(tx, ty) || !isWall(tx, ty);
 
       const lateralOpen = (ny) => isOpen(x - 1, y) || isOpen(x + 1, y) || isOpen(x - 1, ny) || isOpen(x + 1, ny);
       const verticalOpen = (nx) => isOpen(x, y - 1) || isOpen(x, y + 1) || isOpen(nx, y - 1) || isOpen(nx, y + 1);
