@@ -267,7 +267,7 @@ const MENU_OPTIONS = [
 // Dialogue modal
 // =====================================================================
 
-function DialogueModal({ atlas, onClose }) {
+function DialogueModal({ atlas, onClose, frameFamily = 'gray white' }) {
   const [path, setPath] = useState({ branch: 'main', index: 0 });
   const [choiceIdx, setChoiceIdx] = useState(0);
 
@@ -317,7 +317,7 @@ function DialogueModal({ atlas, onClose }) {
         </Frame>
       </div>
 
-      <Frame atlas={atlas} w={16} h={6}>
+      <Frame atlas={atlas} w={16} h={6} family={frameFamily}>
         <button className="menu-modal-close" onClick={onClose} title="Close (Esc)">
           <Sprite atlas={atlas} name="cancel box" scale={1.5} />
         </button>
@@ -375,12 +375,12 @@ function StatBar({ atlas, label, value, max = 20, color = 'gray' }) {
   );
 }
 
-function CharacterModal({ atlas, onClose }) {
+function CharacterModal({ atlas, onClose, frameFamily = 'gray white' }) {
   const [selected, setSelected] = useState(0);
   const ch = CHARACTERS[selected];
 
   return (
-    <Frame atlas={atlas} w={18} h={9}>
+    <Frame atlas={atlas} w={18} h={9} family={frameFamily}>
       <div className="menu-modal-title">Party Roster</div>
       <button className="menu-modal-close" onClick={onClose}>
         <Sprite atlas={atlas} name="cancel box" scale={1.5} />
@@ -476,7 +476,7 @@ function CharacterModal({ atlas, onClose }) {
 // Inventory modal
 // =====================================================================
 
-function InventoryModal({ atlas, onClose }) {
+function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
   const [category, setCategory] = useState('all');
   const [selectedIdx, setSelectedIdx] = useState(0);
 
@@ -492,7 +492,7 @@ function InventoryModal({ atlas, onClose }) {
   const gold = 1247;
 
   return (
-    <Frame atlas={atlas} w={18} h={9}>
+    <Frame atlas={atlas} w={18} h={9} family={frameFamily}>
       <div className="menu-modal-title">Inventory</div>
       <button className="menu-modal-close" onClick={onClose}>
         <Sprite atlas={atlas} name="cancel box" scale={1.5} />
@@ -604,11 +604,32 @@ function cycleDown(v) {
   return next <= 0.001 ? 1 : next;
 }
 
+// Curated 9-slice frame families from the atlas that read well as menu chrome.
+// Each is "<border> <interior>" — passed as the `family` prop to <Frame>.
+export const FRAME_FAMILIES = [
+  'gray white',
+  'white black',
+  'black yellow',
+  'yellow black',
+  'red black',
+  'red green',
+  'green red',
+  'green black',
+  'green blue',
+  'blue black',
+  'brown black',
+  'brown gray',
+  'brown dark',
+  'dark brown',
+  'dark black',
+  'gray black',
+];
+
 // =====================================================================
 // Main component
 // =====================================================================
 
-export default function MenuExample() {
+export default function MenuExample({ frameFamily = 'gray white' }) {
   const [atlas, setAtlas] = useState(null);
   const [error, setError] = useState(null);
   const [openModal, setOpenModal] = useState(null);
@@ -717,9 +738,9 @@ export default function MenuExample() {
       {openModal && (
         <div className="menu-modal-backdrop" onClick={() => setOpenModal(null)}>
           <div className="menu-modal" onClick={(e) => e.stopPropagation()}>
-            {openModal === 'dialogue'  && <DialogueModal  atlas={atlas} onClose={() => setOpenModal(null)} />}
-            {openModal === 'character' && <CharacterModal atlas={atlas} onClose={() => setOpenModal(null)} />}
-            {openModal === 'inventory' && <InventoryModal atlas={atlas} onClose={() => setOpenModal(null)} />}
+            {openModal === 'dialogue'  && <DialogueModal  atlas={atlas} frameFamily={frameFamily} onClose={() => setOpenModal(null)} />}
+            {openModal === 'character' && <CharacterModal atlas={atlas} frameFamily={frameFamily} onClose={() => setOpenModal(null)} />}
+            {openModal === 'inventory' && <InventoryModal atlas={atlas} frameFamily={frameFamily} onClose={() => setOpenModal(null)} />}
           </div>
         </div>
       )}
