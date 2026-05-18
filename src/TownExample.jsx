@@ -215,8 +215,8 @@ export default function TownExample() {
     for (let i = 0; i < buildingCount; i++) {
       let placed = false;
       for (let attempt = 0; attempt < 120; attempt++) {
-        const w = 4 + ROT.RNG.getUniformInt(0, 3);
-        const h = 4 + ROT.RNG.getUniformInt(0, 2);
+        const w = 5 + ROT.RNG.getUniformInt(0, 3);
+        const h = 5 + ROT.RNG.getUniformInt(0, 2);
 
         // Anchor either to plaza or to an existing building, pick a side, then
         // offset so the new building sits with a 1-tile street gap from it.
