@@ -7,11 +7,9 @@ Generated 2026-05-17 from:
 - `source/GUI`
 
 **3853 named sprites** across 4 categories,
-bin-packed into 1024×1024px (64×64 grid, 16px tiles).
-3844 sprites are 16×16; the 9 GUI icons added manually from upstream
-unpacked3 (`health icon`, `stamina icon`, `fire icon`, `ice icon`,
-`lightning icon`, `save icon`, `enter icon`, `inventory icon`,
-`surrounded icon`) are 48×48 and live in a strip at y=976.
+bin-packed into 1024×976px (64×61 grid, 16px tiles).
+Wasted cells: 51 of 3904
+(1.3% empty).
 
 ## Categories Included
 
