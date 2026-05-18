@@ -312,7 +312,7 @@ function DialogueModal({ atlas, onClose }) {
     <div className="menu-dialogue-wrap">
       {/* Name plate above the box */}
       <div className="menu-nameplate">
-        <Frame atlas={atlas} w={6} h={2} family="red black">
+        <Frame atlas={atlas} w={5} h={2} family="red black" scale={2}>
           <div className="menu-nameplate-text">{line.speaker}</div>
         </Frame>
       </div>
@@ -323,13 +323,6 @@ function DialogueModal({ atlas, onClose }) {
         </button>
         <div className="menu-modal-content menu-modal-content-dialogue" onClick={advance}>
           <div className="menu-dialogue">
-            <div className="menu-dialogue-portrait">
-              <Frame atlas={atlas} w={3} h={3} family="white black">
-                <div className="menu-dialogue-portrait-inner">
-                  <Sprite atlas={atlas} name={line.portrait} scale={4} />
-                </div>
-              </Frame>
-            </div>
             <div className="menu-dialogue-body">
               <div className="menu-dialogue-text pixel-small">
                 {shown}
