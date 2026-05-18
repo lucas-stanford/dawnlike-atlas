@@ -1,74 +1,107 @@
 /**
+ * AUTOTILE_MANIFESTS
+ *
+ * Declarative description of DawnLike autotile families. Each manifest
+ * maps a neighbor-pattern key ("nsew" string, e.g. "ns" for vertical
+ * straight, "nse" for the T branching right) to the sprite-name suffix
+ * actually present in the atlas for that pattern. A fallback chain
+ * (`fallbacks`) is consulted when a base family is missing a particular
+ * variant (e.g. a 1-way endcap that reuses the straight).
+ *
+ *  - `openPath` (river / road / castle-wall): the 11-variant set where
+ *    vertical-bar T's (up down X) are E/W-inverted, but corners and
+ *    horizontal-bar T's are literal. See resolveDawnLikeRiverName
+ *    docstring for the full convention and pixel-level verification.
+ *
+ *  - `blob` (mountain): the 10-sprite "blob" set named by which edge
+ *    the tile sits on (n/s/e/w/ne/nw/se/sw/c/alone), no T-junctions or
+ *    thin straights — see resolveDawnLikeMountainName.
+ */
+export const AUTOTILE_MANIFESTS = {
+  openPath: {
+    // Pattern key → atlas suffix. Pattern key is alphabetised cardinals
+    // sorted as "n","s","e","w" → "nsew". '' (empty) is the no-neighbor
+    // isolated case.
+    map: {
+      '':     'up down',              // isolated: render as vertical straight
+      'n':    'up down',              // endcap N → straight
+      's':    'up down',              // endcap S → straight
+      'e':    'left right',           // endcap E → straight
+      'w':    'left right',           // endcap W → straight
+      'ns':   'up down',
+      'ew':   'left right',
+      'nw':   'up left',              // corner: literal (N+W connect)
+      'ne':   'up right',
+      'sw':   'down left',
+      'se':   'down right',
+      'nse':  'up down left',         // vertical-T inverted (stub right)
+      'nsw':  'up down right',        // vertical-T inverted (stub left)
+      'new':  'up left right',        // horizontal-T literal (stub up)
+      'sew':  'down left right',      // horizontal-T literal (stub down)
+      'nsew': 'up down left right',
+    },
+    // If the resolved variant is missing from the atlas, walk these
+    // pattern keys in order and return the first present variant.
+    fallbacks: {
+      'nsew': ['ew', 'ns'],
+      'nse':  ['ns'],
+      'nsw':  ['ns'],
+      'new':  ['ew'],
+      'sew':  ['ew'],
+      'nw':   ['ns', 'ew'],
+      'ne':   ['ns', 'ew'],
+      'sw':   ['ns', 'ew'],
+      'se':   ['ns', 'ew'],
+      'n':    ['ns'], 's': ['ns'],
+      'e':    ['ew'], 'w': ['ew'],
+      '':     ['ns'],
+    },
+  },
+};
+
+/**
+ * resolveAutotile
+ *
+ * Manifest-driven cardinal-neighbor autotile resolver. Pick a manifest
+ * id ('openPath' for river/road/wall) and pass the base family name
+ * plus the {n,s,e,w} neighbor truth table; returns the resolved sprite
+ * name (consulting `byName` for existence) with graceful fallback.
+ */
+export function resolveAutotile(manifestId, baseName, { n, s, e, w }, byName = {}) {
+  const m = AUTOTILE_MANIFESTS[manifestId];
+  if (!m) throw new Error(`Unknown autotile manifest: ${manifestId}`);
+  // Build pattern key in canonical order n,s,e,w.
+  const key = (n ? 'n' : '') + (s ? 's' : '') + (e ? 'e' : '') + (w ? 'w' : '');
+  const tryKey = (k) => {
+    const suf = m.map[k];
+    if (!suf) return null;
+    const full = `${baseName} ${suf}`.trim();
+    return byName[full] ? full : null;
+  };
+  const direct = tryKey(key);
+  if (direct) return { name: direct, suffix: m.map[key] };
+  for (const fb of (m.fallbacks[key] || [])) {
+    const got = tryKey(fb);
+    if (got) return { name: got, suffix: m.map[fb], fallback: true };
+  }
+  // Last-resort: return whatever the manifest says, even if atlas doesn't have it.
+  const suf = m.map[key] || m.map[''] || '';
+  return { name: `${baseName} ${suf}`.trim(), suffix: suf, missing: true };
+}
+
+/**
  * resolveDawnLikeWallName
  * 
  * Maps cardinal neighbors to a specific DawnLike sprite name.
- * Handles the 16 standard autotile positions with robust fallbacks.
+ * This is the original road/wall resolver; it now delegates to
+ * resolveAutotile() with the shared `openPath` manifest so that road
+ * tile naming follows the same (verified) convention as rivers and
+ * castle walls. The pool/fence families with different naming still
+ * use their own resolvers.
  */
-export function resolveDawnLikeWallName(baseName, { n, s, e, w }, byName = {}) {
-  const dirs = [];
-  if (n) dirs.push('up');
-  if (s) dirs.push('down');
-  if (w) dirs.push('left');
-  if (e) dirs.push('right');
-
-  if (dirs.length === 0) {
-    return byName[`${baseName} flat`] || byName[`${baseName} center`] || baseName;
-  }
-
-  let suffix = "flat";
-  // 4-way
-  if (n && s && e && w) suffix = "left right up down";
-  else if (!n && s && e && w) suffix = "left right down";
-  else if (n && !s && e && w) suffix = "left right up";
-  else if (n && s && !e && w) suffix = "left up down";
-  else if (n && s && e && !w) suffix = "right up down";
-  else if (n && s && !e && !w) suffix = "up down";
-  else if (!n && !s && e && w) suffix = "left right";
-  else if (s && e && !n && !w) suffix = "right down";
-  else if (s && w && !n && !e) suffix = "left down";
-  else if (n && e && !s && !w) suffix = "right up";
-  else if (n && w && !s && !e) suffix = "left up";
-  else if (n && !s && !e && !w) suffix = "up down"; // reuse vertical straight for caps
-  else if (s && !n && !e && !w) suffix = "up down"; 
-  else if (w && !n && !s && !e) suffix = "left right"; // reuse horizontal straight for caps
-  else if (e && !n && !s && !w) suffix = "left right";
-
-  // Try permutations in priority order
-  const getFullName = (suff) => {
-    const dArray = suff.split(' ');
-    if (dArray.length === 0) return null;
-    
-    const standard = ['up', 'down', 'left', 'right'].filter(d => dArray.includes(d)).join(' ');
-    const fullName = `${baseName} ${standard}`.trim();
-    if (byName[fullName]) return fullName;
-    
-    const alt = ['left', 'right', 'up', 'down'].filter(d => dArray.includes(d)).join(' ');
-    const fullAlt = `${baseName} ${alt}`.trim();
-    if (byName[fullAlt]) return fullAlt;
-    
-    // Reverse
-    const rev = [...dArray].reverse().join(' ');
-    const fullRev = `${baseName} ${rev}`.trim();
-    if (byName[fullRev]) return fullRev;
-
-    return null;
-  };
-
-  const found = getFullName(suffix);
-  if (found) return found;
-
-  // Fallbacks if the specific directional sprite doesn't exist (e.g. pools missing 4-way)
-  const fallbackOrder = [`${baseName} center`, `${baseName} flat`, `${baseName} c`, baseName];
-  for (const fb of fallbackOrder) {
-    if (byName[fb]) return fb;
-  }
-
-  // Final desperate fallback: find anything that starts with baseName
-  const anything = Object.keys(byName).find(k => k.startsWith(baseName));
-  if (anything) return anything;
-
-  // If all fails, just return baseName and hope it exists or gets caught
-  return baseName;
+export function resolveDawnLikeWallName(baseName, neighbors, byName = {}) {
+  const { name } = resolveAutotile('openPath', baseName, neighbors, byName);
+  return name;
 }
 
 /**
@@ -178,69 +211,15 @@ export function resolveDawnLikePoolName(baseName, { n, s, e, w }, byName = {}) {
 /**
  * resolveDawnLikeRiverName
  *
- * Maps cardinal river neighbors to the full 11-variant DawnLike river set:
- *  - straights: `left right`, `up down`
- *  - corners:   `up left`, `up right`, `down left`, `down right`
- *  - T-junctions: `up down left`, `up down right`, `up left right`,
- *                 `down left right`
- *  - 4-way:     `up down left right`
- *
- * DawnLike naming convention (verified by pixel inspection of the atlas):
- *
- *   Corners — names are LITERAL; suffix lists the two connected cardinals:
- *     `up left`    → river connects N + W
- *     `up right`   → river connects N + E
- *     `down left`  → river connects S + W
- *     `down right` → river connects S + E
- *
- *   Horizontal-bar T-junctions (E + W trunk) — LITERAL:
- *     `up left right`   → river connects N + E + W (stub points up)
- *     `down left right` → river connects S + E + W (stub points down)
- *
- *   Vertical-bar T-junctions (N + S trunk) — INVERTED on the E/W axis;
- *   the L/R word in the name is the OPPOSITE of the stub direction:
- *     `up down left`  → river connects N + S + E  (stub points right!)
- *     `up down right` → river connects N + S + W  (stub points left!)
- *
- *   Straights and 4-way are LITERAL: `up down`, `left right`,
- *   `up down left right`.
+ * Thin wrapper around resolveAutotile('openPath', ...) that returns
+ * { name } so existing callers (which destructure `name` and ignore
+ * `flipX`) keep working. Full naming convention documented on the
+ * `openPath` manifest entry above. Verified by pixel inspection of
+ * DawnlikeAtlas0.png for all 11 variants.
  */
-export function resolveDawnLikeRiverName(baseName, { n, s, e, w }, byName = {}) {
-  const get = (suffix) => {
-    const name = `${baseName} ${suffix}`.trim();
-    if (byName[name]) return { name };
-    return null;
-  };
-
-  const count = (n ? 1 : 0) + (s ? 1 : 0) + (e ? 1 : 0) + (w ? 1 : 0);
-
-  // 4-way
-  if (count === 4) return get('up down left right') || get('left right') || { name: `${baseName} left right` };
-
-  // 3-way T-junctions — see header docstring for the mixed naming rule.
-  // Vertical-bar T's (N+S trunk) are inverted on the E/W axis.
-  if (n && s && e && !w) return get('up down left')    || get('up down')    || { name: `${baseName} up down` };
-  if (n && s && w && !e) return get('up down right')   || get('up down')    || { name: `${baseName} up down` };
-  // Horizontal-bar T's (E+W trunk) are literal.
-  if (n && e && w && !s) return get('up left right')   || get('left right') || { name: `${baseName} left right` };
-  if (s && e && w && !n) return get('down left right') || get('left right') || { name: `${baseName} left right` };
-
-  // 2-way straights
-  if (e && w) return get('left right') || { name: `${baseName} left right` };
-  if (n && s) return get('up down') || { name: `${baseName} up down` };
-
-  // 2-way corners — literal naming (suffix = connected cardinals).
-  if (n && w) return get('up left')    || { name: `${baseName} up left` };
-  if (n && e) return get('up right')   || { name: `${baseName} up right` };
-  if (s && w) return get('down left')  || { name: `${baseName} down left` };
-  if (s && e) return get('down right') || { name: `${baseName} down right` };
-
-  // 1-way endcaps — reuse straights
-  if (e || w) return get('left right') || { name: `${baseName} left right` };
-  if (n || s) return get('up down') || { name: `${baseName} up down` };
-
-  // 0-way isolated
-  return get('up down') || { name: `${baseName} up down` };
+export function resolveDawnLikeRiverName(baseName, neighbors, byName = {}) {
+  const { name } = resolveAutotile('openPath', baseName, neighbors, byName);
+  return { name };
 }
 
 /**

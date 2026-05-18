@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import * as ROT from 'rot-js';
 import { resolveAssetPath } from './utils/paths';
-import { resolveDawnLikeWallName, resolveDawnLikeForestName, resolveDawnLikeRiverName, resolveDawnLikeFloorName, resolveDawnLikePoolName, resolveDawnLikeMountainName } from './utils/autotile';
+import { resolveDawnLikeWallName, resolveDawnLikeForestName, resolveDawnLikeRiverName, resolveDawnLikeFloorName, resolveDawnLikePoolName, resolveDawnLikeMountainName, resolveAutotile } from './utils/autotile';
 import './Autotile.css';
 
 const TILE_SIZE = 16;
@@ -242,16 +242,29 @@ export default function OutdoorExample() {
     // 3. Generate River — main channel meanders top→bottom by ±1 per row,
     // placing an L-bend connector tile in the same row whenever X shifts so
     // the path stays cardinally connected. Bridges form wherever a path
-    // crosses a road. After the main channel we splice in 1-2 tributaries
-    // that branch off the main river horizontally and flow to the map edge,
-    // creating T-junctions that exercise the full river autotile.
+    // crosses a road, but capped at MAX_BRIDGES; once the cap is hit
+    // subsequent crossings are skipped (the road tile is removed at that
+    // intersection so the river continues uninterrupted).
+    const MAX_BRIDGES = 2;
+    let bridgesPlaced = 0;
     const clearForRiver = (tx, ty) => {
       const t = data[`${tx},${ty}`];
       if (!t) return null;
       t.river = true;
       t.tree = false;
       t.mountain = false;
-      if (t.road) t.bridge = true;
+      if (t.road) {
+        if (bridgesPlaced < MAX_BRIDGES) {
+          t.bridge = true;
+          bridgesPlaced++;
+        } else {
+          // Over the bridge cap — remove the road segment at this crossing
+          // so the river just flows across (a "ford"). The road network may
+          // be visually broken here; acceptable for the demo and keeps the
+          // crossing count exactly at the cap.
+          t.road = false;
+        }
+      }
       return t;
     };
 
@@ -316,7 +329,46 @@ export default function OutdoorExample() {
       }
     }
 
-    // 4. Place building
+    // 4. Place castle — sometimes (~40% chance) a small walled keep, with
+    // a 4-tile-square castle-wall ring and a single `castle` tile in the
+    // center, dropped in a clear patch of ground that isn't on a road or
+    // river or mountain. Exercises the 11-variant castle wall set.
+    const placeCastle = () => {
+      if (ROT.RNG.getUniform() > 0.4) return;
+      const SIZE = 4;
+      for (let attempt = 0; attempt < 40; attempt++) {
+        const cx = 3 + Math.floor(ROT.RNG.getUniform() * (DISPLAY_WIDTH - SIZE - 6));
+        const cy = 3 + Math.floor(ROT.RNG.getUniform() * (DISPLAY_HEIGHT - SIZE - 6));
+        // Require all tiles in the bounding box to be plain ground.
+        let ok = true;
+        for (let dy = 0; dy < SIZE && ok; dy++) {
+          for (let dx = 0; dx < SIZE && ok; dx++) {
+            const tt = data[`${cx+dx},${cy+dy}`];
+            if (!tt || tt.road || tt.river || tt.bridge || tt.mountain || tt.tree || tt.building) ok = false;
+          }
+        }
+        if (!ok) continue;
+        // Carve the keep: outline = castleWall (will autotile to the
+        // proper corners/T's/straights at render time); interior = clear
+        // ground except center = `castle` sprite.
+        for (let dy = 0; dy < SIZE; dy++) {
+          for (let dx = 0; dx < SIZE; dx++) {
+            const tt = data[`${cx+dx},${cy+dy}`];
+            tt.decor = null;
+            if (dy === 0 || dy === SIZE - 1 || dx === 0 || dx === SIZE - 1) {
+              tt.castleWall = true;
+            }
+          }
+        }
+        // Drop the castle keep sprite in the middle.
+        const center = data[`${cx + Math.floor(SIZE/2)},${cy + Math.floor(SIZE/2)}`];
+        center.building = 'castle';
+        return;
+      }
+    };
+    placeCastle();
+
+    // 5. Place building
     let built = false;
     for (let x = 5; x < DISPLAY_WIDTH - 5 && !built; x++) {
       for (let y = 5; y < DISPLAY_HEIGHT - 5; y++) {
@@ -409,9 +461,42 @@ export default function OutdoorExample() {
       layers.push({ name, z: 1, flipX, reason: `River connection` });
     }
 
-    // Layer 1.5: Bridge
+    // Layer 1.5: Bridge — pick the bridge variant whose deck orientation
+    // matches the river the bridge spans. Vertical river ⇒ `bridge n s`,
+    // horizontal river ⇒ `bridge e w`. When the river turns AT the bridge
+    // tile (only one cardinal neighbor is river) we use a diagonal
+    // bridge (`ne sw` or `nw se`) so the deck appears to clear the bend.
     if (tile.bridge) {
-      layers.push({ name: 'bridge n s', z: 1.5, rotate: 90, reason: "Crossing" });
+      const rn = !!mapData[`${x},${y-1}`]?.river;
+      const rs = !!mapData[`${x},${y+1}`]?.river;
+      const re = !!mapData[`${x+1},${y}`]?.river;
+      const rw = !!mapData[`${x-1},${y}`]?.river;
+      let bridgeName = 'bridge n s';
+      if (re && rw) bridgeName = 'bridge e w';
+      else if (rn && rs) bridgeName = 'bridge n s';
+      // Diagonal river bends: pick the diagonal bridge whose axis
+      // crosses the bend perpendicularly.
+      else if ((rn && re) || (rs && rw)) bridgeName = 'bridge nw se';
+      else if ((rn && rw) || (rs && re)) bridgeName = 'bridge ne sw';
+      else if (rn || rs) bridgeName = 'bridge n s';
+      else if (re || rw) bridgeName = 'bridge e w';
+      if (!atlas.byName[bridgeName]) bridgeName = 'bridge n s';
+      layers.push({ name: bridgeName, z: 1.5, reason: 'Crossing' });
+    }
+
+    // Layer 1.7: Castle walls (11-variant autotile via shared manifest).
+    if (tile.castleWall) {
+      const n = !!mapData[`${x},${y-1}`]?.castleWall;
+      const s = !!mapData[`${x},${y+1}`]?.castleWall;
+      const w = !!mapData[`${x-1},${y}`]?.castleWall;
+      const e = !!mapData[`${x+1},${y}`]?.castleWall;
+      const { name } = resolveAutotile('openPath', 'castle wall', { n, s, e, w }, atlas.byName);
+      layers.push({
+        name,
+        z: 1.7,
+        reason: `Castle wall`,
+        context: { kind: 'castleWall', neighbors: { n, s, e, w } },
+      });
     }
 
     // Layer 2: Road
