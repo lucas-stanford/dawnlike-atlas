@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import * as ROT from 'rot-js';
 import { resolveAssetPath } from './utils/paths';
-import { resolveDawnLikeWallName, resolveDawnLikeFloorName, resolveAutotile } from './utils/autotile';
+import { resolveDawnLikeWallName, resolveDawnLikeFloorName, resolveAutotile, resolveDawnLikeDungeonWallName, resolveDawnLikeForestName } from './utils/autotile';
 import './Autotile.css';
 
 const TILE_SIZE = 16;
@@ -57,6 +57,13 @@ const TYPE_RUG = {
 
 const DOOR_PLANTS = ['potted plants', 'red flowers', 'gold flowers', 'white flowers', 'blue flowers'];
 
+const GROUND_FLOWERS = [
+  'white flowers', 'sparse white flowers',
+  'blue flowers', 'sparse blue flowers',
+  'gold flowers', 'sparse gold flowers',
+  'red flowers', 'sparse red flowers',
+];
+
 export default function TownExample() {
   const [rawMapData, setRawMapData] = useState(null);
   const [buildings, setBuildings] = useState([]);
@@ -66,6 +73,9 @@ export default function TownExample() {
   const [floorStyle, setFloorStyle] = useState('day brick floor');
   const [streetStyle, setStreetStyle] = useState('day stone floor');
   const [grassStyle, setGrassStyle] = useState('day grass floor');
+  const [treeStyle, setTreeStyle] = useState('');
+  const [treeChance, setTreeChance] = useState(8);
+  const [flowerChance, setFlowerChance] = useState(6);
   const [graveyardChance, setGraveyardChance] = useState(30);
   const [buildingCount, setBuildingCount] = useState(6);
   const [seed, setSeed] = useState(Math.floor(Math.random() * 1000000));
@@ -78,17 +88,26 @@ export default function TownExample() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [showConfig, setShowConfig] = useState(false);
 
-  // Discover wall bases from atlas. Same logic as AutotileExample.
-  const { discoveredWalls } = useMemo(() => {
-    if (!atlas?.byName) return { discoveredWalls: [] };
+  // Discover wall + tree bases from atlas. Same logic as AutotileExample /
+  // OutdoorExample (Trees grouped from the Objects/Tree sheets).
+  const { discoveredWalls, discoveredTrees } = useMemo(() => {
+    if (!atlas?.byName) return { discoveredWalls: [], discoveredTrees: [] };
     const walls = new Set();
+    const trees = new Set();
     Object.entries(atlas.byName).forEach(([name, data]) => {
       if (data.tags?.includes('wall') && data.sourceFile === 'Objects/Wall') {
         const base = cleanName(name);
         if (base) walls.add(base);
       }
+      if (data.sourceFile === 'Objects/Tree' || data.sourceFile === 'Objects/Tree0') {
+        const base = cleanName(name);
+        if (base) trees.add(base);
+      }
     });
-    return { discoveredWalls: Array.from(walls).sort() };
+    return {
+      discoveredWalls: Array.from(walls).sort(),
+      discoveredTrees: Array.from(trees).sort(),
+    };
   }, [atlas]);
 
   // Index sprites by base name for the click-to-pin sprite picker.
@@ -112,6 +131,15 @@ export default function TownExample() {
       setWallStyle(def);
     }
   }, [discoveredWalls]);
+
+  useEffect(() => {
+    if (discoveredTrees.length > 0 && !treeStyle) {
+      const def = discoveredTrees.find(s => s === 'light oak')
+        || discoveredTrees.find(s => s.includes('oak'))
+        || discoveredTrees[0];
+      setTreeStyle(def);
+    }
+  }, [discoveredTrees]);
 
   useEffect(() => {
     fetch(resolveAssetPath('/DawnlikeAtlas.json'))
@@ -424,11 +452,32 @@ export default function TownExample() {
 
     // 7. Signs + lanterns + door plants.
     for (const b of placedBuildings) {
-      // Sign on the street tile outside the door.
+      // Sign: hang it on a street tile beside the door's exit tile so it
+      // doesn't visually block the doorway. For N/S doors that means one
+      // tile to the left/right of the exit tile; for E/W doors it's one
+      // tile above/below. Walk both flanks and pick the first paved street
+      // tile that isn't already a sign/decor/door from another building.
       const outNeighbor = { n: [0,-1], s: [0,1], e: [1,0], w: [-1,0] }[b.doorSide];
-      const sx = b.doorX + outNeighbor[0], sy = b.doorY + outNeighbor[1];
-      const sTile = get(sx, sy);
-      if (sTile && sTile.street && atlas.byName[TYPE_SIGN[b.type]]) sTile.sign = TYPE_SIGN[b.type];
+      const exitX = b.doorX + outNeighbor[0];
+      const exitY = b.doorY + outNeighbor[1];
+      const flank = (b.doorSide === 'n' || b.doorSide === 's')
+        ? [[-1, 0], [1, 0]]
+        : [[0, -1], [0, 1]];
+      let signTile = null;
+      for (const [fx, fy] of flank) {
+        const cand = get(exitX + fx, exitY + fy);
+        if (cand && cand.street && !cand.sign && !cand.decor && !cand.wall && !cand.door) {
+          signTile = cand;
+          break;
+        }
+      }
+      // Fallback: if neither flank is paved, fall back to the exit tile
+      // itself so the building is still identified somehow.
+      if (!signTile) {
+        const exit = get(exitX, exitY);
+        if (exit && exit.street && !exit.sign) signTile = exit;
+      }
+      if (signTile && atlas.byName[TYPE_SIGN[b.type]]) signTile.sign = TYPE_SIGN[b.type];
 
       // Lanterns on the 4 corners (not on the door).
       const corners = [
@@ -441,15 +490,15 @@ export default function TownExample() {
         t.lantern = true;
       }
 
-      // Door-flanking plants (30% chance).
+      // Door-flanking plants (30% chance). Now that the sign sits on one
+      // flank, drop the plant on the OTHER flank when possible.
       if (ROT.RNG.getUniform() < 0.3) {
         const plant = ROT.RNG.getItem(DOOR_PLANTS);
-        const flank = b.doorSide === 'n' || b.doorSide === 's'
-          ? [[-1, 0], [1, 0]]
-          : [[0, -1], [0, 1]];
         for (const [fx, fy] of flank) {
-          const fTile = get(b.doorX + fx + outNeighbor[0], b.doorY + fy + outNeighbor[1]);
-          if (fTile && fTile.street && !fTile.sign && atlas.byName[plant]) fTile.decor = plant;
+          const fTile = get(exitX + fx, exitY + fy);
+          if (fTile && fTile.street && !fTile.sign && !fTile.decor && atlas.byName[plant]) {
+            fTile.decor = plant;
+          }
         }
       }
     }
@@ -500,9 +549,61 @@ export default function TownExample() {
       }
     }
 
+    // 9. Trees + ground flowers scatter on plain grass tiles outside the
+    //    town footprint. Trees grow in small clusters around random seed
+    //    points; flowers are sprinkled individually on remaining grass.
+    //    We keep a one-tile buffer around any street tile so the paths
+    //    stay walkable.
+    const isPlainGrass = (xx, yy) => {
+      if (!inBounds(xx, yy)) return false;
+      const t = get(xx, yy);
+      return !!(t && t.type === 'grass' && !t.tree && !t.fence && !t.gravestone && !t.graveyard);
+    };
+    const nearStreet = (xx, yy) => {
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const t = get(xx + dx, yy + dy);
+          if (t && (t.street || t.door)) return true;
+        }
+      }
+      return false;
+    };
+    const treeSeeds = [];
+    for (let y = 0; y < DISPLAY_HEIGHT; y++) {
+      for (let x = 0; x < DISPLAY_WIDTH; x++) {
+        if (!isPlainGrass(x, y) || nearStreet(x, y)) continue;
+        if (ROT.RNG.getUniform() * 100 < treeChance) treeSeeds.push({ x, y });
+      }
+    }
+    // Grow each seed into a 3–6 tile cluster by random walk.
+    for (const seedPt of treeSeeds) {
+      const size = 2 + ROT.RNG.getUniformInt(0, 4);
+      let cx = seedPt.x, cy = seedPt.y;
+      for (let i = 0; i < size; i++) {
+        if (isPlainGrass(cx, cy) && !nearStreet(cx, cy)) {
+          get(cx, cy).tree = true;
+        }
+        const dir = ROT.RNG.getUniformInt(0, 3);
+        if (dir === 0) cy--;
+        else if (dir === 1) cy++;
+        else if (dir === 2) cx--;
+        else cx++;
+      }
+    }
+    // Flowers: low-density on tiles still plain grass (no tree).
+    for (let y = 0; y < DISPLAY_HEIGHT; y++) {
+      for (let x = 0; x < DISPLAY_WIDTH; x++) {
+        const t = get(x, y);
+        if (!t || t.type !== 'grass' || t.tree || t.fence || t.gravestone || t.decor) continue;
+        if (ROT.RNG.getUniform() * 100 < flowerChance) {
+          t.decor = ROT.RNG.getItem(GROUND_FLOWERS);
+        }
+      }
+    }
+
     setRawMapData(data);
     setBuildings(placedBuildings);
-  }, [seed, atlas, buildingCount, graveyardChance, floorStyle]);
+  }, [seed, atlas, buildingCount, graveyardChance, floorStyle, treeChance, flowerChance]);
 
   // Clone for derived rendering (mirrors OutdoorExample's pattern).
   const mapData = useMemo(() => {
@@ -563,12 +664,26 @@ export default function TownExample() {
       layers.push({ name, z: 1.5, reason: 'Rug' });
     }
 
-    // z=2: walls (openPath autotile).
+    // z=0.6: ground decor (flowers, etc.) on plain grass tiles only.
+    if (tile.decor && tile.type === 'grass' && !tile.tree && atlas.byName[tile.decor]) {
+      layers.push({ name: tile.decor, z: 0.6, reason: 'Ground flora' });
+    }
+
+    // z=2: walls — use the rot.js dungeon-style autotile so corners +
+    //      T-junctions resolve correctly even for small building blobs.
     if (tile.wall) {
-      const isWall = (nx, ny) => !!mapData[`${nx},${ny}`]?.wall;
-      const n = isWall(x, y-1), s = isWall(x, y+1), w = isWall(x-1, y), e = isWall(x+1, y);
-      const name = resolveDawnLikeWallName(wallStyle || 'bright brick wall', { n, s, e, w }, atlas.byName);
-      layers.push({ name, z: 2, reason: 'Wall', context: { kind: 'wall', neighbors: { n, s, e, w } } });
+      const inBoundsRender = (nx, ny) => nx >= 0 && ny >= 0 && nx < DISPLAY_WIDTH && ny < DISPLAY_HEIGHT;
+      const isWall = (nx, ny) => {
+        if (!inBoundsRender(nx, ny)) return true; // treat OOB as wall so the border closes
+        return !!mapData[`${nx},${ny}`]?.wall;
+      };
+      const name = resolveDawnLikeDungeonWallName(
+        wallStyle || 'bright brick wall', x, y, isWall, atlas.byName
+      );
+      if (name) {
+        const n = isWall(x, y-1), s = isWall(x, y+1), w = isWall(x-1, y), e = isWall(x+1, y);
+        layers.push({ name, z: 2, reason: 'Dungeon wall (rot.js)', context: { kind: 'wall', neighbors: { n, s, e, w } } });
+      }
     }
 
     // z=2.3: graveyard fence (openPath autotile).
@@ -601,12 +716,26 @@ export default function TownExample() {
       layers.push({ name: tile.sign, z: 3.5, reason: 'Building sign' });
     }
 
-    // z=4: lanterns / door plants.
+    // z=4: lanterns / door plants (street tiles only — ground flora on grass
+    //      already drew at z=0.6).
     if (tile.lantern && atlas.byName['brass lantern']) {
       layers.push({ name: 'brass lantern', z: 4, reason: 'Lantern' });
     }
-    if (tile.decor && atlas.byName[tile.decor]) {
+    if (tile.decor && tile.type !== 'grass' && atlas.byName[tile.decor]) {
       layers.push({ name: tile.decor, z: 4, reason: 'Door decoration' });
+    }
+
+    // z=4.5: trees (16-way forest autotile). Only on grass and only when
+    //        the tile isn't covered by anything town-related.
+    if (tile.tree && !tile.street && !tile.wall && !tile.floor && !tile.door) {
+      const isTree = (nx, ny) => !!mapData[`${nx},${ny}`]?.tree;
+      const n = isTree(x, y-1), s = isTree(x, y+1), w = isTree(x-1, y), e = isTree(x+1, y);
+      const nw = isTree(x-1, y-1), ne = isTree(x+1, y-1), sw = isTree(x-1, y+1), se = isTree(x+1, y+1);
+      const { name, reason } = resolveDawnLikeForestName(treeStyle || 'light oak', { n, s, e, w, nw, ne, sw, se }, atlas.byName);
+      if (name) layers.push({
+        name, z: 4.5, reason: `Tree (${reason})`,
+        context: { kind: 'forest', neighbors: { n, s, e, w, nw, ne, sw, se } }
+      });
     }
 
     return layers;
@@ -661,7 +790,10 @@ export default function TownExample() {
             <div className="field-group"><label>Building Floor</label><select value={floorStyle} onChange={e => setFloorStyle(e.target.value)}>{FLOOR_STYLES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div className="field-group"><label>Street Style</label><select value={streetStyle} onChange={e => setStreetStyle(e.target.value)}>{STREET_STYLES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div className="field-group"><label>Grass Style</label><select value={grassStyle} onChange={e => setGrassStyle(e.target.value)}>{GRASS_STYLES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+            <div className="field-group"><label>Tree Style</label><select value={treeStyle} onChange={e => setTreeStyle(e.target.value)}>{discoveredTrees.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div className="field-group"><label>Buildings: {buildingCount}</label><input type="range" min="3" max="10" step="1" value={buildingCount} onChange={e => setBuildingCount(parseInt(e.target.value))} /></div>
+            <div className="field-group"><label>Tree density: {treeChance}%</label><input type="range" min="0" max="30" step="1" value={treeChance} onChange={e => setTreeChance(parseInt(e.target.value))} /></div>
+            <div className="field-group"><label>Flower density: {flowerChance}%</label><input type="range" min="0" max="30" step="1" value={flowerChance} onChange={e => setFlowerChance(parseInt(e.target.value))} /></div>
             <div className="field-group"><label>Graveyard chance: {graveyardChance}%</label><input type="range" min="0" max="100" step="5" value={graveyardChance} onChange={e => setGraveyardChance(parseInt(e.target.value))} /></div>
             <div className="field-group"><label>Zoom: {scale.toFixed(1)}x</label><input type="range" min="1" max="6" step="0.5" value={scale} onChange={e => setScale(parseFloat(e.target.value))} /></div>
             <button className="primary-button" onClick={() => { setSpriteOverrides({}); setPinnedTile(null); setSeed(Math.floor(Math.random() * 1000000)); }}>🏘️ Re-generate</button>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import * as ROT from 'rot-js';
 import { resolveAssetPath } from './utils/paths';
-import { resolveDawnLikeWallName, resolveDawnLikeFloorName } from './utils/autotile';
+import { resolveDawnLikeWallName, resolveDawnLikeFloorName, resolveDawnLikeDungeonWallName } from './utils/autotile';
 import './Autotile.css';
 
 const TILE_SIZE = 16;
@@ -130,38 +130,7 @@ export default function AutotileExample() {
     } else {
       const outOfBounds = (tx, ty) => tx < 0 || tx >= DISPLAY_WIDTH || ty < 0 || ty >= DISPLAY_HEIGHT;
       const isWall = (tx, ty) => outOfBounds(tx, ty) || mapData[`${tx},${ty}`] === 1;
-      
-      const isSurfaceWall = (tx, ty) => {
-        if (outOfBounds(tx, ty) || !isWall(tx, ty)) return false;
-        // Check 8-way neighbors for open space
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            const nx = tx + dx;
-            const ny = ty + dy;
-            if (outOfBounds(nx, ny)) continue; // OOB ignored for surface check
-            if (!isWall(nx, ny)) return true;
-          }
-        }
-        return false;
-      };
-
-      if (!isSurfaceWall(x, y)) {
-        // Deep interior wall (not connected to a room or hall)
-        return null;
-      }
-
-      const isOpen = (tx, ty) => outOfBounds(tx, ty) || !isWall(tx, ty);
-
-      const lateralOpen = (ny) => isOpen(x - 1, y) || isOpen(x + 1, y) || isOpen(x - 1, ny) || isOpen(x + 1, ny);
-      const verticalOpen = (nx) => isOpen(x, y - 1) || isOpen(x, y + 1) || isOpen(nx, y - 1) || isOpen(nx, y + 1);
-
-      const n = isSurfaceWall(x, y - 1) && lateralOpen(y - 1);
-      const s = isSurfaceWall(x, y + 1) && lateralOpen(y + 1);
-      const w = isSurfaceWall(x - 1, y) && verticalOpen(x - 1);
-      const e = isSurfaceWall(x + 1, y) && verticalOpen(x + 1);
-
-      return resolveDawnLikeWallName(wallStyle, { n, s, e, w }, atlas.byName);
+      return resolveDawnLikeDungeonWallName(wallStyle, x, y, isWall, atlas.byName);
     }
   };
 

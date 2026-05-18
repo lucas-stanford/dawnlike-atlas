@@ -105,6 +105,61 @@ export function resolveDawnLikeWallName(baseName, neighbors, byName = {}) {
 }
 
 /**
+ * resolveDawnLikeDungeonWallName
+ *
+ * "Rot.js dungeon" wall autotile: the original heuristic used in
+ * `AutotileExample` to render dungeon corridors with correct corners
+ * and T-junctions on top of the shared `openPath` 11-variant set.
+ *
+ * Unlike a plain cardinal-neighbor check, this resolver does two
+ * things that matter for dungeon-shaped wall blobs (rectangular rooms
+ * + corridors, multi-tile-thick walls, L-bends):
+ *
+ *   1. **Surface-wall test.** A wall tile only resolves to a sprite
+ *      if it has at least one OPEN tile in its 8-neighborhood;
+ *      "deep interior" wall tiles (completely surrounded) return
+ *      `null` so the caller can skip them.
+ *
+ *   2. **Lateral / vertical open check on each cardinal neighbor.**
+ *      For the N/S/E/W slots in the autotile, the neighbor only
+ *      counts as connected if (a) it is itself a surface wall AND
+ *      (b) the perpendicular axis at that neighbor has an open
+ *      tile within the immediate 4-tile window — which prevents
+ *      the autotile from connecting walls across an empty room
+ *      diagonal that would otherwise produce ambiguous T-pieces.
+ *
+ * Callers provide an `isWall(x, y)` predicate; treat out-of-bounds
+ * as wall so the map border doesn't read as exposed.
+ */
+export function resolveDawnLikeDungeonWallName(baseName, x, y, isWall, byName = {}) {
+  const isSurfaceWall = (tx, ty) => {
+    if (!isWall(tx, ty)) return false;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue;
+        if (!isWall(tx + dx, ty + dy)) return true;
+      }
+    }
+    return false;
+  };
+
+  if (!isSurfaceWall(x, y)) return null;
+
+  const isOpen = (tx, ty) => !isWall(tx, ty);
+  const lateralOpen = (ny) =>
+    isOpen(x - 1, y) || isOpen(x + 1, y) || isOpen(x - 1, ny) || isOpen(x + 1, ny);
+  const verticalOpen = (nx) =>
+    isOpen(x, y - 1) || isOpen(x, y + 1) || isOpen(nx, y - 1) || isOpen(nx, y + 1);
+
+  const n = isSurfaceWall(x, y - 1) && lateralOpen(y - 1);
+  const s = isSurfaceWall(x, y + 1) && lateralOpen(y + 1);
+  const w = isSurfaceWall(x - 1, y) && verticalOpen(x - 1);
+  const e = isSurfaceWall(x + 1, y) && verticalOpen(x + 1);
+
+  return resolveDawnLikeWallName(baseName, { n, s, e, w }, byName);
+}
+
+/**
  * resolveDawnLikeForestName
  *
  * Maps 8-way tree neighbors to the DawnLike 16-tile tree set. Each suffix
