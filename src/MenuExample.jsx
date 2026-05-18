@@ -320,15 +320,16 @@ const MENU_OPTIONS = [
 
 // Paper-doll anatomical slot layout. Slots flank the central figure column;
 // EQUIPMENT_SLOTS index maps to character.equipped keys via the `key` field.
+// `placeholder` is the sprite drawn (grayscaled + dimmed) when the slot is empty.
 const EQUIPMENT_SLOTS = [
-  { key: 'head',    label: 'Head' },
-  { key: 'amulet',  label: 'Amulet' },
-  { key: 'weapon',  label: 'Weapon' },
-  { key: 'offhand', label: 'Off-hand' },
-  { key: 'body',    label: 'Body' },
-  { key: 'feet',    label: 'Feet' },
-  { key: 'ring',    label: 'Ring' },
-  { key: 'cloak',   label: 'Cloak' },
+  { key: 'head',    label: 'Head',     placeholder: 'helmet' },
+  { key: 'amulet',  label: 'Amulet',   placeholder: 'choker necklace' },
+  { key: 'weapon',  label: 'Weapon',   placeholder: 'broadsword' },
+  { key: 'offhand', label: 'Off-hand', placeholder: 'small shield' },
+  { key: 'body',    label: 'Body',     placeholder: 'iron armor' },
+  { key: 'feet',    label: 'Feet',     placeholder: 'elven boots' },
+  { key: 'ring',    label: 'Ring',     placeholder: 'gold ring' },
+  { key: 'cloak',   label: 'Cloak',    placeholder: 'forest cloak' },
 ];
 
 // =====================================================================
@@ -547,11 +548,15 @@ function PaperDollSlot({ atlas, slot, itemId, onClick, isHighlighted, className 
       title={data ? `${slot.label}: ${data.name}` : `${slot.label} (empty)`}
     >
       <Sprite atlas={atlas} name="brown gray square" scale={4} />
-      {itemId && (
+      {itemId ? (
         <div className="menu-paperdoll-slot-icon">
           <Sprite atlas={atlas} name={itemId} scale={3} />
         </div>
-      )}
+      ) : slot.placeholder && atlas.byName[slot.placeholder] ? (
+        <div className="menu-paperdoll-slot-placeholder">
+          <Sprite atlas={atlas} name={slot.placeholder} scale={3} />
+        </div>
+      ) : null}
       <span className="menu-paperdoll-slot-label pixel-small">{slot.label}</span>
     </button>
   );

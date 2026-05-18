@@ -177,16 +177,110 @@ export function resolveDawnLikePoolName(baseName, { n, s, e, w }, byName = {}) {
 }
 /**
  * resolveDawnLikeRiverName
+ *
+ * Maps cardinal river neighbors to the full 11-variant DawnLike river set:
+ *  - straights: `left right`, `up down`
+ *  - corners:   `up left`, `up right`, `down left`, `down right`
+ *  - T-junctions: `up down left`, `up down right`, `up left right`,
+ *                 `down left right`
+ *  - 4-way:     `up down left right`
+ *
+ * The `up left` / `up down left` sprites do not exist as separate `down right`
+ * mirrors in the atlas — instead the existing `up right` / `up down right`
+ * sprites are flipped horizontally (flipX) to render the western variant.
  */
 export function resolveDawnLikeRiverName(baseName, { n, s, e, w }, byName = {}) {
-  if (e && w) return { name: `${baseName} left right` };
-  if (n && s) return { name: `${baseName} up down` };
-  if (s && e) return { name: `${baseName} down right` };
-  if (s && w) return { name: `${baseName} down right`, flipX: true };
-  if (n && e) return { name: `${baseName} up right` };
-  if (n && w) return { name: `${baseName} up right`, flipX: true };
-  
-  if (e || w) return { name: `${baseName} left right` };
-  if (n || s) return { name: `${baseName} up down` };
-  return { name: `${baseName} up down` };
+  const get = (suffix, opts = {}) => {
+    const name = `${baseName} ${suffix}`.trim();
+    if (byName[name]) return { name, ...opts };
+    return null;
+  };
+
+  const count = (n ? 1 : 0) + (s ? 1 : 0) + (e ? 1 : 0) + (w ? 1 : 0);
+
+  // 4-way
+  if (count === 4) return get('up down left right') || get('left right') || { name: `${baseName} left right` };
+
+  // 3-way T-junctions
+  if (n && s && w && !e) return get('up down left') || get('up down') || { name: `${baseName} up down` };
+  if (n && s && e && !w) return get('up down right') || get('up down') || { name: `${baseName} up down` };
+  if (n && e && w && !s) return get('up left right') || get('left right') || { name: `${baseName} left right` };
+  if (s && e && w && !n) return get('down left right') || get('left right') || { name: `${baseName} left right` };
+
+  // 2-way straights
+  if (e && w) return get('left right') || { name: `${baseName} left right` };
+  if (n && s) return get('up down') || { name: `${baseName} up down` };
+
+  // 2-way corners
+  if (s && e) return get('down right') || { name: `${baseName} down right` };
+  if (s && w) return get('down right', { flipX: true }) || { name: `${baseName} down right`, flipX: true };
+  if (n && e) return get('up right') || { name: `${baseName} up right` };
+  if (n && w) return get('up right', { flipX: true }) || { name: `${baseName} up right`, flipX: true };
+
+  // 1-way endcaps — reuse straights
+  if (e || w) return get('left right') || { name: `${baseName} left right` };
+  if (n || s) return get('up down') || { name: `${baseName} up down` };
+
+  // 0-way isolated
+  return get('up down') || { name: `${baseName} up down` };
+}
+
+/**
+ * resolveDawnLikeMountainName
+ *
+ * Maps 4-way mountain neighbors to the 10-sprite DawnLike "peak" / "snowcap" /
+ * "volcano" / "mound" blob set: alone, c, n, s, e, w, ne, nw, se, sw.
+ *
+ * Convention (matches dawnlike upstream): the suffix names the CARDINAL EDGE
+ * that the tile sits on — `n` means "this tile is the northern edge of the
+ * blob" (has neighbors S+E+W, but nothing to the north). `c` is fully
+ * surrounded interior. Corners `ne/nw/se/sw` are outer corners where two
+ * cardinals are empty and the opposite two are filled (e.g. `ne` has
+ * neighbors S+W only).
+ *
+ * This is a true "blob" set with no T-junctions or thin straights; for
+ * non-blob shapes (a 1-wide column, etc.) we degrade gracefully to the
+ * closest available variant.
+ */
+export function resolveDawnLikeMountainName(baseName, { n, s, e, w }, byName = {}) {
+  const get = (suffix) => {
+    const name = `${baseName} ${suffix}`.trim();
+    return byName[name] ? name : null;
+  };
+
+  const count = (n ? 1 : 0) + (s ? 1 : 0) + (e ? 1 : 0) + (w ? 1 : 0);
+
+  // 4 neighbors → interior
+  if (count === 4) return get('c') || baseName;
+
+  // 3 neighbors → it's the missing-direction edge
+  if (count === 3) {
+    if (!n) return get('n') || get('c') || baseName;
+    if (!s) return get('s') || get('c') || baseName;
+    if (!e) return get('e') || get('c') || baseName;
+    if (!w) return get('w') || get('c') || baseName;
+  }
+
+  // 2 neighbors
+  if (count === 2) {
+    // Opposing pairs (thin column/row) — fall back to one of the cap directions
+    if (n && s) return get('n') || get('c') || baseName;
+    if (e && w) return get('e') || get('c') || baseName;
+    // Corners: outer corner is named by the two MISSING cardinals
+    if (s && e) return get('nw') || get('alone') || baseName;
+    if (s && w) return get('ne') || get('alone') || baseName;
+    if (n && e) return get('sw') || get('alone') || baseName;
+    if (n && w) return get('se') || get('alone') || baseName;
+  }
+
+  // 1 neighbor → cap (treat as a corner pair so it has rounded edges)
+  if (count === 1) {
+    if (n) return get('se') || get('sw') || get('alone') || baseName;
+    if (s) return get('ne') || get('nw') || get('alone') || baseName;
+    if (e) return get('sw') || get('nw') || get('alone') || baseName;
+    if (w) return get('se') || get('ne') || get('alone') || baseName;
+  }
+
+  // 0 neighbors → isolated peak
+  return get('alone') || get('c') || baseName;
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import * as ROT from 'rot-js';
 import { resolveAssetPath } from './utils/paths';
-import { resolveDawnLikeWallName, resolveDawnLikeForestName, resolveDawnLikeRiverName, resolveDawnLikeFloorName, resolveDawnLikePoolName } from './utils/autotile';
+import { resolveDawnLikeWallName, resolveDawnLikeForestName, resolveDawnLikeRiverName, resolveDawnLikeFloorName, resolveDawnLikePoolName, resolveDawnLikeMountainName } from './utils/autotile';
 import './Autotile.css';
 
 const TILE_SIZE = 16;
@@ -13,7 +13,7 @@ const DISPLAY_HEIGHT = 40;
 // "light oak nw ne" → "light oak" — the shared "base" of an autotile family.
 const SUFFIX_KEYWORDS = new Set([
   'left','right','up','down','flat','center','nw','ne','sw','se','dense',
-  'nwe','nswe','we','nsw','ns','nse','swe','c','n','s','e','w',
+  'nwe','nswe','we','nsw','ns','nse','swe','c','n','s','e','w','alone',
 ]);
 const cleanName = (name) => {
   const words = name.split(' ');
@@ -47,6 +47,22 @@ const RIVER_STYLES = [
   'lava flow',
 ];
 
+// Mountain "blob" families discovered in the atlas. Each has 10 sprites
+// (alone, c, n/s/e/w, ne/nw/se/sw). Includes peak (rocky), snowcap, volcano
+// and mound (rolling-hill) variants.
+const MOUNTAIN_STYLES = [
+  'brown peak',
+  'dark peak',
+  'green peak',
+  'red peak',
+  'yellow peak',
+  'blue peak',
+  'brown snowcap',
+  'dark snowcap',
+  'red volcano',
+  'green mound',
+];
+
 export default function OutdoorExample() {
   const [rawMapData, setRawMapData] = useState(null);
   const [atlas, setAtlas] = useState(null);
@@ -55,6 +71,7 @@ export default function OutdoorExample() {
   const [roadStyle, setRoadStyle] = useState('');
   const [riverStyle, setRiverStyle] = useState('');
   const [treeStyle, setTreeStyle] = useState('');
+  const [mountainStyle, setMountainStyle] = useState('');
   const [dirtStyle, setDirtStyle] = useState('');
   const [seed, setSeed] = useState(Math.floor(Math.random() * 1000000));
   const [loading, setLoading] = useState(true);
@@ -67,12 +84,13 @@ export default function OutdoorExample() {
   const [showConfig, setShowConfig] = useState(false);
 
   // Dynamically discover styles from atlas
-  const { discoveredTrees, discoveredFloors, discoveredRoads, discoveredRivers } = useMemo(() => {
-    if (!atlas?.byName) return { discoveredTrees: [], discoveredFloors: [], discoveredRoads: [], discoveredRivers: [] };
+  const { discoveredTrees, discoveredFloors, discoveredRoads, discoveredRivers, discoveredMountains } = useMemo(() => {
+    if (!atlas?.byName) return { discoveredTrees: [], discoveredFloors: [], discoveredRoads: [], discoveredRivers: [], discoveredMountains: [] };
     const trees = new Set();
     const floors = new Set();
     const roads = new Set();
     const rivers = new Set();
+    const mountains = new Set();
 
     Object.entries(atlas.byName).forEach(([name, data]) => {
       if (data.sourceFile === 'Objects/Tree' || data.sourceFile === 'Objects/Tree0') {
@@ -88,12 +106,18 @@ export default function OutdoorExample() {
         if (base.includes('trail')) roads.add(base);
         if (base.includes('river') || base.includes('flow')) rivers.add(base);
       }
+      if (data.sourceFile === 'Objects/Hill' || data.sourceFile === 'Objects/Hill0' || data.sourceFile === 'Objects/Hill1') {
+        const base = cleanName(name);
+        // Filter to peak/snowcap/volcano/mound families (the autotile sets)
+        if (base && /\b(peak|snowcap|volcano|mound)\b/.test(base)) mountains.add(base);
+      }
     });
-    return { 
+    return {
       discoveredTrees: Array.from(trees).sort(),
       discoveredFloors: Array.from(floors).sort(),
       discoveredRoads: Array.from(roads).sort(),
-      discoveredRivers: Array.from(rivers).sort()
+      discoveredRivers: Array.from(rivers).sort(),
+      discoveredMountains: Array.from(mountains).sort(),
     };
   }, [atlas]);
 
@@ -124,7 +148,11 @@ export default function OutdoorExample() {
     }
     if (discoveredRoads.length > 0 && !roadStyle) setRoadStyle(discoveredRoads[0]);
     if (discoveredRivers.length > 0 && !riverStyle) setRiverStyle(discoveredRivers[0]);
-  }, [discoveredTrees, discoveredFloors, discoveredRoads, discoveredRivers]);
+    if (discoveredMountains.length > 0 && !mountainStyle) {
+      const defaultMountain = discoveredMountains.find(s => s === 'brown peak') || discoveredMountains.find(s => s.endsWith('peak')) || discoveredMountains[0];
+      setMountainStyle(defaultMountain);
+    }
+  }, [discoveredTrees, discoveredFloors, discoveredRoads, discoveredRivers, discoveredMountains]);
 
   useEffect(() => {
     fetch(resolveAssetPath('/DawnlikeAtlas.json'))
@@ -145,23 +173,36 @@ export default function OutdoorExample() {
     const data = {};
 
     // 1. Generate Base Biomes
+    // Use a coarser secondary noise field to split "elevated" zones into
+    // forest vs mountain biomes — large contiguous regions of one or the
+    // other so zones feel distinct rather than salt-and-pepper.
     for (let y = 0; y < DISPLAY_HEIGHT; y++) {
       for (let x = 0; x < DISPLAY_WIDTH; x++) {
         const noise = simplex.get(x / 12, y / 12);
         const secNoise = simplex.get(x / 8 + 100, y / 8 + 100);
-        
-        let type = 'ground';
-        if (noise > 0.35) type = 'forest';
-        else if (secNoise > 0.4) type = 'dirt';
+        const biomeNoise = simplex.get(x / 22 + 500, y / 22 + 500);
 
-        const tileData = { 
-          type,
-          // FILL the forest with trees
-          tree: type === 'forest'
-        };
+        let type = 'ground';
+        let tree = false;
+        let mountain = false;
+        if (noise > 0.35) {
+          // Elevated terrain — pick a biome based on coarse biome noise so
+          // each contiguous "zone" is uniformly forest or mountain.
+          if (biomeNoise > 0) {
+            type = 'mountain';
+            mountain = true;
+          } else {
+            type = 'forest';
+            tree = true;
+          }
+        } else if (secNoise > 0.4) {
+          type = 'dirt';
+        }
+
+        const tileData = { type, tree, mountain };
 
         // Procedural Decorations on empty ground (Scatter, reduced density)
-        if (type !== 'forest' && ROT.RNG.getUniform() > 0.96) {
+        if (type === 'ground' && ROT.RNG.getUniform() > 0.96) {
           const decors = ['white flowers', 'sparse white flowers', 'blue flowers', 'sparse blue flowers', 'gold flowers', 'sparse gold flowers', 'red flowers', 'sparse red flowers', 'pebble', 'pebbles', 'rock'];
           tileData.decor = ROT.RNG.getItem(decors);
         }
@@ -174,46 +215,54 @@ export default function OutdoorExample() {
     let rx = 0;
     let ry = Math.floor(DISPLAY_HEIGHT / 2);
     const riverX = Math.floor(DISPLAY_WIDTH * 0.7);
-    
+
+    const clearForPath = (tx, ty) => {
+      const t = data[`${tx},${ty}`];
+      if (!t) return;
+      t.road = true;
+      t.tree = false;
+      t.mountain = false;
+    };
+
     while (rx < DISPLAY_WIDTH) {
-      if (data[`${rx},${ry}`]) {
-        data[`${rx},${ry}`].road = true;
-        data[`${rx},${ry}`].tree = false;
-      }
-      
+      clearForPath(rx, ry);
+
       const nearRiver = Math.abs(rx - riverX) < 4;
       const move = nearRiver ? 0 : ROT.RNG.getItem([-1, 0, 0, 0, 1]);
-      
+
       if (move !== 0 && ry + move >= 0 && ry + move < DISPLAY_HEIGHT) {
         ry += move;
-        if (data[`${rx},${ry}`]) {
-          data[`${rx},${ry}`].road = true;
-          data[`${rx},${ry}`].tree = false;
-        }
+        clearForPath(rx, ry);
       }
-      
+
       rx++;
-      if (rx < DISPLAY_WIDTH && data[`${rx},${ry}`]) {
-        data[`${rx},${ry}`].road = true;
-        data[`${rx},${ry}`].tree = false;
-      }
+      if (rx < DISPLAY_WIDTH) clearForPath(rx, ry);
     }
 
-    // 3. Generate River — one tile per row, meandering ±1 between rows. When
-    // the river shifts X between rows it places an L-bend connector tile so
-    // the path stays cardinally connected (no diagonal jumps). Bridges form
-    // wherever the path crosses a road.
+    // 3. Generate River — main channel meanders top→bottom by ±1 per row,
+    // placing an L-bend connector tile in the same row whenever X shifts so
+    // the path stays cardinally connected. Bridges form wherever a path
+    // crosses a road. After the main channel we splice in 1-2 tributaries
+    // that branch off the main river horizontally and flow to the map edge,
+    // creating T-junctions that exercise the full river autotile.
+    const clearForRiver = (tx, ty) => {
+      const t = data[`${tx},${ty}`];
+      if (!t) return null;
+      t.river = true;
+      t.tree = false;
+      t.mountain = false;
+      if (t.road) t.bridge = true;
+      return t;
+    };
+
     let rvX = riverX;
     let intersectionLocked = 0;
+    const mainRiverPath = [];
     for (let rvY = 0; rvY < DISPLAY_HEIGHT; rvY++) {
-      const tile = data[`${rvX},${rvY}`];
-      if (tile) {
-        tile.river = true;
-        tile.tree = false;
-        if (tile.road) {
-          tile.bridge = true;
-          intersectionLocked = 4;
-        }
+      const t = clearForRiver(rvX, rvY);
+      if (t) {
+        mainRiverPath.push({ x: rvX, y: rvY });
+        if (t.bridge) intersectionLocked = 4;
       }
       if (intersectionLocked > 0) {
         intersectionLocked--;
@@ -222,16 +271,48 @@ export default function OutdoorExample() {
       const move = ROT.RNG.getItem([-1, 0, 0, 0, 0, 1]);
       if (move !== 0 && rvX + move >= 0 && rvX + move < DISPLAY_WIDTH) {
         const newX = rvX + move;
-        const connector = data[`${newX},${rvY}`];
-        if (connector) {
-          connector.river = true;
-          connector.tree = false;
-          if (connector.road) {
-            connector.bridge = true;
-            intersectionLocked = 4;
-          }
+        const conn = clearForRiver(newX, rvY);
+        if (conn) {
+          if (conn.bridge) intersectionLocked = 4;
+          rvX = newX;
         }
-        rvX = newX;
+      }
+    }
+
+    // 3b. Tributaries — branch off the main river at 1-2 random points and
+    // flow horizontally toward the nearest map edge, meandering ±1 in Y as
+    // they go. The first cell of each tributary creates a T-junction in the
+    // main river (3-way), and a tributary crossing a road becomes a bridge.
+    const numTributaries = 1 + (ROT.RNG.getUniform() > 0.5 ? 1 : 0);
+    for (let t = 0; t < numTributaries; t++) {
+      // Pick a branch point well inside the map and not adjacent to a bridge.
+      const candidates = mainRiverPath.filter(p =>
+        p.y > 4 && p.y < DISPLAY_HEIGHT - 5 &&
+        p.x > 5 && p.x < DISPLAY_WIDTH - 5 &&
+        !data[`${p.x},${p.y}`]?.bridge
+      );
+      if (!candidates.length) break;
+      const start = ROT.RNG.getItem(candidates);
+      const goLeft = start.x > DISPLAY_WIDTH / 2;
+      const step = goLeft ? -1 : 1;
+      let tx = start.x + step;
+      let ty = start.y;
+      let trbLocked = 0;
+      while (tx >= 0 && tx < DISPLAY_WIDTH) {
+        const tile = clearForRiver(tx, ty);
+        if (tile?.bridge) trbLocked = 3;
+        if (trbLocked > 0) {
+          trbLocked--;
+          tx += step;
+          continue;
+        }
+        const dy = ROT.RNG.getItem([-1, 0, 0, 0, 0, 1]);
+        if (dy !== 0 && ty + dy >= 1 && ty + dy < DISPLAY_HEIGHT - 1) {
+          ty += dy;
+          const conn = clearForRiver(tx, ty);
+          if (conn?.bridge) trbLocked = 3;
+        }
+        tx += step;
       }
     }
 
@@ -240,9 +321,11 @@ export default function OutdoorExample() {
     for (let x = 5; x < DISPLAY_WIDTH - 5 && !built; x++) {
       for (let y = 5; y < DISPLAY_HEIGHT - 5; y++) {
         if (data[`${x},${y}`]?.road && !data[`${x},${y}`]?.river) {
-          if (data[`${x},${y-1}`] && !data[`${x},${y-1}`].river && !data[`${x},${y-1}`].road && data[`${x},${y-1}`].type !== 'water') {
-             data[`${x},${y-1}`].building = ROT.RNG.getItem(['homestead', 'campsite', 'fort']);
-             data[`${x},${y-1}`].tree = false;
+          const above = data[`${x},${y-1}`];
+          if (above && !above.river && !above.road && !above.mountain && above.type !== 'water') {
+             above.building = ROT.RNG.getItem(['homestead', 'campsite', 'fort']);
+             above.tree = false;
+             above.mountain = false;
              built = true; break;
           }
         }
@@ -366,6 +449,22 @@ export default function OutdoorExample() {
       });
     }
 
+    // Layer 4: Mountains (4-way blob autotile) — same z as trees since they
+    // never coexist on a single tile (a zone is one or the other).
+    if (tile.mountain && !tile.road && !tile.river && !tile.building) {
+      const n = !!mapData[`${x},${y-1}`]?.mountain;
+      const s = !!mapData[`${x},${y+1}`]?.mountain;
+      const w = !!mapData[`${x-1},${y}`]?.mountain;
+      const e = !!mapData[`${x+1},${y}`]?.mountain;
+      const name = resolveDawnLikeMountainName(mountainStyle || "brown peak", { n, s, e, w }, atlas.byName);
+      layers.push({
+        name,
+        z: 4,
+        reason: `Mountain blob`,
+        context: { kind: 'mountain', neighbors: { n, s, e, w } },
+      });
+    }
+
     return layers;
   };
 
@@ -392,7 +491,7 @@ export default function OutdoorExample() {
     }
     entries.sort((a, b) => a.pos.y - b.pos.y || a.pos.x - b.pos.x || a.z - b.z);
     return entries;
-  }, [spriteOverrides, mapData, atlas, treeStyle, terrainStyle, dirtStyle, roadStyle, riverStyle]);
+  }, [spriteOverrides, mapData, atlas, treeStyle, terrainStyle, dirtStyle, roadStyle, riverStyle, mountainStyle]);
 
   const copyLog = () => {
     const text = JSON.stringify(overrideLog, null, 2);
@@ -430,6 +529,7 @@ export default function OutdoorExample() {
             <div className="field-group"><label>Path Style</label><select value={roadStyle} onChange={e => setRoadStyle(e.target.value)}>{discoveredRoads.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div className="field-group"><label>River Style</label><select value={riverStyle} onChange={e => setRiverStyle(e.target.value)}>{discoveredRivers.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div className="field-group"><label>Tree Style</label><select value={treeStyle} onChange={e => setTreeStyle(e.target.value)}>{discoveredTrees.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+            <div className="field-group"><label>Mountain Style</label><select value={mountainStyle} onChange={e => setMountainStyle(e.target.value)}>{discoveredMountains.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div className="field-group"><label>Zoom: {scale.toFixed(1)}x</label><input type="range" min="1" max="6" step="0.5" value={scale} onChange={e => setScale(parseFloat(e.target.value))} /></div>
             <button className="primary-button" onClick={() => { setSpriteOverrides({}); setPinnedTile(null); setSeed(Math.floor(Math.random() * 1000000)); }}>🌲 Re-generate</button>
             {overrideLog.length > 0 && (
