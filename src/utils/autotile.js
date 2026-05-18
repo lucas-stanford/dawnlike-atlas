@@ -185,14 +185,35 @@ export function resolveDawnLikePoolName(baseName, { n, s, e, w }, byName = {}) {
  *                 `down left right`
  *  - 4-way:     `up down left right`
  *
- * The `up left` / `up down left` sprites do not exist as separate `down right`
- * mirrors in the atlas — instead the existing `up right` / `up down right`
- * sprites are flipped horizontally (flipX) to render the western variant.
+ * IMPORTANT — DawnLike naming convention:
+ *   For corners and T-junctions, the sprite suffix names the *opposite* of
+ *   the connected neighbors (it describes where the bend or cross-piece
+ *   sits, not where the water flows to). Specifically:
+ *
+ *   Corners — the bend sits in the named quadrant; river connects the
+ *   two cardinals OPPOSITE that quadrant:
+ *     `up left`    → bend NW, river connects S + E
+ *     `up right`   → bend NE, river connects S + W
+ *     `down left`  → bend SW, river connects N + E
+ *     `down right` → bend SE, river connects N + W
+ *
+ *   T-junctions — the three legs of the T are NOT the names in the
+ *   suffix. The suffix's three directions are the three "outer corners"
+ *   the cross-piece points toward. In practice: the one cardinal NOT in
+ *   the suffix is the direction the cross-piece extends:
+ *     `up down left`   → branches right  → river N + S + E
+ *     `up down right`  → branches left   → river N + S + W
+ *     `up left right`  → branches down   → river S + E + W
+ *     `down left right`→ branches up     → river N + E + W
+ *
+ *   Straights (`up down`, `left right`) and 4-way (`up down left right`)
+ *   follow the intuitive convention — name lists the cardinals with
+ *   river neighbors.
  */
 export function resolveDawnLikeRiverName(baseName, { n, s, e, w }, byName = {}) {
-  const get = (suffix, opts = {}) => {
+  const get = (suffix) => {
     const name = `${baseName} ${suffix}`.trim();
-    if (byName[name]) return { name, ...opts };
+    if (byName[name]) return { name };
     return null;
   };
 
@@ -201,21 +222,21 @@ export function resolveDawnLikeRiverName(baseName, { n, s, e, w }, byName = {}) 
   // 4-way
   if (count === 4) return get('up down left right') || get('left right') || { name: `${baseName} left right` };
 
-  // 3-way T-junctions
-  if (n && s && w && !e) return get('up down left') || get('up down') || { name: `${baseName} up down` };
-  if (n && s && e && !w) return get('up down right') || get('up down') || { name: `${baseName} up down` };
-  if (n && e && w && !s) return get('up left right') || get('left right') || { name: `${baseName} left right` };
-  if (s && e && w && !n) return get('down left right') || get('left right') || { name: `${baseName} left right` };
+  // 3-way T-junctions — see header docstring for the inverted naming rule.
+  if (n && s && e && !w) return get('up down left')    || get('up down')    || { name: `${baseName} up down` };
+  if (n && s && w && !e) return get('up down right')   || get('up down')    || { name: `${baseName} up down` };
+  if (s && e && w && !n) return get('up left right')   || get('left right') || { name: `${baseName} left right` };
+  if (n && e && w && !s) return get('down left right') || get('left right') || { name: `${baseName} left right` };
 
   // 2-way straights
   if (e && w) return get('left right') || { name: `${baseName} left right` };
   if (n && s) return get('up down') || { name: `${baseName} up down` };
 
-  // 2-way corners
-  if (s && e) return get('down right') || { name: `${baseName} down right` };
-  if (s && w) return get('down right', { flipX: true }) || { name: `${baseName} down right`, flipX: true };
-  if (n && e) return get('up right') || { name: `${baseName} up right` };
-  if (n && w) return get('up right', { flipX: true }) || { name: `${baseName} up right`, flipX: true };
+  // 2-way corners — see header docstring; suffix names the bend's quadrant.
+  if (s && e) return get('up left')    || { name: `${baseName} up left` };
+  if (s && w) return get('up right')   || { name: `${baseName} up right` };
+  if (n && e) return get('down left')  || { name: `${baseName} down left` };
+  if (n && w) return get('down right') || { name: `${baseName} down right` };
 
   // 1-way endcaps — reuse straights
   if (e || w) return get('left right') || { name: `${baseName} left right` };
