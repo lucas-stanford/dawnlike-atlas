@@ -461,23 +461,21 @@ export default function OutdoorExample() {
       layers.push({ name, z: 1, flipX, reason: `River connection` });
     }
 
-    // Layer 1.5: Bridge — pick the bridge variant whose deck orientation
-    // matches the river the bridge spans. Vertical river ⇒ `bridge n s`,
-    // horizontal river ⇒ `bridge e w`. When the river turns AT the bridge
-    // tile (only one cardinal neighbor is river) we use a diagonal
-    // bridge (`ne sw` or `nw se`) so the deck appears to clear the bend.
+    // Layer 1.5: Bridge — the bridge deck is part of the road, so its
+    // orientation follows the ROAD axis at this tile, not the river.
+    // Road N+S neighbors ⇒ `bridge n s`, road E+W ⇒ `bridge e w`. When
+    // the road bends AT the bridge tile, pick the diagonal whose axis
+    // matches the bend (N+E or S+W ⇒ `ne sw`; N+W or S+E ⇒ `nw se`).
     if (tile.bridge) {
-      const rn = !!mapData[`${x},${y-1}`]?.river;
-      const rs = !!mapData[`${x},${y+1}`]?.river;
-      const re = !!mapData[`${x+1},${y}`]?.river;
-      const rw = !!mapData[`${x-1},${y}`]?.river;
-      let bridgeName = 'bridge n s';
-      if (re && rw) bridgeName = 'bridge e w';
-      else if (rn && rs) bridgeName = 'bridge n s';
-      // Diagonal river bends: pick the diagonal bridge whose axis
-      // crosses the bend perpendicularly.
-      else if ((rn && re) || (rs && rw)) bridgeName = 'bridge nw se';
-      else if ((rn && rw) || (rs && re)) bridgeName = 'bridge ne sw';
+      const rn = !!mapData[`${x},${y-1}`]?.road;
+      const rs = !!mapData[`${x},${y+1}`]?.road;
+      const re = !!mapData[`${x+1},${y}`]?.road;
+      const rw = !!mapData[`${x-1},${y}`]?.road;
+      let bridgeName = 'bridge e w';
+      if (rn && rs) bridgeName = 'bridge n s';
+      else if (re && rw) bridgeName = 'bridge e w';
+      else if ((rn && re) || (rs && rw)) bridgeName = 'bridge ne sw';
+      else if ((rn && rw) || (rs && re)) bridgeName = 'bridge nw se';
       else if (rn || rs) bridgeName = 'bridge n s';
       else if (re || rw) bridgeName = 'bridge e w';
       if (!atlas.byName[bridgeName]) bridgeName = 'bridge n s';
@@ -618,7 +616,7 @@ export default function OutdoorExample() {
             <div className="field-group"><label>Zoom: {scale.toFixed(1)}x</label><input type="range" min="1" max="6" step="0.5" value={scale} onChange={e => setScale(parseFloat(e.target.value))} /></div>
             <button className="primary-button" onClick={() => { setSpriteOverrides({}); setPinnedTile(null); setSeed(Math.floor(Math.random() * 1000000)); }}>🌲 Re-generate</button>
             {overrideLog.length > 0 && (
-              <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.15)' }}>
+              <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <strong>Overrides ({overrideLog.length})</strong>
                   <span>
@@ -626,7 +624,7 @@ export default function OutdoorExample() {
                     <button onClick={() => setSpriteOverrides({})} style={{ marginLeft: 4 }} title="Clear all overrides">Clear</button>
                   </span>
                 </div>
-                <pre style={{ maxHeight: 240, overflow: 'auto', fontSize: 11, margin: 0, background: 'rgba(0,0,0,0.35)', padding: 6, borderRadius: 4 }}>
+                <pre style={{ maxHeight: 240, overflow: 'auto', fontSize: 11, margin: 0, background: 'rgba(0,0,0,0.35)', padding: 6, borderRadius: 4, color: '#fff' }}>
 {JSON.stringify(overrideLog, null, 2)}
                 </pre>
               </div>
