@@ -331,7 +331,7 @@ function DialogueModal({ atlas, onClose, frameFamily = 'gray white' }) {
     <div className="menu-dialogue-wrap">
       {/* Name plate above the box */}
       <div className="menu-nameplate">
-        <Frame atlas={atlas} w={5} h={2} family="red black" scale={1.5}>
+        <Frame atlas={atlas} w={6} h={2} family="red black" scale={1.25}>
           <div className="menu-nameplate-text">{line.speaker}</div>
         </Frame>
       </div>
@@ -497,10 +497,10 @@ function PaperDollSlot({ atlas, slot, itemId, onClick, isHighlighted }) {
       onClick={onClick}
       title={data ? `${slot.label}: ${data.name}` : `${slot.label} (empty)`}
     >
-      <Sprite atlas={atlas} name="brown gray square" scale={2} />
+      <Sprite atlas={atlas} name="brown gray square" scale={4} />
       {itemId && (
         <div className="menu-paperdoll-slot-icon">
-          <Sprite atlas={atlas} name={itemId} scale={2} />
+          <Sprite atlas={atlas} name={itemId} scale={3} />
         </div>
       )}
       <span className="menu-paperdoll-slot-label pixel-small">{slot.label}</span>
@@ -557,29 +557,14 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
   return (
     <Frame atlas={atlas} w={22} h={11} family={frameFamily}>
       <div className="menu-modal-title">Inventory</div>
+      <div className="menu-inv-gold-top">
+        <Sprite atlas={atlas} name="gold coin" scale={1.5} />
+        <span className="pixel-small">{gold} g</span>
+      </div>
       <button className="menu-modal-close" onClick={onClose}>
         <Sprite atlas={atlas} name="cancel box" scale={1.5} />
       </button>
       <div className="menu-modal-content">
-        <div className="menu-inv-header">
-          <div className="menu-inv-tabs">
-            {CATEGORIES.map(c => (
-              <button
-                key={c.id}
-                className={`menu-inv-tab${c.id === category ? ' is-selected' : ''}`}
-                onClick={() => setCategory(c.id)}
-              >
-                {c.icon && <Sprite atlas={atlas} name={c.icon} scale={1.5} />}
-                <span className="pixel-small">{c.label}</span>
-              </button>
-            ))}
-          </div>
-          <div className="menu-inv-gold">
-            <Sprite atlas={atlas} name="gold coin" scale={2} />
-            <span className="pixel-small">{gold} g</span>
-          </div>
-        </div>
-
         <div className="menu-inv-body">
           <div className="menu-inv-paperdoll-col">
             <div className="menu-paperdoll-char-tabs">
@@ -601,26 +586,41 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
             <PaperDoll atlas={atlas} character={equipChar} />
           </div>
 
-          <div className="menu-inventory-grid">
-            {filtered.map((it, i) => (
-              <button
-                key={it.id}
-                className={`menu-inventory-slot${i === selectedIdx ? ' is-selected' : ''}`}
-                onClick={() => setSelectedIdx(i)}
-                title={ITEM_DATA[it.id]?.name || it.id}
-              >
-                <Sprite atlas={atlas} name="brown gray square" scale={2} />
-                <div className="menu-inventory-slot-item">
-                  <Sprite atlas={atlas} name={it.id} scale={2} />
+          <div className="menu-inv-items-col">
+            <div className="menu-inv-tabs">
+              {CATEGORIES.map(c => (
+                <button
+                  key={c.id}
+                  className={`menu-inv-tab${c.id === category ? ' is-selected' : ''}`}
+                  onClick={() => setCategory(c.id)}
+                >
+                  {c.icon && <Sprite atlas={atlas} name={c.icon} scale={1.5} />}
+                  <span className="pixel-small">{c.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="menu-inventory-grid">
+              {filtered.map((it, i) => (
+                <button
+                  key={it.id}
+                  className={`menu-inventory-slot${i === selectedIdx ? ' is-selected' : ''}`}
+                  onClick={() => setSelectedIdx(i)}
+                  title={ITEM_DATA[it.id]?.name || it.id}
+                >
+                  <Sprite atlas={atlas} name="brown gray square" scale={2} />
+                  <div className="menu-inventory-slot-item">
+                    <Sprite atlas={atlas} name={it.id} scale={2} />
+                  </div>
+                  {it.count > 1 && <span className="menu-inventory-count">{it.count}</span>}
+                </button>
+              ))}
+              {Array.from({ length: Math.max(0, 32 - filtered.length) }).map((_, i) => (
+                <div key={`empty-${i}`} className="menu-inventory-slot is-empty">
+                  <Sprite atlas={atlas} name="brown gray square" scale={2} />
                 </div>
-                {it.count > 1 && <span className="menu-inventory-count">{it.count}</span>}
-              </button>
-            ))}
-            {Array.from({ length: Math.max(0, 32 - filtered.length) }).map((_, i) => (
-              <div key={`empty-${i}`} className="menu-inventory-slot is-empty">
-                <Sprite atlas={atlas} name="brown gray square" scale={2} />
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           <div className="menu-inv-detail">

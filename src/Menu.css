@@ -246,7 +246,7 @@ button {
 
 .menu-nameplate {
   margin-left: 28px;
-  margin-bottom: -8px;
+  margin-bottom: -16px;
   position: relative;
   z-index: 1;
 }
@@ -257,7 +257,7 @@ button {
   align-items: center;
   justify-content: center;
   font-family: var(--font-pixel);
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 1px;
   color: #f1ecd6;
   text-shadow: 1px 1px 0 #000;
@@ -267,7 +267,7 @@ button {
 
 .menu-modal-content-dialogue {
   cursor: pointer;
-  padding-top: 20px;
+  padding-top: 28px;
 }
 
 .menu-dialogue {
@@ -531,17 +531,27 @@ button {
 }
 
 /* ---------- Inventory modal ---------- */
-.menu-inv-header {
+.menu-inv-gold-top {
+  position: absolute;
+  top: 10px;
+  right: 44px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 6px;
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #f7d36b;
+  text-shadow: 1px 1px 0 #000;
+  z-index: 25;
+  pointer-events: none;
 }
+
 .menu-inv-tabs {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .menu-inv-tab {
   display: flex;
@@ -561,21 +571,19 @@ button {
   color: #2a2230;
 }
 
-.menu-inv-gold {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  color: #6a3a1a;
-  font-weight: bold;
-}
-
 .menu-inv-body {
   display: grid;
   grid-template-columns: 240px 1fr 260px;
   gap: 16px;
   flex: 1;
   min-height: 0;
+}
+
+.menu-inv-items-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
 }
 
 .menu-inv-paperdoll-col {
