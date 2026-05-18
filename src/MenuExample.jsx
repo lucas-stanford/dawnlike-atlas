@@ -261,13 +261,29 @@ function InventoryModal({ atlas, onClose }) {
   );
 }
 
+// ---------- Helpers ----------
+const HP_STEP = 1 / 6;
+
+function heartSprite(color, value) {
+  if (value >= 0.7) return `${color} heart full`;
+  if (value >= 0.4) return `${color} heart half`;
+  if (value >= 0.2) return `${color} heart low`;
+  if (value > 0) return `${color} heart sliver`;
+  return `${color} heart sliver`;
+}
+
+function cycleDown(v) {
+  const next = +(v - HP_STEP).toFixed(4);
+  return next <= 0.001 ? 1 : next;
+}
+
 // ---------- Main component ----------
 export default function MenuExample() {
   const [atlas, setAtlas] = useState(null);
   const [error, setError] = useState(null);
   const [openModal, setOpenModal] = useState(null);
-  const [hp] = useState(0.72);
-  const [mp] = useState(0.45);
+  const [hp, setHp] = useState(1);
+  const [mp, setMp] = useState(1);
 
   useEffect(() => {
     fetch(resolveAssetPath('/DawnlikeAtlas.json'))
@@ -290,16 +306,26 @@ export default function MenuExample() {
     <div className="menu-stage">
       {/* HUD */}
       <div className="menu-hud">
-        <div className="menu-hud-row">
-          <Sprite atlas={atlas} name="red heart full" scale={2} />
+        <button
+          type="button"
+          className="menu-hud-row menu-hud-button"
+          onClick={() => setHp(cycleDown)}
+          title="Click to drain HP"
+        >
+          <Sprite atlas={atlas} name={heartSprite('red', hp)} scale={2} />
           <Gauge atlas={atlas} color="red" value={hp} segments={6} scale={2} />
           <span className="menu-hud-label">{Math.round(hp * 100)}</span>
-        </div>
-        <div className="menu-hud-row">
-          <Sprite atlas={atlas} name="blue heart full" scale={2} />
+        </button>
+        <button
+          type="button"
+          className="menu-hud-row menu-hud-button"
+          onClick={() => setMp(cycleDown)}
+          title="Click to drain MP"
+        >
+          <Sprite atlas={atlas} name={heartSprite('blue', mp)} scale={2} />
           <Gauge atlas={atlas} color="blue" value={mp} segments={6} scale={2} />
           <span className="menu-hud-label">{Math.round(mp * 100)}</span>
-        </div>
+        </button>
       </div>
 
       {/* Title */}

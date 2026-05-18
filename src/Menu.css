@@ -32,6 +32,26 @@
   gap: 6px;
 }
 
+.menu-hud-button {
+  background: transparent;
+  border: none;
+  padding: 4px 6px;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 100ms ease, transform 80ms ease;
+}
+
+.menu-hud-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.menu-hud-button:active {
+  transform: translateY(1px);
+}
+
 .menu-hud-label {
   font-size: 14px;
   letter-spacing: 1px;
