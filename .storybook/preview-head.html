@@ -1,0 +1,29 @@
+<!-- Pixel UI fonts used across all stories. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap"
+  rel="stylesheet"
+/>
+<style>
+  :root {
+    --font-pixel: 'Press Start 2P', 'Courier New', monospace;
+    --font-pixel-small: 'Silkscreen', 'Press Start 2P', 'Courier New', monospace;
+  }
+  body,
+  .sb-show-main {
+    font-family: var(--font-pixel);
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
+    image-rendering: pixelated;
+  }
+  /* Tighten letter-spacing default — Press Start 2P is very wide. */
+  body {
+    letter-spacing: 0;
+  }
+  /* Helper class for small text where Press Start 2P is unreadable. */
+  .pixel-small {
+    font-family: var(--font-pixel-small);
+    letter-spacing: 0.5px;
+  }
+</style>

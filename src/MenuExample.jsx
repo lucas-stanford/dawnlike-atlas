@@ -1,19 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { resolveAssetPath } from './utils/paths';
 import './Menu.css';
 
 const TILE = 16;
 const SCALE = 3;
-const TILE_PX = TILE * SCALE;
 
-// ---------- Sprite primitive ----------
+// =====================================================================
+// Primitives
+// =====================================================================
+
 function Sprite({ atlas, name, scale = SCALE, flipY = false, flipX = false, style }) {
   const sprite = atlas?.byName?.[name];
   if (!sprite) return <div style={{ width: TILE * scale, height: TILE * scale, ...style }} />;
-  const transform = [
-    flipX ? 'scaleX(-1)' : '',
-    flipY ? 'scaleY(-1)' : '',
-  ].filter(Boolean).join(' ');
+  const transform = [flipX ? 'scaleX(-1)' : '', flipY ? 'scaleY(-1)' : ''].filter(Boolean).join(' ');
   return (
     <div
       style={{
@@ -30,19 +29,15 @@ function Sprite({ atlas, name, scale = SCALE, flipY = false, flipX = false, styl
   );
 }
 
-// ---------- 9-slice frame using gray white parts ----------
-// Top row uses 'nw n ne' (the title-bar row), middle rows use 'w c e',
-// bottom row reuses 'nw n ne' flipped vertically as 'sw s se' (footer bar).
-function Frame({ atlas, w, h, scale = SCALE, children, style }) {
+// 9-slice frame. The atlas's frame families ('gray white', 'red black', etc.)
+// only provide nw/n/ne/w/c/e/square — we flip the top row vertically for the
+// bottom corners/edges so we get a clean rectangular border.
+function Frame({ atlas, w, h, family = 'gray white', scale = SCALE, children, style }) {
   const cells = [];
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      const isTop = y === 0;
-      const isBot = y === h - 1;
-      const isL = x === 0;
-      const isR = x === w - 1;
-      let part = 'c';
-      let flipY = false;
+      const isTop = y === 0, isBot = y === h - 1, isL = x === 0, isR = x === w - 1;
+      let part = 'c', flipY = false;
       if (isTop && isL) part = 'nw';
       else if (isTop && isR) part = 'ne';
       else if (isTop) part = 'n';
@@ -52,71 +47,47 @@ function Frame({ atlas, w, h, scale = SCALE, children, style }) {
       else if (isL) part = 'w';
       else if (isR) part = 'e';
       cells.push(
-        <div
-          key={`${x},${y}`}
-          style={{
-            position: 'absolute',
-            left: x * TILE * scale,
-            top: y * TILE * scale,
-          }}
-        >
-          <Sprite atlas={atlas} name={`gray white ${part}`} scale={scale} flipY={flipY} />
+        <div key={`${x},${y}`} style={{ position: 'absolute', left: x * TILE * scale, top: y * TILE * scale }}>
+          <Sprite atlas={atlas} name={`${family} ${part}`} scale={scale} flipY={flipY} />
         </div>
       );
     }
   }
   return (
-    <div style={{
-      position: 'relative',
-      width: w * TILE * scale,
-      height: h * TILE * scale,
-      ...style,
-    }}>
+    <div style={{ position: 'relative', width: w * TILE * scale, height: h * TILE * scale, ...style }}>
       {cells}
       {children}
     </div>
   );
 }
 
-// ---------- HP/MP gauge using gauge chrome + colored fill ----------
-// chrome single = standalone 1-tile gauge; chrome left/center/right tiles
-// to extend. The colored fill sprites (full/most/half/low) map to four
-// levels of bar fullness; we pick one based on the value 0..1.
+// Multi-segment gauge: colored fill under chrome frame.
 function Gauge({ atlas, color, value, segments = 4, scale = 2 }) {
-  // Pick fill level per segment based on the value
   const segWidth = 1 / segments;
-  const fillLevels = ['low', 'half', 'most', 'full'];
-  const pickLevel = (segIdx) => {
-    const segStart = segIdx * segWidth;
-    const segEnd = (segIdx + 1) * segWidth;
+  const pickLevel = (i) => {
+    const segStart = i * segWidth, segEnd = (i + 1) * segWidth;
     if (value >= segEnd) return 'full';
     if (value <= segStart) return null;
-    // Partial fill: map (value - segStart) / segWidth to a level
     const frac = (value - segStart) / segWidth;
     if (frac > 0.75) return 'full';
     if (frac > 0.5) return 'most';
     if (frac > 0.25) return 'half';
     return 'low';
   };
-
   return (
     <div style={{ position: 'relative', width: segments * TILE * scale, height: TILE * scale }}>
-      {/* Fill layer (under the frame) */}
       {Array.from({ length: segments }).map((_, i) => {
         const level = pickLevel(i);
         return (
-          <div key={`fill-${i}`} style={{ position: 'absolute', left: i * TILE * scale, top: 0 }}>
+          <div key={`f-${i}`} style={{ position: 'absolute', left: i * TILE * scale, top: 0 }}>
             {level && <Sprite atlas={atlas} name={`gauge ${color} ${level}`} scale={scale} />}
           </div>
         );
       })}
-      {/* Frame layer (on top) */}
       {Array.from({ length: segments }).map((_, i) => {
-        const part = segments === 1
-          ? 'single'
-          : i === 0 ? 'left' : i === segments - 1 ? 'right' : 'center';
+        const part = segments === 1 ? 'single' : i === 0 ? 'left' : i === segments - 1 ? 'right' : 'center';
         return (
-          <div key={`frame-${i}`} style={{ position: 'absolute', left: i * TILE * scale, top: 0 }}>
+          <div key={`c-${i}`} style={{ position: 'absolute', left: i * TILE * scale, top: 0 }}>
             <Sprite atlas={atlas} name={`gauge chrome ${part}`} scale={scale} />
           </div>
         );
@@ -125,109 +96,380 @@ function Gauge({ atlas, color, value, segments = 4, scale = 2 }) {
   );
 }
 
-// ---------- Main menu button: speech-bubble icon + label ----------
-function MenuButton({ atlas, iconName, label, onClick, scale = 4 }) {
-  return (
-    <button className="menu-button" onClick={onClick}>
-      <Sprite atlas={atlas} name={iconName} scale={scale} />
-      <span className="menu-button-label">{label}</span>
-    </button>
-  );
+// =====================================================================
+// Hooks
+// =====================================================================
+
+function useTypewriter(text, speed = 22) {
+  const [shown, setShown] = useState('');
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    setShown(''); setDone(false);
+    if (!text) { setDone(true); return; }
+    let i = 0;
+    const id = setInterval(() => {
+      i++;
+      if (i >= text.length) {
+        setShown(text); setDone(true); clearInterval(id);
+      } else {
+        setShown(text.slice(0, i));
+      }
+    }, speed);
+    return () => clearInterval(id);
+  }, [text, speed]);
+  const skip = () => { setShown(text); setDone(true); };
+  return { shown, done, skip };
 }
 
-// ---------- Sample dialogue / character / inventory data ----------
-const DIALOGUE = {
-  speaker: 'Old Sage',
-  portrait: 'ordinary human',
-  text: '"Traveler! The northern caves stir with unrest. The lich of Vorn has awoken from his long slumber. Will you aid us?"',
+// =====================================================================
+// Data
+// =====================================================================
+
+const DIALOGUE_SCRIPT = [
+  { speaker: 'Old Sage', portrait: 'ordinary human', text: '"Traveler! At long last you have come. The wind itself spoke your name."' },
+  { speaker: 'Old Sage', portrait: 'ordinary human', text: '"The northern caves stir with unrest. The lich of Vorn has awoken from his thousand-year slumber."' },
+  { speaker: 'Old Sage', portrait: 'ordinary human', text: '"Will you take up the silver blade and ride to meet him?"',
+    choices: [
+      { label: 'Accept the quest', icon: 'confirm box', next: 'accept' },
+      { label: 'Tell me more first', icon: 'talk box', next: 'more' },
+      { label: 'Decline politely', icon: 'cancel box', next: 'decline' },
+    ],
+  },
+];
+
+const DIALOGUE_BRANCHES = {
+  accept: [
+    { speaker: 'Old Sage', portrait: 'ordinary human', text: '"Brave soul! Take this blessed scroll — it will guide you through the dark woods."' },
+  ],
+  more: [
+    { speaker: 'Old Sage', portrait: 'ordinary human', text: '"The lich commands an army of bone — skeletons, wraiths, and worse things still."' },
+  ],
+  decline: [
+    { speaker: 'Old Sage', portrait: 'ordinary human', text: '"…Then the world is truly doomed. May the gods forgive your choice."' },
+  ],
 };
 
-const CHARACTER = {
-  name: 'Arden',
-  klass: 'Knight',
-  portrait: 'knight',
-  hp: 24, hpMax: 30,
-  mp: 12, mpMax: 20,
-  str: 17, dex: 12, intel: 9,
-  equipped: ['helmet', 'broadsword', 'small shield'],
+const CHARACTERS = [
+  {
+    name: 'Arden', klass: 'Knight of Vorn', portrait: 'knight',
+    level: 7, xp: 240, xpMax: 400,
+    hp: 24, hpMax: 30, mp: 6, mpMax: 12,
+    str: 17, dex: 12, intel: 9,
+    resists: { fire: 0.4, cold: 0.2, lightning: 0.1, poison: 0.3 },
+    abilities: [
+      { name: 'Shield Bash', icon: 'small shield' },
+      { name: 'Cleave', icon: 'broadsword' },
+      { name: 'Rally', icon: 'red heart full' },
+    ],
+  },
+  {
+    name: 'Lyra', klass: 'Archmage of Sael', portrait: 'archmage',
+    level: 8, xp: 510, xpMax: 600,
+    hp: 14, hpMax: 22, mp: 24, mpMax: 28,
+    str: 7, dex: 11, intel: 19,
+    resists: { fire: 0.6, cold: 0.7, lightning: 0.5, poison: 0.2 },
+    abilities: [
+      { name: 'Fireball', icon: 'big flame' },
+      { name: 'Ice Lance', icon: 'cyan potion' },
+      { name: 'Arcane Mist', icon: 'crystal ball' },
+    ],
+  },
+  {
+    name: 'Kael', klass: 'Shadow Ninja', portrait: 'ninja',
+    level: 6, xp: 180, xpMax: 350,
+    hp: 19, hpMax: 24, mp: 10, mpMax: 16,
+    str: 13, dex: 18, intel: 11,
+    resists: { fire: 0.2, cold: 0.3, lightning: 0.3, poison: 0.5 },
+    abilities: [
+      { name: 'Backstab', icon: 'short sword' },
+      { name: 'Smoke Veil', icon: 'gray scroll' },
+      { name: 'Throw Shuriken', icon: 'shuriken' },
+    ],
+  },
+  {
+    name: 'Mira', klass: 'High Priestess', portrait: 'priestess',
+    level: 7, xp: 320, xpMax: 400,
+    hp: 20, hpMax: 26, mp: 18, mpMax: 24,
+    str: 9, dex: 12, intel: 16,
+    resists: { fire: 0.3, cold: 0.3, lightning: 0.3, poison: 0.6 },
+    abilities: [
+      { name: 'Heal', icon: 'red heart full' },
+      { name: 'Sanctuary', icon: 'white scroll' },
+      { name: 'Smite', icon: 'mace' },
+    ],
+  },
+];
+
+const ITEM_DATA = {
+  'broadsword':           { name: 'Broadsword',           type: 'Weapon',  desc: 'A trusted steel blade — perfectly balanced.',          stats: '+8 ATK',         value: 120 },
+  'short sword':          { name: 'Short Sword',          type: 'Weapon',  desc: 'Light and quick, favoured by scouts.',                stats: '+5 ATK',         value: 60  },
+  'small shield':         { name: 'Small Shield',         type: 'Armor',   desc: 'A round wooden shield rimmed with iron.',             stats: '+4 DEF',         value: 80  },
+  'large shield':         { name: 'Large Shield',         type: 'Armor',   desc: 'A heavy kite shield. Slows you, but turns a blade.',  stats: '+9 DEF, -1 DEX', value: 180 },
+  'helmet':               { name: 'Iron Helm',            type: 'Armor',   desc: 'Plain but reliable head protection.',                 stats: '+2 DEF',         value: 50  },
+  'ruby potion':          { name: 'Potion of Healing',    type: 'Potion',  desc: 'Restores a moderate amount of HP.',                   stats: '+25 HP',         value: 40  },
+  'emerald potion':       { name: 'Potion of Mana',       type: 'Potion',  desc: 'Replenishes the arcane reserves.',                    stats: '+20 MP',         value: 45  },
+  'yellow potion':        { name: 'Potion of Vigor',      type: 'Potion',  desc: 'Grants a surge of strength for one battle.',          stats: '+3 STR (1m)',    value: 90  },
+  'orange potion':        { name: 'Potion of Fire Resist',type: 'Potion',  desc: 'Wards the body against flame.',                       stats: '+25% Fire R',    value: 70  },
+  'dark green potion':    { name: 'Potion of Antidote',   type: 'Potion',  desc: 'Cleanses poison from the blood.',                     stats: 'Cure Poison',    value: 35  },
+  'white scroll':         { name: 'Scroll of Light',      type: 'Scroll',  desc: 'Conjures a sphere of pure light.',                    stats: 'Cast: Light',    value: 25  },
+  'gray scroll':          { name: 'Scroll of Smoke',      type: 'Scroll',  desc: 'A veil of grey smoke obscures vision.',               stats: 'Cast: Smoke',    value: 30  },
+  'dusty cyan scroll':    { name: 'Scroll of Recall',     type: 'Scroll',  desc: 'Returns you to the last shrine you visited.',         stats: 'Cast: Recall',   value: 200 },
+  'long scroll':          { name: 'Map of the Caves',     type: 'Scroll',  desc: 'A weathered parchment marked with the Old Roads.',    stats: 'Reveals Map',    value: 150 },
+  'pile of copper coins': { name: 'Copper Coins',         type: 'Misc',    desc: 'A small handful of tarnished coppers.',               stats: 'Currency',       value: 1   },
+  'crystal ball':         { name: 'Crystal Ball',         type: 'Misc',    desc: 'Shows shapes in the swirling mists. Sometimes true.', stats: 'Foresight',      value: 800 },
+  'bag':                  { name: 'Leather Bag',          type: 'Misc',    desc: 'Doubles your carrying capacity.',                     stats: '+10 slots',      value: 100 },
+  'closed chest':         { name: 'Locked Chest',         type: 'Misc',    desc: 'You sense treasure within… if only you had the key.', stats: 'Locked',         value: 0   },
 };
 
 const INVENTORY = [
-  ['broadsword', 1], ['small shield', 1], ['helmet', 1],
-  ['ruby potion', 3], ['emerald potion', 2], ['yellow potion', 1],
-  ['white scroll', 4], ['gray scroll', 1], ['dusty cyan scroll', 1],
-  ['pile of copper coins', 14], ['crystal ball', 1], ['bag', 1],
-  ['closed chest', 1], ['short sword', 1], ['large shield', 1],
-  ['orange potion', 2], ['dark green potion', 1], ['long scroll', 2],
+  { id: 'broadsword',           count: 1,  category: 'weapons' },
+  { id: 'short sword',          count: 1,  category: 'weapons' },
+  { id: 'small shield',         count: 1,  category: 'armor' },
+  { id: 'large shield',         count: 1,  category: 'armor' },
+  { id: 'helmet',               count: 1,  category: 'armor' },
+  { id: 'ruby potion',          count: 3,  category: 'potions' },
+  { id: 'emerald potion',       count: 2,  category: 'potions' },
+  { id: 'yellow potion',        count: 1,  category: 'potions' },
+  { id: 'orange potion',        count: 2,  category: 'potions' },
+  { id: 'dark green potion',    count: 1,  category: 'potions' },
+  { id: 'white scroll',         count: 4,  category: 'scrolls' },
+  { id: 'gray scroll',          count: 1,  category: 'scrolls' },
+  { id: 'dusty cyan scroll',    count: 1,  category: 'scrolls' },
+  { id: 'long scroll',          count: 2,  category: 'scrolls' },
+  { id: 'crystal ball',         count: 1,  category: 'misc' },
+  { id: 'bag',                  count: 1,  category: 'misc' },
+  { id: 'closed chest',         count: 1,  category: 'misc' },
 ];
 
-// ---------- Modals ----------
+const CATEGORIES = [
+  { id: 'all',     label: 'All',     icon: null },
+  { id: 'weapons', label: 'Weapons', icon: 'broadsword' },
+  { id: 'armor',   label: 'Armor',   icon: 'small shield' },
+  { id: 'potions', label: 'Potions', icon: 'ruby potion' },
+  { id: 'scrolls', label: 'Scrolls', icon: 'white scroll' },
+  { id: 'misc',    label: 'Misc',    icon: 'crystal ball' },
+];
+
+const RESIST_COLORS = {
+  fire:      { color: 'red',    icon: 'big flame' },
+  cold:      { color: 'blue',   icon: 'cyan potion' },
+  lightning: { color: 'yellow', icon: 'yellow potion' },
+  poison:    { color: 'green',  icon: 'dark green potion' },
+};
+
+const MENU_OPTIONS = [
+  { id: 'dialogue',  label: 'Speak to the Sage',   icon: 'talk box' },
+  { id: 'character', label: 'View Party Roster',   icon: 'love box' },
+  { id: 'inventory', label: 'Open Inventory',      icon: 'alert box' },
+];
+
+// =====================================================================
+// Dialogue modal
+// =====================================================================
+
 function DialogueModal({ atlas, onClose }) {
+  const [path, setPath] = useState({ branch: 'main', index: 0 });
+  const [choiceIdx, setChoiceIdx] = useState(0);
+
+  const script = path.branch === 'main' ? DIALOGUE_SCRIPT : DIALOGUE_BRANCHES[path.branch];
+  const line = script[path.index];
+  const { shown, done, skip } = useTypewriter(line?.text || '', 22);
+
+  const isLastInBranch = path.index >= script.length - 1;
+  const showChoices = done && line?.choices && line.choices.length > 0;
+
+  const advance = () => {
+    if (!done) { skip(); return; }
+    if (showChoices) return;
+    if (!isLastInBranch) {
+      setPath(p => ({ ...p, index: p.index + 1 }));
+    } else {
+      onClose();
+    }
+  };
+
+  const pickChoice = (i) => {
+    const choice = line.choices[i];
+    setPath({ branch: choice.next, index: 0 });
+    setChoiceIdx(0);
+  };
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (showChoices) {
+        if (e.key === 'ArrowDown') { setChoiceIdx(i => Math.min(i + 1, line.choices.length - 1)); e.preventDefault(); }
+        if (e.key === 'ArrowUp')   { setChoiceIdx(i => Math.max(i - 1, 0)); e.preventDefault(); }
+        if (e.key === 'Enter' || e.key === ' ') { pickChoice(choiceIdx); e.preventDefault(); }
+      } else {
+        if (e.key === 'Enter' || e.key === ' ') { advance(); e.preventDefault(); }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
   return (
-    <Frame atlas={atlas} w={14} h={7}>
-      <div className="menu-modal-title">Dialogue</div>
-      <button className="menu-modal-close" onClick={onClose}>
-        <Sprite atlas={atlas} name="cancel box" scale={1.5} />
-      </button>
-      <div className="menu-modal-content">
-        <div className="menu-dialogue">
-          <div className="menu-dialogue-portrait">
-            <Sprite atlas={atlas} name={DIALOGUE.portrait} scale={4} />
-          </div>
-          <div className="menu-dialogue-text">
-            <div className="menu-dialogue-speaker">{DIALOGUE.speaker}</div>
-            {DIALOGUE.text}
-          </div>
-        </div>
-        <div className="menu-dialogue-actions">
-          <button className="menu-action-btn" onClick={onClose}>
-            <Sprite atlas={atlas} name="confirm box" scale={2} />
-            Accept
-          </button>
-          <button className="menu-action-btn" onClick={onClose}>
-            <Sprite atlas={atlas} name="cancel box" scale={2} />
-            Decline
-          </button>
-        </div>
+    <div className="menu-dialogue-wrap">
+      {/* Name plate above the box */}
+      <div className="menu-nameplate">
+        <Frame atlas={atlas} w={6} h={2} family="red black">
+          <div className="menu-nameplate-text">{line.speaker}</div>
+        </Frame>
       </div>
-    </Frame>
+
+      <Frame atlas={atlas} w={16} h={6}>
+        <button className="menu-modal-close" onClick={onClose} title="Close (Esc)">
+          <Sprite atlas={atlas} name="cancel box" scale={1.5} />
+        </button>
+        <div className="menu-modal-content menu-modal-content-dialogue" onClick={advance}>
+          <div className="menu-dialogue">
+            <div className="menu-dialogue-portrait">
+              <Frame atlas={atlas} w={3} h={3} family="white black">
+                <div className="menu-dialogue-portrait-inner">
+                  <Sprite atlas={atlas} name={line.portrait} scale={4} />
+                </div>
+              </Frame>
+            </div>
+            <div className="menu-dialogue-body">
+              <div className="menu-dialogue-text pixel-small">
+                {shown}
+                {!done && <span className="menu-typewriter-caret">|</span>}
+              </div>
+
+              {showChoices && (
+                <div className="menu-dialogue-choices">
+                  {line.choices.map((c, i) => (
+                    <button
+                      key={c.label}
+                      className={`menu-choice${i === choiceIdx ? ' is-selected' : ''}`}
+                      onClick={(e) => { e.stopPropagation(); pickChoice(i); }}
+                      onMouseEnter={() => setChoiceIdx(i)}
+                    >
+                      <div className="menu-choice-cursor">
+                        {i === choiceIdx && <Sprite atlas={atlas} name="pointer e" scale={1.5} />}
+                      </div>
+                      <Sprite atlas={atlas} name={c.icon} scale={1.5} />
+                      <span className="pixel-small">{c.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {done && !showChoices && (
+                <div className="menu-dialogue-continue">
+                  <Sprite atlas={atlas} name="pointer s" scale={1.5} />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </Frame>
+    </div>
+  );
+}
+
+// =====================================================================
+// Character / Party modal
+// =====================================================================
+
+function StatBar({ atlas, label, value, max = 20, color = 'gray' }) {
+  return (
+    <div className="menu-statbar-row">
+      <span className="menu-statbar-label">{label}</span>
+      <Gauge atlas={atlas} color={color} value={value / max} segments={5} scale={1.5} />
+      <span className="pixel-small menu-statbar-value">{value}</span>
+    </div>
   );
 }
 
 function CharacterModal({ atlas, onClose }) {
+  const [selected, setSelected] = useState(0);
+  const ch = CHARACTERS[selected];
+
   return (
-    <Frame atlas={atlas} w={14} h={7}>
-      <div className="menu-modal-title">Character</div>
+    <Frame atlas={atlas} w={18} h={9}>
+      <div className="menu-modal-title">Party Roster</div>
       <button className="menu-modal-close" onClick={onClose}>
         <Sprite atlas={atlas} name="cancel box" scale={1.5} />
       </button>
       <div className="menu-modal-content">
+        <div className="menu-character-tabs">
+          {CHARACTERS.map((c, i) => (
+            <button
+              key={c.name}
+              type="button"
+              className={`menu-character-tab${i === selected ? ' is-selected' : ''}`}
+              onClick={() => setSelected(i)}
+              title={`${c.name} — ${c.klass}`}
+            >
+              <Sprite atlas={atlas} name="brown gray square" scale={2} />
+              <div className="menu-character-tab-icon">
+                <Sprite atlas={atlas} name={c.portrait} scale={2} />
+              </div>
+              <div className="menu-character-tab-level pixel-small">Lv {c.level}</div>
+            </button>
+          ))}
+        </div>
+
         <div className="menu-character">
-          <div className="menu-character-portrait">
-            <Sprite atlas={atlas} name={CHARACTER.portrait} scale={4} />
-            <div className="menu-character-name">{CHARACTER.name}</div>
-            <div className="menu-character-class">{CHARACTER.klass}</div>
+          <div className="menu-character-portrait-col">
+            <div className="menu-character-portrait-frame">
+              <Frame atlas={atlas} w={4} h={4} family="white black" scale={2}>
+                <div className="menu-character-portrait-inner">
+                  <Sprite atlas={atlas} name={ch.portrait} scale={4} />
+                </div>
+              </Frame>
+            </div>
+            <div className="menu-character-name">{ch.name}</div>
+            <div className="menu-character-class pixel-small">{ch.klass}</div>
+            <div className="menu-character-level pixel-small">
+              Lv {ch.level} &nbsp;·&nbsp; XP {ch.xp}/{ch.xpMax}
+            </div>
+            <Gauge atlas={atlas} color="yellow" value={ch.xp / ch.xpMax} segments={5} scale={1.5} />
           </div>
+
           <div className="menu-character-stats">
             <div className="menu-stat-row">
               <span className="menu-stat-label">HP</span>
-              <Gauge atlas={atlas} color="red" value={CHARACTER.hp / CHARACTER.hpMax} segments={5} scale={1.5} />
-              <span>{CHARACTER.hp} / {CHARACTER.hpMax}</span>
+              <Gauge atlas={atlas} color="red" value={ch.hp / ch.hpMax} segments={6} scale={2} />
+              <span className="pixel-small menu-stat-value">{ch.hp}/{ch.hpMax}</span>
             </div>
             <div className="menu-stat-row">
               <span className="menu-stat-label">MP</span>
-              <Gauge atlas={atlas} color="blue" value={CHARACTER.mp / CHARACTER.mpMax} segments={5} scale={1.5} />
-              <span>{CHARACTER.mp} / {CHARACTER.mpMax}</span>
+              <Gauge atlas={atlas} color="blue" value={ch.mp / ch.mpMax} segments={6} scale={2} />
+              <span className="pixel-small menu-stat-value">{ch.mp}/{ch.mpMax}</span>
             </div>
-            <div className="menu-stat-row" style={{ marginTop: 8 }}>
-              <span className="menu-stat-label">STR</span><span>{CHARACTER.str}</span>
-              <span className="menu-stat-label" style={{ marginLeft: 16 }}>DEX</span><span>{CHARACTER.dex}</span>
-              <span className="menu-stat-label" style={{ marginLeft: 16 }}>INT</span><span>{CHARACTER.intel}</span>
+
+            <div className="menu-section-label pixel-small">Attributes</div>
+            <div className="menu-character-attrs">
+              <StatBar atlas={atlas} label="STR" value={ch.str} color="red" />
+              <StatBar atlas={atlas} label="DEX" value={ch.dex} color="green" />
+              <StatBar atlas={atlas} label="INT" value={ch.intel} color="blue" />
             </div>
-            <div className="menu-equipped">
-              <span className="menu-equipped-label">Equipped</span>
-              {CHARACTER.equipped.map(item => (
-                <Sprite key={item} atlas={atlas} name={item} scale={2} />
+
+            <div className="menu-section-label pixel-small">Resistances</div>
+            <div className="menu-resists">
+              {Object.entries(ch.resists).map(([type, val]) => {
+                const { icon } = RESIST_COLORS[type];
+                return (
+                  <div key={type} className="menu-resist">
+                    <Sprite atlas={atlas} name={icon} scale={1.5} />
+                    <span className="pixel-small">{Math.round(val * 100)}%</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="menu-section-label pixel-small">Abilities</div>
+            <div className="menu-abilities">
+              {ch.abilities.map(a => (
+                <div key={a.name} className="menu-ability" title={a.name}>
+                  <Sprite atlas={atlas} name="brown gray square" scale={2.5} />
+                  <div className="menu-ability-icon">
+                    <Sprite atlas={atlas} name={a.icon} scale={2} />
+                  </div>
+                  <span className="menu-ability-label pixel-small">{a.name}</span>
+                </div>
               ))}
             </div>
           </div>
@@ -237,38 +479,130 @@ function CharacterModal({ atlas, onClose }) {
   );
 }
 
+// =====================================================================
+// Inventory modal
+// =====================================================================
+
 function InventoryModal({ atlas, onClose }) {
+  const [category, setCategory] = useState('all');
+  const [selectedIdx, setSelectedIdx] = useState(0);
+
+  const filtered = useMemo(() => (
+    category === 'all' ? INVENTORY : INVENTORY.filter(it => it.category === category)
+  ), [category]);
+
+  const selected = filtered[selectedIdx] || filtered[0];
+  const selectedData = selected ? ITEM_DATA[selected.id] : null;
+
+  useEffect(() => { setSelectedIdx(0); }, [category]);
+
+  const gold = 1247;
+
   return (
-    <Frame atlas={atlas} w={14} h={8}>
+    <Frame atlas={atlas} w={18} h={9}>
       <div className="menu-modal-title">Inventory</div>
       <button className="menu-modal-close" onClick={onClose}>
         <Sprite atlas={atlas} name="cancel box" scale={1.5} />
       </button>
       <div className="menu-modal-content">
-        <div className="menu-inventory-grid">
-          {INVENTORY.map(([item, count], i) => (
-            <div key={i} className="menu-inventory-slot" title={`${item} (${count})`}>
-              <Sprite atlas={atlas} name="brown gray square" scale={2} />
-              <div className="menu-inventory-slot-item">
-                <Sprite atlas={atlas} name={item} scale={2} />
+        <div className="menu-inv-header">
+          <div className="menu-inv-tabs">
+            {CATEGORIES.map(c => (
+              <button
+                key={c.id}
+                className={`menu-inv-tab${c.id === category ? ' is-selected' : ''}`}
+                onClick={() => setCategory(c.id)}
+              >
+                {c.icon && <Sprite atlas={atlas} name={c.icon} scale={1.5} />}
+                <span className="pixel-small">{c.label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="menu-inv-gold">
+            <Sprite atlas={atlas} name="gold coin" scale={2} />
+            <span className="pixel-small">{gold} g</span>
+          </div>
+        </div>
+
+        <div className="menu-inv-body">
+          <div className="menu-inventory-grid">
+            {filtered.map((it, i) => (
+              <button
+                key={it.id}
+                className={`menu-inventory-slot${i === selectedIdx ? ' is-selected' : ''}`}
+                onClick={() => setSelectedIdx(i)}
+                title={ITEM_DATA[it.id]?.name || it.id}
+              >
+                <Sprite atlas={atlas} name="brown gray square" scale={2} />
+                <div className="menu-inventory-slot-item">
+                  <Sprite atlas={atlas} name={it.id} scale={2} />
+                </div>
+                {it.count > 1 && <span className="menu-inventory-count">{it.count}</span>}
+              </button>
+            ))}
+            {Array.from({ length: Math.max(0, 32 - filtered.length) }).map((_, i) => (
+              <div key={`empty-${i}`} className="menu-inventory-slot is-empty">
+                <Sprite atlas={atlas} name="brown gray square" scale={2} />
               </div>
-              {count > 1 && <span className="menu-inventory-count">{count}</span>}
-            </div>
-          ))}
+            ))}
+          </div>
+
+          <div className="menu-inv-detail">
+            {selectedData ? (
+              <>
+                <div className="menu-inv-detail-head">
+                  <Frame atlas={atlas} w={3} h={3} family="white black" scale={2}>
+                    <div className="menu-inv-detail-icon">
+                      <Sprite atlas={atlas} name={selected.id} scale={2} />
+                    </div>
+                  </Frame>
+                  <div className="menu-inv-detail-head-text">
+                    <div className="menu-inv-detail-name">{selectedData.name}</div>
+                    <div className="menu-inv-detail-type pixel-small">{selectedData.type}</div>
+                  </div>
+                </div>
+                <div className="menu-inv-detail-desc pixel-small">{selectedData.desc}</div>
+                <div className="menu-inv-detail-stats pixel-small">
+                  <span>{selectedData.stats}</span>
+                  <span>·</span>
+                  <span>{selectedData.value} g</span>
+                </div>
+                <div className="menu-inv-actions">
+                  <button className="menu-action-btn">
+                    <Sprite atlas={atlas} name="confirm box" scale={2} />
+                    <span>Use</span>
+                  </button>
+                  <button className="menu-action-btn">
+                    <Sprite atlas={atlas} name="yes box" scale={2} />
+                    <span>Equip</span>
+                  </button>
+                  <button className="menu-action-btn">
+                    <Sprite atlas={atlas} name="cancel box" scale={2} />
+                    <span>Drop</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="menu-inv-empty pixel-small">No items in this category.</div>
+            )}
+          </div>
         </div>
       </div>
     </Frame>
   );
 }
 
-// ---------- Helpers ----------
+// =====================================================================
+// Helpers for HUD
+// =====================================================================
+
 const HP_STEP = 1 / 6;
 
 function heartSprite(color, value) {
   if (value >= 0.7) return `${color} heart full`;
   if (value >= 0.4) return `${color} heart half`;
   if (value >= 0.2) return `${color} heart low`;
-  if (value > 0) return `${color} heart sliver`;
+  if (value > 0)    return `${color} heart sliver`;
   return `${color} heart sliver`;
 }
 
@@ -277,13 +611,17 @@ function cycleDown(v) {
   return next <= 0.001 ? 1 : next;
 }
 
-// ---------- Main component ----------
+// =====================================================================
+// Main component
+// =====================================================================
+
 export default function MenuExample() {
   const [atlas, setAtlas] = useState(null);
   const [error, setError] = useState(null);
   const [openModal, setOpenModal] = useState(null);
   const [hp, setHp] = useState(1);
   const [mp, setMp] = useState(1);
+  const [menuIdx, setMenuIdx] = useState(0);
 
   useEffect(() => {
     fetch(resolveAssetPath('/DawnlikeAtlas.json'))
@@ -292,18 +630,42 @@ export default function MenuExample() {
       .catch(err => setError(err.message));
   }, []);
 
-  // Close modal on Escape
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') setOpenModal(null); };
+    const onKey = (e) => {
+      if (e.key === 'Escape') { setOpenModal(null); return; }
+      if (openModal) return;
+      if (e.key === 'ArrowDown') { setMenuIdx(i => (i + 1) % MENU_OPTIONS.length); e.preventDefault(); }
+      if (e.key === 'ArrowUp')   { setMenuIdx(i => (i - 1 + MENU_OPTIONS.length) % MENU_OPTIONS.length); e.preventDefault(); }
+      if (e.key === 'Enter' || e.key === ' ') { setOpenModal(MENU_OPTIONS[menuIdx].id); e.preventDefault(); }
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [openModal, menuIdx]);
 
   if (error) return <div style={{ padding: 24, color: 'crimson' }}>Failed to load atlas: {error}</div>;
   if (!atlas) return <div style={{ padding: 24 }}>Loading atlas…</div>;
 
   return (
     <div className="menu-stage">
+      {/* Atmospheric decorations */}
+      <div className="menu-deco menu-deco-tr">
+        <Sprite atlas={atlas} name="magic dragon skull" scale={3} />
+      </div>
+      <div className="menu-deco menu-deco-tl-far">
+        <Sprite atlas={atlas} name="old skull" scale={2} />
+      </div>
+      <div className="menu-deco menu-deco-bl">
+        <Sprite atlas={atlas} name="candle pair" scale={3} />
+        <div className="menu-deco-flame"><Sprite atlas={atlas} name="little flame" scale={2} /></div>
+      </div>
+      <div className="menu-deco menu-deco-br">
+        <Sprite atlas={atlas} name="candle pair" scale={3} />
+        <div className="menu-deco-flame menu-deco-flame-br"><Sprite atlas={atlas} name="little flame" scale={2} /></div>
+      </div>
+      <div className="menu-deco menu-deco-bottom-center">
+        <Sprite atlas={atlas} name="old bones" scale={3} />
+      </div>
+
       {/* HUD */}
       <div className="menu-hud">
         <button
@@ -328,24 +690,41 @@ export default function MenuExample() {
         </button>
       </div>
 
-      {/* Title */}
+      {/* Title with skull motifs */}
       <div className="menu-title-block">
-        <h1 className="menu-title">DAWNLIKE</h1>
-        <p className="menu-subtitle">— Press a button to explore —</p>
+        <div className="menu-title-row">
+          <Sprite atlas={atlas} name="old skull" scale={3} style={{ transform: 'scaleX(-1)' }} />
+          <h1 className="menu-title">DAWNLIKE</h1>
+          <Sprite atlas={atlas} name="old skull" scale={3} />
+        </div>
+        <p className="menu-subtitle pixel-small">Tales from the Lost Kingdom</p>
       </div>
 
-      {/* Main buttons */}
-      <div className="menu-buttons">
-        <MenuButton atlas={atlas} iconName="talk box" label="Dialogue" onClick={() => setOpenModal('dialogue')} />
-        <MenuButton atlas={atlas} iconName="love box" label="Character" onClick={() => setOpenModal('character')} />
-        <MenuButton atlas={atlas} iconName="alert box" label="Inventory" onClick={() => setOpenModal('inventory')} />
+      {/* Vertical menu list with pointer cursor */}
+      <div className="menu-options">
+        {MENU_OPTIONS.map((opt, i) => (
+          <button
+            key={opt.id}
+            className={`menu-option${i === menuIdx ? ' is-selected' : ''}`}
+            onClick={() => setOpenModal(opt.id)}
+            onMouseEnter={() => setMenuIdx(i)}
+          >
+            <div className="menu-option-cursor">
+              {i === menuIdx && <Sprite atlas={atlas} name="pointer e" scale={2} />}
+            </div>
+            <Sprite atlas={atlas} name={opt.icon} scale={3} />
+            <span className="menu-option-label">{opt.label}</span>
+          </button>
+        ))}
       </div>
+
+      <div className="menu-hint pixel-small">↑ ↓ to navigate · Enter to select · Esc to close</div>
 
       {/* Modal overlay */}
       {openModal && (
         <div className="menu-modal-backdrop" onClick={() => setOpenModal(null)}>
-          <div className="menu-modal" onClick={e => e.stopPropagation()}>
-            {openModal === 'dialogue' && <DialogueModal atlas={atlas} onClose={() => setOpenModal(null)} />}
+          <div className="menu-modal" onClick={(e) => e.stopPropagation()}>
+            {openModal === 'dialogue'  && <DialogueModal  atlas={atlas} onClose={() => setOpenModal(null)} />}
             {openModal === 'character' && <CharacterModal atlas={atlas} onClose={() => setOpenModal(null)} />}
             {openModal === 'inventory' && <InventoryModal atlas={atlas} onClose={() => setOpenModal(null)} />}
           </div>
