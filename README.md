@@ -7,8 +7,8 @@ A bin-packed **mega-atlas** and rich metadata for the [DawnLike](https://dragond
 ## Contents
 
 - `atlas/`
-  - `DawnlikeAtlas0.png` — primary frames (3,963 sprites)
-  - `DawnlikeAtlas1.png` — alt frames for the 2,080 animated sprites
+  - `DawnlikeAtlas0.png` — primary frames (4,157 sprites)
+  - `DawnlikeAtlas1.png` — alt frames for the 2,226 animated sprites
   - `DawnlikeAtlas.json` — `byName` lookup + AI-generated tags + semantic connections
 - `src/` — autotile resolvers (`src/utils/autotile.js`) and the example components
 - `react/` — re-exports for consuming the atlas from a React project
@@ -37,7 +37,7 @@ All examples live in `stories/` and are browsable from the Storybook sidebar.
 ### DawnLike › Mega Atlas › All Sprites
 `stories/MegaAtlas.stories.jsx` → `src/components/SpriteSheet`
 
-Renders every named sprite from `DawnlikeAtlas0.png` in its bin-packed 64×62 grid. Toggle animation to flip in `DawnlikeAtlas1.png` for the animated sprites; hover any cell to read its name from the atlas lookup. Use this to browse what's available before reaching for it by name.
+Renders every named sprite from `DawnlikeAtlas0.png` in its bin-packed 64×65 grid. Toggle animation to flip in `DawnlikeAtlas1.png` for the animated sprites; hover any cell to read its name from the atlas lookup. Use this to browse what's available before reaching for it by name.
 
 ### Examples › Autotile (rot.js)
 `stories/Autotile.stories.jsx` → `src/AutotileExample.jsx`
