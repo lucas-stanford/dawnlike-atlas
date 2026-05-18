@@ -163,7 +163,12 @@ const CHARACTERS = [
       { name: 'Cleave', icon: 'broadsword' },
       { name: 'Rally', icon: 'red heart full' },
     ],
-    equipped: { head: 'helmet', weapon: 'broadsword', offhand: 'small shield', body: null, feet: null, ring: null },
+    equipped: {
+      head: 'helmet', amulet: 'amulet of yendor',
+      weapon: 'broadsword', offhand: 'small shield',
+      body: 'iron armor', feet: 'elven boots',
+      ring: 'gold ring', cloak: 'forest cloak',
+    },
   },
   {
     name: 'Lyra', klass: 'Archmage of Sael', portrait: 'archmage',
@@ -176,7 +181,12 @@ const CHARACTERS = [
       { name: 'Ice Lance', icon: 'cyan potion' },
       { name: 'Arcane Mist', icon: 'crystal ball' },
     ],
-    equipped: { head: null, weapon: 'white scroll', offhand: 'crystal ball', body: null, feet: null, ring: null },
+    equipped: {
+      head: null, amulet: 'jade pendant',
+      weapon: 'white scroll', offhand: 'crystal ball',
+      body: 'monk robes', feet: 'buckled shoes',
+      ring: 'emerald ring', cloak: 'desert cloak',
+    },
   },
   {
     name: 'Kael', klass: 'Shadow Ninja', portrait: 'ninja',
@@ -189,7 +199,12 @@ const CHARACTERS = [
       { name: 'Smoke Veil', icon: 'gray scroll' },
       { name: 'Throw Shuriken', icon: 'shuriken' },
     ],
-    equipped: { head: null, weapon: 'short sword', offhand: 'dagger', body: null, feet: null, ring: null },
+    equipped: {
+      head: null, amulet: 'fuzzy amulet',
+      weapon: 'short sword', offhand: 'dagger',
+      body: null, feet: 'elven boots',
+      ring: 'black onyx ring', cloak: 'spidersilk cape',
+    },
   },
   {
     name: 'Mira', klass: 'High Priestess', portrait: 'priestess',
@@ -202,16 +217,38 @@ const CHARACTERS = [
       { name: 'Sanctuary', icon: 'white scroll' },
       { name: 'Smite', icon: 'mace' },
     ],
-    equipped: { head: 'helmet', weapon: 'mace', offhand: 'white scroll', body: null, feet: null, ring: null },
+    equipped: {
+      head: 'helmet', amulet: 'choker necklace',
+      weapon: 'mace', offhand: 'white scroll',
+      body: 'monk robes', feet: 'buckled shoes',
+      ring: 'silver ring', cloak: null,
+    },
   },
 ];
 
 const ITEM_DATA = {
   'broadsword':           { name: 'Broadsword',           type: 'Weapon',  desc: 'A trusted steel blade — perfectly balanced.',          stats: '+8 ATK',         value: 120 },
   'short sword':          { name: 'Short Sword',          type: 'Weapon',  desc: 'Light and quick, favoured by scouts.',                stats: '+5 ATK',         value: 60  },
+  'dagger':               { name: 'Curved Dagger',        type: 'Weapon',  desc: 'A wickedly hooked blade. Strikes from the shadows.',  stats: '+3 ATK, +2 DEX', value: 45  },
+  'mace':                 { name: 'War Mace',             type: 'Weapon',  desc: 'A heavy spiked head. Cracks armor and bone alike.',   stats: '+7 ATK',         value: 95  },
   'small shield':         { name: 'Small Shield',         type: 'Armor',   desc: 'A round wooden shield rimmed with iron.',             stats: '+4 DEF',         value: 80  },
   'large shield':         { name: 'Large Shield',         type: 'Armor',   desc: 'A heavy kite shield. Slows you, but turns a blade.',  stats: '+9 DEF, -1 DEX', value: 180 },
   'helmet':               { name: 'Iron Helm',            type: 'Armor',   desc: 'Plain but reliable head protection.',                 stats: '+2 DEF',         value: 50  },
+  'iron armor':           { name: 'Iron Plate',           type: 'Armor',   desc: 'Riveted plate. Heavy, but turns most strikes.',       stats: '+7 DEF, -1 DEX', value: 220 },
+  'monk robes':           { name: 'Monk Robes',           type: 'Armor',   desc: 'Simple woven robes. Light and unrestricting.',        stats: '+2 DEF, +2 MAG', value: 90  },
+  'spidersilk cape':      { name: 'Spidersilk Cape',      type: 'Armor',   desc: 'Almost weightless, yet stronger than chain.',         stats: '+3 DEF, +2 DEX', value: 260 },
+  'elven boots':          { name: 'Elven Boots',          type: 'Armor',   desc: 'Soft soled. Your steps make no sound.',               stats: '+1 DEF, +3 DEX', value: 140 },
+  'buckled shoes':        { name: 'Buckled Shoes',        type: 'Armor',   desc: 'Hand-stitched leather with polished brass buckles.',  stats: '+1 DEF',         value: 40  },
+  'forest cloak':         { name: 'Forest Cloak',         type: 'Armor',   desc: 'Mottled green, blends with the underbrush.',          stats: '+2 DEF, +1 DEX', value: 110 },
+  'desert cloak':         { name: 'Desert Cloak',         type: 'Armor',   desc: 'Pale linen that turns the harshest sun.',             stats: '+1 DEF, +2 MAG', value: 105 },
+  'gold ring':            { name: 'Gold Ring',            type: 'Jewelry', desc: 'A heavy gold band. Hums softly when worn.',           stats: '+2 ATK',         value: 200 },
+  'silver ring':          { name: 'Silver Ring',          type: 'Jewelry', desc: 'A simple silver loop, cool to the touch.',            stats: '+1 DEF, +1 MAG', value: 150 },
+  'emerald ring':         { name: 'Emerald Ring',         type: 'Jewelry', desc: 'A flawless emerald set in silver. Pulses with power.', stats: '+3 MAG',        value: 320 },
+  'black onyx ring':      { name: 'Onyx Ring',            type: 'Jewelry', desc: 'A dark onyx cabochon. Drinks the candlelight.',       stats: '+2 DEX',         value: 240 },
+  'amulet of yendor':     { name: 'Amulet of Yendor',     type: 'Jewelry', desc: 'A relic of the deep, etched with forgotten runes.',   stats: '+2 ATK, +2 DEF', value: 999 },
+  'fuzzy amulet':         { name: 'Fuzzy Amulet',         type: 'Jewelry', desc: 'Strangely warm. Faintly purrs against your chest.',   stats: '+3 DEX',         value: 180 },
+  'jade pendant':         { name: 'Jade Pendant',         type: 'Jewelry', desc: 'Carved jade on a silver chain. Sharpens the mind.',   stats: '+3 MAG',         value: 280 },
+  'choker necklace':      { name: 'Silver Choker',        type: 'Jewelry', desc: 'A simple chain blessed by the temple.',               stats: '+1 DEF, +1 MAG', value: 160 },
   'ruby potion':          { name: 'Potion of Healing',    type: 'Potion',  desc: 'Restores a moderate amount of HP.',                   stats: '+25 HP',         value: 40  },
   'emerald potion':       { name: 'Potion of Mana',       type: 'Potion',  desc: 'Replenishes the arcane reserves.',                    stats: '+20 MP',         value: 45  },
   'yellow potion':        { name: 'Potion of Vigor',      type: 'Potion',  desc: 'Grants a surge of strength for one battle.',          stats: '+3 STR (1m)',    value: 90  },
@@ -230,9 +267,20 @@ const ITEM_DATA = {
 const INVENTORY = [
   { id: 'broadsword',           count: 1,  category: 'weapons' },
   { id: 'short sword',          count: 1,  category: 'weapons' },
+  { id: 'dagger',               count: 1,  category: 'weapons' },
+  { id: 'mace',                 count: 1,  category: 'weapons' },
   { id: 'small shield',         count: 1,  category: 'armor' },
   { id: 'large shield',         count: 1,  category: 'armor' },
   { id: 'helmet',               count: 1,  category: 'armor' },
+  { id: 'iron armor',           count: 1,  category: 'armor' },
+  { id: 'monk robes',           count: 1,  category: 'armor' },
+  { id: 'elven boots',          count: 1,  category: 'armor' },
+  { id: 'forest cloak',         count: 1,  category: 'armor' },
+  { id: 'gold ring',            count: 1,  category: 'jewelry' },
+  { id: 'silver ring',          count: 1,  category: 'jewelry' },
+  { id: 'emerald ring',         count: 1,  category: 'jewelry' },
+  { id: 'jade pendant',         count: 1,  category: 'jewelry' },
+  { id: 'amulet of yendor',     count: 1,  category: 'jewelry' },
   { id: 'ruby potion',          count: 3,  category: 'potions' },
   { id: 'emerald potion',       count: 2,  category: 'potions' },
   { id: 'yellow potion',        count: 1,  category: 'potions' },
@@ -248,9 +296,10 @@ const INVENTORY = [
 ];
 
 const CATEGORIES = [
-  { id: 'all',     label: 'All',     icon: null },
+  { id: 'all',     label: 'All',     icon: 'bag' },
   { id: 'weapons', label: 'Weapons', icon: 'broadsword' },
   { id: 'armor',   label: 'Armor',   icon: 'small shield' },
+  { id: 'jewelry', label: 'Jewelry', icon: 'gold ring' },
   { id: 'potions', label: 'Potions', icon: 'ruby potion' },
   { id: 'scrolls', label: 'Scrolls', icon: 'white scroll' },
   { id: 'misc',    label: 'Misc',    icon: 'crystal ball' },
@@ -269,8 +318,8 @@ const MENU_OPTIONS = [
   { id: 'inventory', label: 'Open Inventory',      icon: 'alert box' },
 ];
 
-// Paper-doll equipment slot grid layout. Center cell holds the portrait;
-// the other 8 cells host equipment slots. Empty slots show a chrome square.
+// Paper-doll anatomical slot layout. Slots flank the central figure column;
+// EQUIPMENT_SLOTS index maps to character.equipped keys via the `key` field.
 const EQUIPMENT_SLOTS = [
   { key: 'head',    label: 'Head' },
   { key: 'amulet',  label: 'Amulet' },
@@ -279,7 +328,7 @@ const EQUIPMENT_SLOTS = [
   { key: 'body',    label: 'Body' },
   { key: 'feet',    label: 'Feet' },
   { key: 'ring',    label: 'Ring' },
-  { key: 'belt',    label: 'Belt' },
+  { key: 'cloak',   label: 'Cloak' },
 ];
 
 // =====================================================================
@@ -488,12 +537,12 @@ function CharacterModal({ atlas, onClose, frameFamily = 'gray white' }) {
 // Inventory modal
 // =====================================================================
 
-function PaperDollSlot({ atlas, slot, itemId, onClick, isHighlighted }) {
+function PaperDollSlot({ atlas, slot, itemId, onClick, isHighlighted, className = '' }) {
   const data = itemId ? ITEM_DATA[itemId] : null;
   return (
     <button
       type="button"
-      className={`menu-paperdoll-slot${itemId ? ' is-filled' : ' is-empty'}${isHighlighted ? ' is-highlight' : ''}`}
+      className={`menu-paperdoll-slot${itemId ? ' is-filled' : ' is-empty'}${isHighlighted ? ' is-highlight' : ''} ${className}`}
       onClick={onClick}
       title={data ? `${slot.label}: ${data.name}` : `${slot.label} (empty)`}
     >
@@ -508,30 +557,73 @@ function PaperDollSlot({ atlas, slot, itemId, onClick, isHighlighted }) {
   );
 }
 
+// Heuristic — pull the first signed integer out of an item's "+8 ATK" stats string.
+function parseStatBonus(stats, kind) {
+  if (!stats) return 0;
+  const re = new RegExp(`([+-]?\\d+)\\s*${kind}`, 'i');
+  const m = stats.match(re);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
 function PaperDoll({ atlas, character }) {
   const eq = character.equipped || {};
+  const equippedItems = Object.values(eq).filter(Boolean).map(id => ITEM_DATA[id]).filter(Boolean);
+
+  const atk = character.str + equippedItems.reduce((s, i) => s + parseStatBonus(i.stats, 'ATK'), 0);
+  const def = equippedItems.reduce((s, i) => s + parseStatBonus(i.stats, 'DEF'), 0);
+  const mag = character.intel + equippedItems.reduce((s, i) => s + parseStatBonus(i.stats, 'MAG'), 0);
+
+  const equippedCount = Object.values(eq).filter(Boolean).length;
+  const totalSlots = EQUIPMENT_SLOTS.length;
+
   return (
     <div className="menu-paperdoll">
-      <div className="menu-paperdoll-title pixel-small">Equipping</div>
-      <div className="menu-paperdoll-name">{character.name}</div>
-      <div className="menu-paperdoll-class pixel-small">{character.klass}</div>
+      <div className="menu-paperdoll-header">
+        <div className="menu-paperdoll-level">Lv {character.level}</div>
+        <div className="menu-paperdoll-name">{character.name}</div>
+        <div className="menu-paperdoll-class pixel-small">{character.klass}</div>
+      </div>
 
       <div className="menu-paperdoll-grid">
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[0]} itemId={eq.head} />
-        <div className="menu-paperdoll-portrait-wrap">
-          <Frame atlas={atlas} w={2} h={2} family="white black" scale={2}>
-            <div className="menu-paperdoll-portrait-inner">
-              <Sprite atlas={atlas} name={character.portrait} scale={3} />
-            </div>
-          </Frame>
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[0]} itemId={eq.head}    className="pd-slot pd-slot-head" />
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[1]} itemId={eq.amulet}  className="pd-slot pd-slot-amulet" />
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[6]} itemId={eq.ring}    className="pd-slot pd-slot-ring" />
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[2]} itemId={eq.weapon}  className="pd-slot pd-slot-weapon" />
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[3]} itemId={eq.offhand} className="pd-slot pd-slot-offhand" />
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[4]} itemId={eq.body}    className="pd-slot pd-slot-body" />
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[7]} itemId={eq.cloak}   className="pd-slot pd-slot-cloak" />
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[5]} itemId={eq.feet}    className="pd-slot pd-slot-feet" />
+
+        <div className="menu-paperdoll-figure">
+          <div className="menu-paperdoll-figure-glow" />
+          <div className="menu-paperdoll-figure-pedestal" />
+          <Sprite atlas={atlas} name={character.portrait} scale={6} />
         </div>
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[1]} itemId={eq.amulet} />
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[2]} itemId={eq.weapon} />
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[4]} itemId={eq.body} />
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[3]} itemId={eq.offhand} />
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[6]} itemId={eq.ring} />
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[5]} itemId={eq.feet} />
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[7]} itemId={eq.belt} />
+      </div>
+
+      <div className="menu-paperdoll-footer">
+        <div className="menu-paperdoll-stats">
+          <div className="menu-pd-stat" title="Attack">
+            <Sprite atlas={atlas} name="broadsword" scale={1.5} />
+            <span className="menu-pd-stat-label pixel-small">ATK</span>
+            <span className="menu-pd-stat-value">{atk}</span>
+          </div>
+          <div className="menu-paperdoll-stat-divider" />
+          <div className="menu-pd-stat" title="Defense">
+            <Sprite atlas={atlas} name="small shield" scale={1.5} />
+            <span className="menu-pd-stat-label pixel-small">DEF</span>
+            <span className="menu-pd-stat-value">{def}</span>
+          </div>
+          <div className="menu-paperdoll-stat-divider" />
+          <div className="menu-pd-stat" title="Magic">
+            <Sprite atlas={atlas} name="crystal ball" scale={1.5} />
+            <span className="menu-pd-stat-label pixel-small">MAG</span>
+            <span className="menu-pd-stat-value">{mag}</span>
+          </div>
+        </div>
+        <div className="menu-paperdoll-equipped-count pixel-small">
+          {equippedCount} / {totalSlots} EQUIPPED
+        </div>
       </div>
     </div>
   );
@@ -593,9 +685,10 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
                   key={c.id}
                   className={`menu-inv-tab${c.id === category ? ' is-selected' : ''}`}
                   onClick={() => setCategory(c.id)}
+                  title={c.label}
+                  aria-label={c.label}
                 >
-                  {c.icon && <Sprite atlas={atlas} name={c.icon} scale={1.5} />}
-                  <span className="pixel-small">{c.label}</span>
+                  <Sprite atlas={atlas} name={c.icon} scale={1.5} />
                 </button>
               ))}
             </div>
