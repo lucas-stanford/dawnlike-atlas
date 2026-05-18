@@ -163,6 +163,7 @@ const CHARACTERS = [
       { name: 'Cleave', icon: 'broadsword' },
       { name: 'Rally', icon: 'red heart full' },
     ],
+    equipped: { head: 'helmet', weapon: 'broadsword', offhand: 'small shield', body: null, feet: null, ring: null },
   },
   {
     name: 'Lyra', klass: 'Archmage of Sael', portrait: 'archmage',
@@ -175,6 +176,7 @@ const CHARACTERS = [
       { name: 'Ice Lance', icon: 'cyan potion' },
       { name: 'Arcane Mist', icon: 'crystal ball' },
     ],
+    equipped: { head: null, weapon: 'white scroll', offhand: 'crystal ball', body: null, feet: null, ring: null },
   },
   {
     name: 'Kael', klass: 'Shadow Ninja', portrait: 'ninja',
@@ -187,6 +189,7 @@ const CHARACTERS = [
       { name: 'Smoke Veil', icon: 'gray scroll' },
       { name: 'Throw Shuriken', icon: 'shuriken' },
     ],
+    equipped: { head: null, weapon: 'short sword', offhand: 'dagger', body: null, feet: null, ring: null },
   },
   {
     name: 'Mira', klass: 'High Priestess', portrait: 'priestess',
@@ -199,6 +202,7 @@ const CHARACTERS = [
       { name: 'Sanctuary', icon: 'white scroll' },
       { name: 'Smite', icon: 'mace' },
     ],
+    equipped: { head: 'helmet', weapon: 'mace', offhand: 'white scroll', body: null, feet: null, ring: null },
   },
 ];
 
@@ -265,6 +269,19 @@ const MENU_OPTIONS = [
   { id: 'inventory', label: 'Open Inventory',      icon: 'alert box' },
 ];
 
+// Paper-doll equipment slot grid layout. Center cell holds the portrait;
+// the other 8 cells host equipment slots. Empty slots show a chrome square.
+const EQUIPMENT_SLOTS = [
+  { key: 'head',    label: 'Head' },
+  { key: 'amulet',  label: 'Amulet' },
+  { key: 'weapon',  label: 'Weapon' },
+  { key: 'offhand', label: 'Off-hand' },
+  { key: 'body',    label: 'Body' },
+  { key: 'feet',    label: 'Feet' },
+  { key: 'ring',    label: 'Ring' },
+  { key: 'belt',    label: 'Belt' },
+];
+
 // =====================================================================
 // Dialogue modal
 // =====================================================================
@@ -314,7 +331,7 @@ function DialogueModal({ atlas, onClose, frameFamily = 'gray white' }) {
     <div className="menu-dialogue-wrap">
       {/* Name plate above the box */}
       <div className="menu-nameplate">
-        <Frame atlas={atlas} w={5} h={2} family="red black" scale={2}>
+        <Frame atlas={atlas} w={5} h={2} family="red black" scale={1.5}>
           <div className="menu-nameplate-text">{line.speaker}</div>
         </Frame>
       </div>
@@ -367,107 +384,100 @@ function DialogueModal({ atlas, onClose, frameFamily = 'gray white' }) {
 // Character / Party modal
 // =====================================================================
 
-function StatBar({ atlas, label, value, max = 20, color = 'gray' }) {
+function PartyCard({ atlas, ch }) {
+  const xpPct = ch.xp / ch.xpMax;
   return (
-    <div className="menu-statbar-row">
-      <span className="menu-statbar-label">{label}</span>
-      <Gauge atlas={atlas} color={color} value={value / max} segments={5} scale={1.5} />
-      <span className="pixel-small menu-statbar-value">{value}</span>
+    <div className="menu-party-card">
+      <div className="menu-party-card-header">
+        <div className="menu-party-portrait">
+          <Frame atlas={atlas} w={3} h={3} family="white black" scale={1.5}>
+            <div className="menu-party-portrait-inner">
+              <Sprite atlas={atlas} name={ch.portrait} scale={2.5} />
+            </div>
+          </Frame>
+          <div className="menu-party-level-badge">Lv {ch.level}</div>
+        </div>
+        <div className="menu-party-card-name-block">
+          <div className="menu-party-card-name">{ch.name}</div>
+          <div className="menu-party-card-class pixel-small">{ch.klass}</div>
+        </div>
+      </div>
+
+      <div className="menu-party-card-bars">
+        <div className="menu-party-bar-row">
+          <span className="menu-party-bar-label">HP</span>
+          <Gauge atlas={atlas} color="red" value={ch.hp / ch.hpMax} segments={5} scale={1.5} />
+          <span className="pixel-small menu-party-bar-value">{ch.hp}/{ch.hpMax}</span>
+        </div>
+        <div className="menu-party-bar-row">
+          <span className="menu-party-bar-label">MP</span>
+          <Gauge atlas={atlas} color="blue" value={ch.mp / ch.mpMax} segments={5} scale={1.5} />
+          <span className="pixel-small menu-party-bar-value">{ch.mp}/{ch.mpMax}</span>
+        </div>
+        <div className="menu-party-bar-row">
+          <span className="menu-party-bar-label">XP</span>
+          <Gauge atlas={atlas} color="yellow" value={xpPct} segments={5} scale={1.5} />
+          <span className="pixel-small menu-party-bar-value">{Math.round(xpPct * 100)}%</span>
+        </div>
+      </div>
+
+      <div className="menu-party-divider" />
+
+      <div className="menu-party-card-attrs">
+        <div className="menu-party-attr">
+          <span className="menu-party-attr-label">STR</span>
+          <span className="menu-party-attr-value">{ch.str}</span>
+        </div>
+        <div className="menu-party-attr">
+          <span className="menu-party-attr-label">DEX</span>
+          <span className="menu-party-attr-value">{ch.dex}</span>
+        </div>
+        <div className="menu-party-attr">
+          <span className="menu-party-attr-label">INT</span>
+          <span className="menu-party-attr-value">{ch.intel}</span>
+        </div>
+      </div>
+
+      <div className="menu-party-divider" />
+
+      <div className="menu-party-card-section pixel-small">Resist</div>
+      <div className="menu-party-card-resists">
+        {Object.entries(ch.resists).map(([type, val]) => {
+          const { icon } = RESIST_COLORS[type];
+          return (
+            <div key={type} className="menu-party-resist" title={`${type}: ${Math.round(val * 100)}%`}>
+              <Sprite atlas={atlas} name={icon} scale={1.25} />
+              <span className="pixel-small">{Math.round(val * 100)}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="menu-party-card-section pixel-small">Abilities</div>
+      <div className="menu-party-card-abilities">
+        {ch.abilities.map(a => (
+          <div key={a.name} className="menu-party-card-ability" title={a.name}>
+            <Sprite atlas={atlas} name="brown gray square" scale={1.5} />
+            <div className="menu-party-card-ability-icon">
+              <Sprite atlas={atlas} name={a.icon} scale={1.5} />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 function CharacterModal({ atlas, onClose, frameFamily = 'gray white' }) {
-  const [selected, setSelected] = useState(0);
-  const ch = CHARACTERS[selected];
-
   return (
-    <Frame atlas={atlas} w={18} h={9} family={frameFamily}>
+    <Frame atlas={atlas} w={22} h={11} family={frameFamily}>
       <div className="menu-modal-title">Party Roster</div>
       <button className="menu-modal-close" onClick={onClose}>
         <Sprite atlas={atlas} name="cancel box" scale={1.5} />
       </button>
       <div className="menu-modal-content">
-        <div className="menu-character-tabs">
-          {CHARACTERS.map((c, i) => (
-            <button
-              key={c.name}
-              type="button"
-              className={`menu-character-tab${i === selected ? ' is-selected' : ''}`}
-              onClick={() => setSelected(i)}
-              title={`${c.name} — ${c.klass}`}
-            >
-              <Sprite atlas={atlas} name="brown gray square" scale={2} />
-              <div className="menu-character-tab-icon">
-                <Sprite atlas={atlas} name={c.portrait} scale={2} />
-              </div>
-              <div className="menu-character-tab-level pixel-small">Lv {c.level}</div>
-            </button>
-          ))}
-        </div>
-
-        <div className="menu-character">
-          <div className="menu-character-portrait-col">
-            <div className="menu-character-portrait-frame">
-              <Frame atlas={atlas} w={4} h={4} family="white black" scale={2}>
-                <div className="menu-character-portrait-inner">
-                  <Sprite atlas={atlas} name={ch.portrait} scale={4} />
-                </div>
-              </Frame>
-            </div>
-            <div className="menu-character-name">{ch.name}</div>
-            <div className="menu-character-class pixel-small">{ch.klass}</div>
-            <div className="menu-character-level pixel-small">
-              Lv {ch.level} &nbsp;·&nbsp; XP {ch.xp}/{ch.xpMax}
-            </div>
-            <Gauge atlas={atlas} color="yellow" value={ch.xp / ch.xpMax} segments={5} scale={1.5} />
-          </div>
-
-          <div className="menu-character-stats">
-            <div className="menu-stat-row">
-              <span className="menu-stat-label">HP</span>
-              <Gauge atlas={atlas} color="red" value={ch.hp / ch.hpMax} segments={6} scale={2} />
-              <span className="pixel-small menu-stat-value">{ch.hp}/{ch.hpMax}</span>
-            </div>
-            <div className="menu-stat-row">
-              <span className="menu-stat-label">MP</span>
-              <Gauge atlas={atlas} color="blue" value={ch.mp / ch.mpMax} segments={6} scale={2} />
-              <span className="pixel-small menu-stat-value">{ch.mp}/{ch.mpMax}</span>
-            </div>
-
-            <div className="menu-section-label pixel-small">Attributes</div>
-            <div className="menu-character-attrs">
-              <StatBar atlas={atlas} label="STR" value={ch.str} color="red" />
-              <StatBar atlas={atlas} label="DEX" value={ch.dex} color="green" />
-              <StatBar atlas={atlas} label="INT" value={ch.intel} color="blue" />
-            </div>
-
-            <div className="menu-section-label pixel-small">Resistances</div>
-            <div className="menu-resists">
-              {Object.entries(ch.resists).map(([type, val]) => {
-                const { icon } = RESIST_COLORS[type];
-                return (
-                  <div key={type} className="menu-resist">
-                    <Sprite atlas={atlas} name={icon} scale={1.5} />
-                    <span className="pixel-small">{Math.round(val * 100)}%</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="menu-section-label pixel-small">Abilities</div>
-            <div className="menu-abilities">
-              {ch.abilities.map(a => (
-                <div key={a.name} className="menu-ability" title={a.name}>
-                  <Sprite atlas={atlas} name="brown gray square" scale={2.5} />
-                  <div className="menu-ability-icon">
-                    <Sprite atlas={atlas} name={a.icon} scale={2} />
-                  </div>
-                  <span className="menu-ability-label pixel-small">{a.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="menu-party-grid">
+          {CHARACTERS.map(ch => <PartyCard key={ch.name} atlas={atlas} ch={ch} />)}
         </div>
       </div>
     </Frame>
@@ -478,9 +488,59 @@ function CharacterModal({ atlas, onClose, frameFamily = 'gray white' }) {
 // Inventory modal
 // =====================================================================
 
+function PaperDollSlot({ atlas, slot, itemId, onClick, isHighlighted }) {
+  const data = itemId ? ITEM_DATA[itemId] : null;
+  return (
+    <button
+      type="button"
+      className={`menu-paperdoll-slot${itemId ? ' is-filled' : ' is-empty'}${isHighlighted ? ' is-highlight' : ''}`}
+      onClick={onClick}
+      title={data ? `${slot.label}: ${data.name}` : `${slot.label} (empty)`}
+    >
+      <Sprite atlas={atlas} name="brown gray square" scale={2} />
+      {itemId && (
+        <div className="menu-paperdoll-slot-icon">
+          <Sprite atlas={atlas} name={itemId} scale={2} />
+        </div>
+      )}
+      <span className="menu-paperdoll-slot-label pixel-small">{slot.label}</span>
+    </button>
+  );
+}
+
+function PaperDoll({ atlas, character }) {
+  const eq = character.equipped || {};
+  return (
+    <div className="menu-paperdoll">
+      <div className="menu-paperdoll-title pixel-small">Equipping</div>
+      <div className="menu-paperdoll-name">{character.name}</div>
+      <div className="menu-paperdoll-class pixel-small">{character.klass}</div>
+
+      <div className="menu-paperdoll-grid">
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[0]} itemId={eq.head} />
+        <div className="menu-paperdoll-portrait-wrap">
+          <Frame atlas={atlas} w={2} h={2} family="white black" scale={2}>
+            <div className="menu-paperdoll-portrait-inner">
+              <Sprite atlas={atlas} name={character.portrait} scale={3} />
+            </div>
+          </Frame>
+        </div>
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[1]} itemId={eq.amulet} />
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[2]} itemId={eq.weapon} />
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[4]} itemId={eq.body} />
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[3]} itemId={eq.offhand} />
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[6]} itemId={eq.ring} />
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[5]} itemId={eq.feet} />
+        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[7]} itemId={eq.belt} />
+      </div>
+    </div>
+  );
+}
+
 function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
   const [category, setCategory] = useState('all');
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [equipCharIdx, setEquipCharIdx] = useState(0);
 
   const filtered = useMemo(() => (
     category === 'all' ? INVENTORY : INVENTORY.filter(it => it.category === category)
@@ -488,13 +548,14 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
 
   const selected = filtered[selectedIdx] || filtered[0];
   const selectedData = selected ? ITEM_DATA[selected.id] : null;
+  const equipChar = CHARACTERS[equipCharIdx];
 
   useEffect(() => { setSelectedIdx(0); }, [category]);
 
   const gold = 1247;
 
   return (
-    <Frame atlas={atlas} w={18} h={9} family={frameFamily}>
+    <Frame atlas={atlas} w={22} h={11} family={frameFamily}>
       <div className="menu-modal-title">Inventory</div>
       <button className="menu-modal-close" onClick={onClose}>
         <Sprite atlas={atlas} name="cancel box" scale={1.5} />
@@ -520,6 +581,26 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
         </div>
 
         <div className="menu-inv-body">
+          <div className="menu-inv-paperdoll-col">
+            <div className="menu-paperdoll-char-tabs">
+              {CHARACTERS.map((c, i) => (
+                <button
+                  key={c.name}
+                  type="button"
+                  className={`menu-paperdoll-char-tab${i === equipCharIdx ? ' is-selected' : ''}`}
+                  onClick={() => setEquipCharIdx(i)}
+                  title={c.name}
+                >
+                  <Sprite atlas={atlas} name="brown gray square" scale={1.5} />
+                  <div className="menu-paperdoll-char-tab-icon">
+                    <Sprite atlas={atlas} name={c.portrait} scale={1.5} />
+                  </div>
+                </button>
+              ))}
+            </div>
+            <PaperDoll atlas={atlas} character={equipChar} />
+          </div>
+
           <div className="menu-inventory-grid">
             {filtered.map((it, i) => (
               <button
