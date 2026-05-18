@@ -248,7 +248,10 @@ function InventoryModal({ atlas, onClose }) {
         <div className="menu-inventory-grid">
           {INVENTORY.map(([item, count], i) => (
             <div key={i} className="menu-inventory-slot" title={`${item} (${count})`}>
-              <Sprite atlas={atlas} name={item} scale={2} />
+              <Sprite atlas={atlas} name="brown gray square" scale={2} />
+              <div className="menu-inventory-slot-item">
+                <Sprite atlas={atlas} name={item} scale={2} />
+              </div>
               {count > 1 && <span className="menu-inventory-count">{count}</span>}
             </div>
           ))}

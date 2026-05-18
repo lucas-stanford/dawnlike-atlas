@@ -273,24 +273,30 @@
 .menu-inventory-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(6, 32px);
+  gap: 4px;
   align-content: start;
+  justify-content: center;
 }
 
 .menu-inventory-slot {
   position: relative;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.08);
-  border-radius: 4px;
-  transition: background 100ms ease;
+  width: 32px;
+  height: 32px;
+  transition: filter 100ms ease;
 }
 
 .menu-inventory-slot:hover {
-  background: rgba(247, 211, 107, 0.25);
+  filter: brightness(1.25);
+}
+
+.menu-inventory-slot-item {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .menu-inventory-count {
