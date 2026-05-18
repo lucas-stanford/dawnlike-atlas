@@ -11,13 +11,15 @@ const SCALE = 3;
 
 function Sprite({ atlas, name, scale = SCALE, flipY = false, flipX = false, style }) {
   const sprite = atlas?.byName?.[name];
-  if (!sprite) return <div style={{ width: TILE * scale, height: TILE * scale, ...style }} />;
+  const w = (sprite?.w ?? TILE) * scale;
+  const h = (sprite?.h ?? TILE) * scale;
+  if (!sprite) return <div style={{ width: w, height: h, ...style }} />;
   const transform = [flipX ? 'scaleX(-1)' : '', flipY ? 'scaleY(-1)' : ''].filter(Boolean).join(' ');
   return (
     <div
       style={{
-        width: TILE * scale,
-        height: TILE * scale,
+        width: w,
+        height: h,
         backgroundImage: `url(${resolveAssetPath('/DawnlikeAtlas0.png')})`,
         backgroundPosition: `-${sprite.x * scale}px -${sprite.y * scale}px`,
         backgroundSize: `${atlas.meta.size.w * scale}px ${atlas.meta.size.h * scale}px`,

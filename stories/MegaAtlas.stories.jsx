@@ -9,13 +9,13 @@ export default {
 };
 
 export const AllSprites = {
-  name: 'All 3,844 Sprites (1024×976px)',
+  name: 'All 3,853 Sprites (1024×1024px)',
   render: () => (
     <SpriteSheet
       imagePath="/DawnlikeAtlas0.png"
       metadataPath="/DawnlikeAtlas.json"
-      title="Dawnlike Mega-Atlas — every named sprite in a single 1024×976 PNG"
-      description="All 3,844 named sprites from Characters, Items, Objects, and GUI bin-packed into one tightly-packed 64×61 grid (98.5% utilization). Each sprite occupies exactly one 16×16 cell. Toggle animation to see alt frames for the 1,970 animated sprites; non-animated sprites are identical in both atlases. Hover any cell to see its name from the atlas lookup."
+      title="Dawnlike Mega-Atlas — every named sprite in a single 1024×1024 PNG"
+      description="3,853 named sprites from Characters, Items, Objects, and GUI bin-packed into a 64×64 grid. The first 3,844 sprites each occupy one 16×16 cell; 9 GUI icons (health/stamina/fire/ice/lightning/save/enter/inventory/surrounded) live in a 48×48 strip at the bottom. Toggle animation to see alt frames for the 1,970 animated sprites; non-animated sprites are identical in both atlases. Hover any cell to see its name from the atlas lookup."
       columns={64}
       tileSize={16}
       defaultScale={1}

@@ -6,17 +6,19 @@ Generated 2026-05-17 from:
 - `source/Objects`
 - `source/GUI`
 
-**3844 named sprites** across 4 categories,
-bin-packed into 1024×976px (64×61 grid, 16px tiles).
-Wasted cells: 60 of 3904
-(1.5% empty).
+**3853 named sprites** across 4 categories,
+bin-packed into 1024×1024px (64×64 grid, 16px tiles).
+3844 sprites are 16×16; the 9 GUI icons added manually from upstream
+unpacked3 (`health icon`, `stamina icon`, `fire icon`, `ice icon`,
+`lightning icon`, `save icon`, `enter icon`, `inventory icon`,
+`surrounded icon`) are 48×48 and live in a strip at y=976.
 
 ## Categories Included
 
 - **Characters**: 16 groups, 707 sprites
 - **Items**: 25 groups, 684 sprites
 - **Objects**: 15 groups, 2221 sprites
-- **GUI**: 1 groups, 232 sprites
+- **GUI**: 1 groups, 241 sprites
 
 ## Phaser 3
 
