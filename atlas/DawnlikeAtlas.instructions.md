@@ -6,16 +6,16 @@ Generated 2026-05-17 from:
 - `source/Objects`
 - `source/GUI`
 
-**3853 named sprites** across 4 categories,
-bin-packed into 1024×976px (64×61 grid, 16px tiles).
-Wasted cells: 51 of 3904
-(1.3% empty).
+**3963 named sprites** across 4 categories,
+bin-packed into 1024×992px (64×62 grid, 16px tiles).
+Wasted cells: 5 of 3968
+(0.1% empty).
 
 ## Categories Included
 
 - **Characters**: 16 groups, 707 sprites
 - **Items**: 25 groups, 684 sprites
-- **Objects**: 15 groups, 2221 sprites
+- **Objects**: 15 groups, 2331 sprites
 - **GUI**: 1 groups, 241 sprites
 
 ## Phaser 3
