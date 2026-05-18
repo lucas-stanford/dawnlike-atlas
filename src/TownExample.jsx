@@ -72,6 +72,7 @@ export default function TownExample() {
   const [wallStyle, setWallStyle] = useState('');
   const [floorStyle, setFloorStyle] = useState('day brick floor');
   const [streetStyle, setStreetStyle] = useState('day stone floor');
+  const [mainStreetStyle, setMainStreetStyle] = useState('day brick floor');
   const [grassStyle, setGrassStyle] = useState('day grass floor');
   const [treeStyle, setTreeStyle] = useState('');
   const [treeChance, setTreeChance] = useState(8);
@@ -174,7 +175,7 @@ export default function TownExample() {
     for (let py = plazaY; py < plazaY + PLAZA_SIZE; py++) {
       for (let px = plazaX; px < plazaX + PLAZA_SIZE; px++) {
         const t = get(px, py);
-        if (t) { t.type = 'street'; t.plaza = true; }
+        if (t) { t.type = 'street'; t.plaza = true; t.streetKind = 'main'; }
       }
     }
     const plazaCenterX = plazaX + Math.floor(PLAZA_SIZE / 2);
@@ -295,13 +296,16 @@ export default function TownExample() {
     for (const key of streetMask) {
       const [xs, ys] = key.split(',').map(Number);
       const t = get(xs, ys);
-      if (t && !t.wall && !t.floor) { t.type = 'street'; t.street = true; }
+      // Skip plaza tiles so we don't clobber their 'main' streetKind.
+      if (t && !t.wall && !t.floor && !t.plaza) {
+        t.type = 'street'; t.street = true; t.streetKind = 'side';
+      }
     }
     // Plaza tiles are also street tiles for the street-autotile pass.
     for (let py = plazaY; py < plazaY + PLAZA_SIZE; py++) {
       for (let px = plazaX; px < plazaX + PLAZA_SIZE; px++) {
         const t = get(px, py);
-        if (t) t.street = true;
+        if (t) { t.street = true; t.streetKind = 'main'; }
       }
     }
 
@@ -363,7 +367,10 @@ export default function TownExample() {
       const ox = door.x + outNeighbor[0], oy = door.y + outNeighbor[1];
       if (inBounds(ox, oy)) {
         const o = get(ox, oy);
-        if (!o.wall && !o.floor) { o.type = 'street'; o.street = true; }
+        if (!o.wall && !o.floor) {
+          o.type = 'street'; o.street = true;
+          if (!o.streetKind) o.streetKind = 'side';
+        }
       }
     }
 
@@ -471,12 +478,8 @@ export default function TownExample() {
           break;
         }
       }
-      // Fallback: if neither flank is paved, fall back to the exit tile
-      // itself so the building is still identified somehow.
-      if (!signTile) {
-        const exit = get(exitX, exitY);
-        if (exit && exit.street && !exit.sign) signTile = exit;
-      }
+      // No fallback: if neither flank is paved, skip the sign rather than
+      // place it directly on the door exit tile (which would block the doorway).
       if (signTile && atlas.byName[TYPE_SIGN[b.type]]) signTile.sign = TYPE_SIGN[b.type];
 
       // Lanterns on the 4 corners (not on the door).
@@ -503,12 +506,16 @@ export default function TownExample() {
       }
     }
 
-    // 8. External road. Pick a random map edge, walk straight inward
+    // 8. External main road. Pick a random map edge, walk straight inward
     //    for a few tiles so the road exits perpendicular to the border,
     //    then Dijkstra-pathfind to the plaza centre. The path treats
-    //    building walls/floors and graveyard fences as impassable; any
-    //    tile it touches becomes a street (clears trees on the way) so
-    //    the existing street-pavement autotile renders it seamlessly.
+    //    building walls/floors/doors/graveyard fences as impassable so it
+    //    can't pave over doorways. Every tile it touches is paved as a
+    //    'main' street (brick) — the plaza is also 'main', so the brick
+    //    trunk reads as one continuous surface from edge to fountain.
+    //    The road is then widened to 2 tiles by paving one perpendicular
+    //    neighbour of every path tile (right of motion, falling back to
+    //    left when right is blocked).
     const ROAD_EDGE_BUFFER = 3;
     const roadSide = ['n', 's', 'e', 'w'][ROT.RNG.getUniformInt(0, 3)];
     let entryX, entryY, inward;
@@ -518,32 +525,64 @@ export default function TownExample() {
     else                       { entryX = 0;                                            entryY = ROT.RNG.getUniformInt(3, DISPLAY_HEIGHT - 4); inward = [1, 0]; }
 
     const paveRoad = (xx, yy) => {
-      if (!inBounds(xx, yy)) return;
+      if (!inBounds(xx, yy)) return false;
       const t = get(xx, yy);
-      if (!t || t.wall || t.floor) return;
+      // Never overwrite walls, building floors, or doors — keeps doorways clear.
+      if (!t || t.wall || t.floor || t.door) return false;
       t.street = true;
       t.type = 'street';
+      t.streetKind = 'main';
       t.tree = false;
       t.decor = undefined;
+      return true;
     };
 
+    const pathTiles = [];
     let rx = entryX, ry = entryY;
     for (let i = 0; i < ROAD_EDGE_BUFFER; i++) {
-      paveRoad(rx, ry);
+      if (paveRoad(rx, ry)) pathTiles.push([rx, ry]);
       rx += inward[0]; ry += inward[1];
     }
     if (inBounds(rx, ry)) {
       const passable = (px, py) => {
         if (!inBounds(px, py)) return false;
         const t = get(px, py);
-        return !!t && !t.wall && !t.floor && !t.fence;
+        return !!t && !t.wall && !t.floor && !t.fence && !t.door;
       };
       // Topology 4 keeps the road on cardinal steps so the openPath
       // street autotile resolves cleanly. Dijkstra walks the cheapest
       // route from (rx,ry) to the plaza centre; the callback paves
       // every tile along the way (including the start + end).
       const dij = new ROT.Path.Dijkstra(plazaCenterX, plazaCenterY, passable, { topology: 4 });
-      dij.compute(rx, ry, (px, py) => paveRoad(px, py));
+      dij.compute(rx, ry, (px, py) => {
+        if (paveRoad(px, py)) pathTiles.push([px, py]);
+      });
+    }
+
+    // Widen the road to 2 tiles. For each path tile, pave one tile
+    // perpendicular to the local direction of travel (right of motion).
+    // If that side is blocked (wall/floor/door/OOB) try the left side.
+    for (let i = 0; i < pathTiles.length; i++) {
+      const [px, py] = pathTiles[i];
+      let dx = 0, dy = 0;
+      if (i + 1 < pathTiles.length) {
+        dx = pathTiles[i + 1][0] - px;
+        dy = pathTiles[i + 1][1] - py;
+      } else if (i > 0) {
+        dx = px - pathTiles[i - 1][0];
+        dy = py - pathTiles[i - 1][1];
+      } else {
+        dx = inward[0]; dy = inward[1];
+      }
+      // Normalize (Dijkstra topology=4 only ever steps 1 tile, but the
+      // entry buffer respects |inward|=1 already, so this is just safety).
+      if (Math.abs(dx) > 1) dx = Math.sign(dx);
+      if (Math.abs(dy) > 1) dy = Math.sign(dy);
+      // 90° CW rotation = (-dy, dx)
+      const rXcw = -dy, rYcw = dx;
+      if (!paveRoad(px + rXcw, py + rYcw)) {
+        paveRoad(px - rXcw, py - rYcw);
+      }
     }
 
     // 9. Optional graveyard. Find a 5x6 grass patch far from the plaza,
@@ -678,12 +717,21 @@ export default function TownExample() {
       layers.push({ name, z: 0, reason: `Grass (${reason})` });
     }
 
-    // z=0.5: street pavement autotile.
+    // z=0.5: street pavement autotile. Two variants:
+    //   - main: brick trunk road + plaza
+    //   - side: stone ring around buildings + door-flank spurs
+    // Each variant autotiles only against its own kind, so brick and
+    // stone meet at a clean edge rather than merging visually.
     if (tile.street) {
-      const isStreet = (nx, ny) => !!mapData[`${nx},${ny}`]?.street;
-      const n = isStreet(x, y-1), s = isStreet(x, y+1), w = isStreet(x-1, y), e = isStreet(x+1, y);
-      const { name } = resolveDawnLikeFloorName(streetStyle, { n, s, e, w }, atlas.byName);
-      layers.push({ name, z: 0.5, reason: 'Street pavement' });
+      const kind = tile.streetKind || 'side';
+      const isSameKind = (nx, ny) => {
+        const n = mapData[`${nx},${ny}`];
+        return !!(n?.street && (n.streetKind || 'side') === kind);
+      };
+      const n = isSameKind(x, y-1), s = isSameKind(x, y+1), w = isSameKind(x-1, y), e = isSameKind(x+1, y);
+      const style = kind === 'main' ? mainStreetStyle : streetStyle;
+      const { name } = resolveDawnLikeFloorName(style, { n, s, e, w }, atlas.byName);
+      layers.push({ name, z: 0.5, reason: `${kind === 'main' ? 'Main' : 'Side'} street pavement` });
     }
 
     // z=1: building interior floor autotile. Door tiles also get the floor
@@ -797,7 +845,7 @@ export default function TownExample() {
     }
     entries.sort((a, b) => a.pos.y - b.pos.y || a.pos.x - b.pos.x || a.z - b.z);
     return entries;
-  }, [spriteOverrides, mapData, atlas, wallStyle, floorStyle, streetStyle, grassStyle]);
+  }, [spriteOverrides, mapData, atlas, wallStyle, floorStyle, streetStyle, mainStreetStyle, grassStyle]);
 
   const copyLog = () => {
     const text = JSON.stringify(overrideLog, null, 2);
@@ -831,7 +879,8 @@ export default function TownExample() {
             <h3>Town Config</h3>
             <div className="field-group"><label>Wall Style</label><select value={wallStyle} onChange={e => setWallStyle(e.target.value)}>{discoveredWalls.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div className="field-group"><label>Building Floor</label><select value={floorStyle} onChange={e => setFloorStyle(e.target.value)}>{FLOOR_STYLES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-            <div className="field-group"><label>Street Style</label><select value={streetStyle} onChange={e => setStreetStyle(e.target.value)}>{STREET_STYLES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+            <div className="field-group"><label>Main Road (brick)</label><select value={mainStreetStyle} onChange={e => setMainStreetStyle(e.target.value)}>{STREET_STYLES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+            <div className="field-group"><label>Side Street</label><select value={streetStyle} onChange={e => setStreetStyle(e.target.value)}>{STREET_STYLES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div className="field-group"><label>Grass Style</label><select value={grassStyle} onChange={e => setGrassStyle(e.target.value)}>{GRASS_STYLES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div className="field-group"><label>Tree Style</label><select value={treeStyle} onChange={e => setTreeStyle(e.target.value)}>{discoveredTrees.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div className="field-group"><label>Buildings: {buildingCount}</label><input type="range" min="3" max="10" step="1" value={buildingCount} onChange={e => setBuildingCount(parseInt(e.target.value))} /></div>
