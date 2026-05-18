@@ -211,10 +211,13 @@ export default function OutdoorExample() {
       }
     }
 
-    // 2. Generate Road (Strict Cardinal Steps)
+    // 2. Generate Road (Strict Cardinal Steps) — like the river, the road
+    // runs straight for the first/last EDGE_BUFFER tiles so it enters and
+    // exits the map perpendicular to the edge rather than at a bend.
     let rx = 0;
     let ry = Math.floor(DISPLAY_HEIGHT / 2);
     const riverX = Math.floor(DISPLAY_WIDTH * 0.7);
+    const ROAD_EDGE_BUFFER = 2;
 
     const clearForPath = (tx, ty) => {
       const t = data[`${tx},${ty}`];
@@ -228,7 +231,8 @@ export default function OutdoorExample() {
       clearForPath(rx, ry);
 
       const nearRiver = Math.abs(rx - riverX) < 4;
-      const move = nearRiver ? 0 : ROT.RNG.getItem([-1, 0, 0, 0, 1]);
+      const nearEdge = rx < ROAD_EDGE_BUFFER || rx >= DISPLAY_WIDTH - ROAD_EDGE_BUFFER;
+      const move = (nearRiver || nearEdge) ? 0 : ROT.RNG.getItem([-1, 0, 0, 0, 1]);
 
       if (move !== 0 && ry + move >= 0 && ry + move < DISPLAY_HEIGHT) {
         ry += move;
@@ -271,6 +275,10 @@ export default function OutdoorExample() {
     let rvX = riverX;
     let intersectionLocked = 0;
     const mainRiverPath = [];
+    // Tiles within EDGE_BUFFER of the top or bottom edge run straight so the
+    // river enters/exits the map perpendicular to the edge instead of with a
+    // visually awkward bend right at the boundary.
+    const EDGE_BUFFER = 2;
     for (let rvY = 0; rvY < DISPLAY_HEIGHT; rvY++) {
       const t = clearForRiver(rvX, rvY);
       if (t) {
@@ -281,7 +289,8 @@ export default function OutdoorExample() {
         intersectionLocked--;
         continue;
       }
-      const move = ROT.RNG.getItem([-1, 0, 0, 0, 0, 1]);
+      const nearEdge = rvY < EDGE_BUFFER || rvY >= DISPLAY_HEIGHT - EDGE_BUFFER;
+      const move = nearEdge ? 0 : ROT.RNG.getItem([-1, 0, 0, 0, 0, 1]);
       if (move !== 0 && rvX + move >= 0 && rvX + move < DISPLAY_WIDTH) {
         const newX = rvX + move;
         const conn = clearForRiver(newX, rvY);
@@ -319,7 +328,11 @@ export default function OutdoorExample() {
           tx += step;
           continue;
         }
-        const dy = ROT.RNG.getItem([-1, 0, 0, 0, 0, 1]);
+        // Run straight when within EDGE_BUFFER of the destination edge.
+        const nearTribEdge = goLeft
+          ? tx <= EDGE_BUFFER
+          : tx >= DISPLAY_WIDTH - 1 - EDGE_BUFFER;
+        const dy = nearTribEdge ? 0 : ROT.RNG.getItem([-1, 0, 0, 0, 0, 1]);
         if (dy !== 0 && ty + dy >= 1 && ty + dy < DISPLAY_HEIGHT - 1) {
           ty += dy;
           const conn = clearForRiver(tx, ty);
