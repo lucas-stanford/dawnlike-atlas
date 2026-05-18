@@ -13,6 +13,14 @@
  *    horizontal-bar T's are literal. See resolveDawnLikeRiverName
  *    docstring for the full convention and pixel-level verification.
  *
+ *  - `wall` (bright brick wall / bright mine wall / etc.): the
+ *    DawnLike WALL family. Same 11-variant logical set as openPath,
+ *    but DawnLike orders the suffix tokens left → right → up → down
+ *    (so a NE corner is `right up`, not `up right`) and uses
+ *    `center` / `flat` for isolated and endcap fallbacks. Use this
+ *    for any "Objects/Wall" sheet sprite; openPath is for sprites on
+ *    the Objects/Map sheet (river/road/castle).
+ *
  *  - `blob` (mountain): the 10-sprite "blob" set named by which edge
  *    the tile sits on (n/s/e/w/ne/nw/se/sw/c/alone), no T-junctions or
  *    thin straights — see resolveDawnLikeMountainName.
@@ -57,6 +65,49 @@ export const AUTOTILE_MANIFESTS = {
       '':     ['ns'],
     },
   },
+  // DawnLike WALL family ("bright brick wall", "bright mine wall", etc.).
+  // These use a different suffix ordering than openPath: directions are
+  // listed left → right → up → down, corners flip the openPath order
+  // (DawnLike has e.g. `right down` for an E+S corner, not `down right`),
+  // and the isolated/endcap fallback is `center` / `flat` rather than a
+  // straight piece. Verified against the atlas (sprites listed in
+  // DawnlikeAtlas.json for `bright brick wall *` and `bright mine wall *`).
+  wall: {
+    map: {
+      '':     'center',                 // isolated wall
+      'n':    'up down',                // endcap N → vertical straight
+      's':    'up down',                // endcap S → vertical straight
+      'e':    'left right',             // endcap E → horizontal straight
+      'w':    'left right',             // endcap W → horizontal straight
+      'ns':   'up down',
+      'ew':   'left right',
+      'nw':   'left up',                // outer corner (N+W neighbors)
+      'ne':   'right up',
+      'sw':   'left down',
+      'se':   'right down',
+      'nse':  'left up down',
+      'nsw':  'right up down',
+      'new':  'left right up',
+      'sew':  'left right down',
+      'nsew': 'left right up down',
+    },
+    fallbacks: {
+      'nsew': ['ew', 'ns', 'center'],
+      'nse':  ['ns', 'center'],
+      'nsw':  ['ns', 'center'],
+      'new':  ['ew', 'center'],
+      'sew':  ['ew', 'center'],
+      'nw':   ['ns', 'ew', 'center'],
+      'ne':   ['ns', 'ew', 'center'],
+      'sw':   ['ns', 'ew', 'center'],
+      'se':   ['ns', 'ew', 'center'],
+      'n':    ['ns', 'center'],
+      's':    ['ns', 'center'],
+      'e':    ['ew', 'center'],
+      'w':    ['ew', 'center'],
+      '':     ['center'],
+    },
+  },
 };
 
 /**
@@ -91,16 +142,30 @@ export function resolveAutotile(manifestId, baseName, { n, s, e, w }, byName = {
 
 /**
  * resolveDawnLikeWallName
- * 
- * Maps cardinal neighbors to a specific DawnLike sprite name.
- * This is the original road/wall resolver; it now delegates to
- * resolveAutotile() with the shared `openPath` manifest so that road
- * tile naming follows the same (verified) convention as rivers and
- * castle walls. The pool/fence families with different naming still
- * use their own resolvers.
+ *
+ * Road/path resolver via the shared `openPath` manifest. Despite the
+ * name this is historically used for ROADS, RIVERS, and CASTLE WALLS
+ * (sprites on Objects/Map that use the `up down left right` suffix
+ * ordering). For DawnLike Objects/Wall sprites (bright brick wall,
+ * bright mine wall, etc.) use `resolveDawnLikeBuildingWallName` —
+ * those use a different `left right up down` suffix ordering.
  */
 export function resolveDawnLikeWallName(baseName, neighbors, byName = {}) {
   const { name } = resolveAutotile('openPath', baseName, neighbors, byName);
+  return name;
+}
+
+/**
+ * resolveDawnLikeBuildingWallName
+ *
+ * Cardinal-neighbor resolver for DawnLike WALL-family sprites
+ * (Objects/Wall sheet: bright brick wall, bright mine wall, etc.).
+ * Uses the dedicated `wall` manifest whose suffix tokens follow
+ * DawnLike's left→right→up→down ordering and whose fallbacks land
+ * on `center`/`flat` instead of a straight piece.
+ */
+export function resolveDawnLikeBuildingWallName(baseName, neighbors, byName = {}) {
+  const { name } = resolveAutotile('wall', baseName, neighbors, byName);
   return name;
 }
 
@@ -109,7 +174,7 @@ export function resolveDawnLikeWallName(baseName, neighbors, byName = {}) {
  *
  * "Rot.js dungeon" wall autotile: the original heuristic used in
  * `AutotileExample` to render dungeon corridors with correct corners
- * and T-junctions on top of the shared `openPath` 11-variant set.
+ * and T-junctions on top of the DawnLike WALL family.
  *
  * Unlike a plain cardinal-neighbor check, this resolver does two
  * things that matter for dungeon-shaped wall blobs (rectangular rooms
@@ -128,8 +193,9 @@ export function resolveDawnLikeWallName(baseName, neighbors, byName = {}) {
  *      the autotile from connecting walls across an empty room
  *      diagonal that would otherwise produce ambiguous T-pieces.
  *
- * Callers provide an `isWall(x, y)` predicate; treat out-of-bounds
- * as wall so the map border doesn't read as exposed.
+ * Resolves through the `wall` manifest (DawnLike Objects/Wall suffix
+ * ordering). Callers provide an `isWall(x, y)` predicate; treat
+ * out-of-bounds as wall so the map border doesn't read as exposed.
  */
 export function resolveDawnLikeDungeonWallName(baseName, x, y, isWall, byName = {}) {
   const isSurfaceWall = (tx, ty) => {
@@ -156,7 +222,7 @@ export function resolveDawnLikeDungeonWallName(baseName, x, y, isWall, byName = 
   const w = isSurfaceWall(x - 1, y) && verticalOpen(x - 1);
   const e = isSurfaceWall(x + 1, y) && verticalOpen(x + 1);
 
-  return resolveDawnLikeWallName(baseName, { n, s, e, w }, byName);
+  return resolveDawnLikeBuildingWallName(baseName, { n, s, e, w }, byName);
 }
 
 /**

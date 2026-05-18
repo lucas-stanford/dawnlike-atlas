@@ -503,7 +503,50 @@ export default function TownExample() {
       }
     }
 
-    // 8. Optional graveyard. Find a 5x6 grass patch far from the plaza,
+    // 8. External road. Pick a random map edge, walk straight inward
+    //    for a few tiles so the road exits perpendicular to the border,
+    //    then Dijkstra-pathfind to the plaza centre. The path treats
+    //    building walls/floors and graveyard fences as impassable; any
+    //    tile it touches becomes a street (clears trees on the way) so
+    //    the existing street-pavement autotile renders it seamlessly.
+    const ROAD_EDGE_BUFFER = 3;
+    const roadSide = ['n', 's', 'e', 'w'][ROT.RNG.getUniformInt(0, 3)];
+    let entryX, entryY, inward;
+    if (roadSide === 'n')      { entryX = ROT.RNG.getUniformInt(3, DISPLAY_WIDTH - 4);  entryY = 0;                  inward = [0, 1]; }
+    else if (roadSide === 's') { entryX = ROT.RNG.getUniformInt(3, DISPLAY_WIDTH - 4);  entryY = DISPLAY_HEIGHT - 1; inward = [0, -1]; }
+    else if (roadSide === 'e') { entryX = DISPLAY_WIDTH - 1;                            entryY = ROT.RNG.getUniformInt(3, DISPLAY_HEIGHT - 4); inward = [-1, 0]; }
+    else                       { entryX = 0;                                            entryY = ROT.RNG.getUniformInt(3, DISPLAY_HEIGHT - 4); inward = [1, 0]; }
+
+    const paveRoad = (xx, yy) => {
+      if (!inBounds(xx, yy)) return;
+      const t = get(xx, yy);
+      if (!t || t.wall || t.floor) return;
+      t.street = true;
+      t.type = 'street';
+      t.tree = false;
+      t.decor = undefined;
+    };
+
+    let rx = entryX, ry = entryY;
+    for (let i = 0; i < ROAD_EDGE_BUFFER; i++) {
+      paveRoad(rx, ry);
+      rx += inward[0]; ry += inward[1];
+    }
+    if (inBounds(rx, ry)) {
+      const passable = (px, py) => {
+        if (!inBounds(px, py)) return false;
+        const t = get(px, py);
+        return !!t && !t.wall && !t.floor && !t.fence;
+      };
+      // Topology 4 keeps the road on cardinal steps so the openPath
+      // street autotile resolves cleanly. Dijkstra walks the cheapest
+      // route from (rx,ry) to the plaza centre; the callback paves
+      // every tile along the way (including the start + end).
+      const dij = new ROT.Path.Dijkstra(plazaCenterX, plazaCenterY, passable, { topology: 4 });
+      dij.compute(rx, ry, (px, py) => paveRoad(px, py));
+    }
+
+    // 9. Optional graveyard. Find a 5x6 grass patch far from the plaza,
     //    fence the perimeter with stone fence, fill the interior with
     //    a mix of gravestones and an occasional coffin.
     if (ROT.RNG.getUniform() * 100 < graveyardChance) {
@@ -549,7 +592,7 @@ export default function TownExample() {
       }
     }
 
-    // 9. Trees + ground flowers scatter on plain grass tiles outside the
+    // 10. Trees + ground flowers scatter on plain grass tiles outside the
     //    town footprint. Trees grow in small clusters around random seed
     //    points; flowers are sprinkled individually on remaining grass.
     //    We keep a one-tile buffer around any street tile so the paths
