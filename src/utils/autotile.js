@@ -185,30 +185,25 @@ export function resolveDawnLikePoolName(baseName, { n, s, e, w }, byName = {}) {
  *                 `down left right`
  *  - 4-way:     `up down left right`
  *
- * IMPORTANT — DawnLike naming convention:
- *   For corners and T-junctions, the sprite suffix names the *opposite* of
- *   the connected neighbors (it describes where the bend or cross-piece
- *   sits, not where the water flows to). Specifically:
+ * DawnLike naming convention (verified by pixel inspection of the atlas):
  *
- *   Corners — the bend sits in the named quadrant; river connects the
- *   two cardinals OPPOSITE that quadrant:
- *     `up left`    → bend NW, river connects S + E
- *     `up right`   → bend NE, river connects S + W
- *     `down left`  → bend SW, river connects N + E
- *     `down right` → bend SE, river connects N + W
+ *   Corners — names are LITERAL; suffix lists the two connected cardinals:
+ *     `up left`    → river connects N + W
+ *     `up right`   → river connects N + E
+ *     `down left`  → river connects S + W
+ *     `down right` → river connects S + E
  *
- *   T-junctions — the three legs of the T are NOT the names in the
- *   suffix. The suffix's three directions are the three "outer corners"
- *   the cross-piece points toward. In practice: the one cardinal NOT in
- *   the suffix is the direction the cross-piece extends:
- *     `up down left`   → branches right  → river N + S + E
- *     `up down right`  → branches left   → river N + S + W
- *     `up left right`  → branches down   → river S + E + W
- *     `down left right`→ branches up     → river N + E + W
+ *   Horizontal-bar T-junctions (E + W trunk) — LITERAL:
+ *     `up left right`   → river connects N + E + W (stub points up)
+ *     `down left right` → river connects S + E + W (stub points down)
  *
- *   Straights (`up down`, `left right`) and 4-way (`up down left right`)
- *   follow the intuitive convention — name lists the cardinals with
- *   river neighbors.
+ *   Vertical-bar T-junctions (N + S trunk) — INVERTED on the E/W axis;
+ *   the L/R word in the name is the OPPOSITE of the stub direction:
+ *     `up down left`  → river connects N + S + E  (stub points right!)
+ *     `up down right` → river connects N + S + W  (stub points left!)
+ *
+ *   Straights and 4-way are LITERAL: `up down`, `left right`,
+ *   `up down left right`.
  */
 export function resolveDawnLikeRiverName(baseName, { n, s, e, w }, byName = {}) {
   const get = (suffix) => {
@@ -222,21 +217,23 @@ export function resolveDawnLikeRiverName(baseName, { n, s, e, w }, byName = {}) 
   // 4-way
   if (count === 4) return get('up down left right') || get('left right') || { name: `${baseName} left right` };
 
-  // 3-way T-junctions — see header docstring for the inverted naming rule.
+  // 3-way T-junctions — see header docstring for the mixed naming rule.
+  // Vertical-bar T's (N+S trunk) are inverted on the E/W axis.
   if (n && s && e && !w) return get('up down left')    || get('up down')    || { name: `${baseName} up down` };
   if (n && s && w && !e) return get('up down right')   || get('up down')    || { name: `${baseName} up down` };
-  if (s && e && w && !n) return get('up left right')   || get('left right') || { name: `${baseName} left right` };
-  if (n && e && w && !s) return get('down left right') || get('left right') || { name: `${baseName} left right` };
+  // Horizontal-bar T's (E+W trunk) are literal.
+  if (n && e && w && !s) return get('up left right')   || get('left right') || { name: `${baseName} left right` };
+  if (s && e && w && !n) return get('down left right') || get('left right') || { name: `${baseName} left right` };
 
   // 2-way straights
   if (e && w) return get('left right') || { name: `${baseName} left right` };
   if (n && s) return get('up down') || { name: `${baseName} up down` };
 
-  // 2-way corners — see header docstring; suffix names the bend's quadrant.
-  if (s && e) return get('up left')    || { name: `${baseName} up left` };
-  if (s && w) return get('up right')   || { name: `${baseName} up right` };
-  if (n && e) return get('down left')  || { name: `${baseName} down left` };
-  if (n && w) return get('down right') || { name: `${baseName} down right` };
+  // 2-way corners — literal naming (suffix = connected cardinals).
+  if (n && w) return get('up left')    || { name: `${baseName} up left` };
+  if (n && e) return get('up right')   || { name: `${baseName} up right` };
+  if (s && w) return get('down left')  || { name: `${baseName} down left` };
+  if (s && e) return get('down right') || { name: `${baseName} down right` };
 
   // 1-way endcaps — reuse straights
   if (e || w) return get('left right') || { name: `${baseName} left right` };
