@@ -189,7 +189,7 @@ const CHARACTERS = [
     },
   },
   {
-    name: 'Kael', klass: 'Shadow Ninja', portrait: 'ninja',
+    name: 'Kael', klass: 'Shadow Initiate', portrait: 'ninja',
     level: 6, xp: 180, xpMax: 350,
     hp: 19, hpMax: 24, mp: 10, mpMax: 16,
     str: 13, dex: 18, intel: 11,
@@ -200,10 +200,10 @@ const CHARACTERS = [
       { name: 'Throw Shuriken', icon: 'shuriken' },
     ],
     equipped: {
-      head: null, amulet: 'fuzzy amulet',
-      weapon: 'short sword', offhand: 'dagger',
-      body: null, feet: 'elven boots',
-      ring: 'black onyx ring', cloak: 'spidersilk cape',
+      head: null, amulet: null,
+      weapon: null, offhand: null,
+      body: null, feet: null,
+      ring: null, cloak: null,
     },
   },
   {
@@ -227,39 +227,39 @@ const CHARACTERS = [
 ];
 
 const ITEM_DATA = {
-  'broadsword':           { name: 'Broadsword',           type: 'Weapon',  desc: 'A trusted steel blade — perfectly balanced.',          stats: '+8 ATK',         value: 120 },
-  'short sword':          { name: 'Short Sword',          type: 'Weapon',  desc: 'Light and quick, favoured by scouts.',                stats: '+5 ATK',         value: 60  },
-  'dagger':               { name: 'Curved Dagger',        type: 'Weapon',  desc: 'A wickedly hooked blade. Strikes from the shadows.',  stats: '+3 ATK, +2 DEX', value: 45  },
-  'mace':                 { name: 'War Mace',             type: 'Weapon',  desc: 'A heavy spiked head. Cracks armor and bone alike.',   stats: '+7 ATK',         value: 95  },
-  'small shield':         { name: 'Small Shield',         type: 'Armor',   desc: 'A round wooden shield rimmed with iron.',             stats: '+4 DEF',         value: 80  },
-  'large shield':         { name: 'Large Shield',         type: 'Armor',   desc: 'A heavy kite shield. Slows you, but turns a blade.',  stats: '+9 DEF, -1 DEX', value: 180 },
-  'helmet':               { name: 'Iron Helm',            type: 'Armor',   desc: 'Plain but reliable head protection.',                 stats: '+2 DEF',         value: 50  },
-  'iron armor':           { name: 'Iron Plate',           type: 'Armor',   desc: 'Riveted plate. Heavy, but turns most strikes.',       stats: '+7 DEF, -1 DEX', value: 220 },
-  'monk robes':           { name: 'Monk Robes',           type: 'Armor',   desc: 'Simple woven robes. Light and unrestricting.',        stats: '+2 DEF, +2 MAG', value: 90  },
-  'spidersilk cape':      { name: 'Spidersilk Cape',      type: 'Armor',   desc: 'Almost weightless, yet stronger than chain.',         stats: '+3 DEF, +2 DEX', value: 260 },
-  'elven boots':          { name: 'Elven Boots',          type: 'Armor',   desc: 'Soft soled. Your steps make no sound.',               stats: '+1 DEF, +3 DEX', value: 140 },
-  'buckled shoes':        { name: 'Buckled Shoes',        type: 'Armor',   desc: 'Hand-stitched leather with polished brass buckles.',  stats: '+1 DEF',         value: 40  },
-  'forest cloak':         { name: 'Forest Cloak',         type: 'Armor',   desc: 'Mottled green, blends with the underbrush.',          stats: '+2 DEF, +1 DEX', value: 110 },
-  'desert cloak':         { name: 'Desert Cloak',         type: 'Armor',   desc: 'Pale linen that turns the harshest sun.',             stats: '+1 DEF, +2 MAG', value: 105 },
-  'gold ring':            { name: 'Gold Ring',            type: 'Jewelry', desc: 'A heavy gold band. Hums softly when worn.',           stats: '+2 ATK',         value: 200 },
-  'silver ring':          { name: 'Silver Ring',          type: 'Jewelry', desc: 'A simple silver loop, cool to the touch.',            stats: '+1 DEF, +1 MAG', value: 150 },
-  'emerald ring':         { name: 'Emerald Ring',         type: 'Jewelry', desc: 'A flawless emerald set in silver. Pulses with power.', stats: '+3 MAG',        value: 320 },
-  'black onyx ring':      { name: 'Onyx Ring',            type: 'Jewelry', desc: 'A dark onyx cabochon. Drinks the candlelight.',       stats: '+2 DEX',         value: 240 },
-  'amulet of yendor':     { name: 'Amulet of Yendor',     type: 'Jewelry', desc: 'A relic of the deep, etched with forgotten runes.',   stats: '+2 ATK, +2 DEF', value: 999 },
-  'fuzzy amulet':         { name: 'Fuzzy Amulet',         type: 'Jewelry', desc: 'Strangely warm. Faintly purrs against your chest.',   stats: '+3 DEX',         value: 180 },
-  'jade pendant':         { name: 'Jade Pendant',         type: 'Jewelry', desc: 'Carved jade on a silver chain. Sharpens the mind.',   stats: '+3 MAG',         value: 280 },
-  'choker necklace':      { name: 'Silver Choker',        type: 'Jewelry', desc: 'A simple chain blessed by the temple.',               stats: '+1 DEF, +1 MAG', value: 160 },
+  'broadsword':           { name: 'Broadsword',           type: 'Weapon',  desc: 'A trusted steel blade — perfectly balanced.',          stats: '+8 ATK',         value: 120, slots: ['weapon'] },
+  'short sword':          { name: 'Short Sword',          type: 'Weapon',  desc: 'Light and quick, favoured by scouts.',                stats: '+5 ATK',         value: 60 , slots: ['weapon', 'offhand'] },
+  'dagger':               { name: 'Curved Dagger',        type: 'Weapon',  desc: 'A wickedly hooked blade. Strikes from the shadows.',  stats: '+3 ATK, +2 DEX', value: 45 , slots: ['weapon', 'offhand'] },
+  'mace':                 { name: 'War Mace',             type: 'Weapon',  desc: 'A heavy spiked head. Cracks armor and bone alike.',   stats: '+7 ATK',         value: 95 , slots: ['weapon'] },
+  'small shield':         { name: 'Small Shield',         type: 'Armor',   desc: 'A round wooden shield rimmed with iron.',             stats: '+4 DEF',         value: 80 , slots: ['offhand'] },
+  'large shield':         { name: 'Large Shield',         type: 'Armor',   desc: 'A heavy kite shield. Slows you, but turns a blade.',  stats: '+9 DEF, -1 DEX', value: 180, slots: ['offhand'] },
+  'helmet':               { name: 'Iron Helm',            type: 'Armor',   desc: 'Plain but reliable head protection.',                 stats: '+2 DEF',         value: 50 , slots: ['head'] },
+  'iron armor':           { name: 'Iron Plate',           type: 'Armor',   desc: 'Riveted plate. Heavy, but turns most strikes.',       stats: '+7 DEF, -1 DEX', value: 220, slots: ['body'] },
+  'monk robes':           { name: 'Monk Robes',           type: 'Armor',   desc: 'Simple woven robes. Light and unrestricting.',        stats: '+2 DEF, +2 MAG', value: 90 , slots: ['body'] },
+  'spidersilk cape':      { name: 'Spidersilk Cape',      type: 'Armor',   desc: 'Almost weightless, yet stronger than chain.',         stats: '+3 DEF, +2 DEX', value: 260, slots: ['cloak'] },
+  'elven boots':          { name: 'Elven Boots',          type: 'Armor',   desc: 'Soft soled. Your steps make no sound.',               stats: '+1 DEF, +3 DEX', value: 140, slots: ['feet'] },
+  'buckled shoes':        { name: 'Buckled Shoes',        type: 'Armor',   desc: 'Hand-stitched leather with polished brass buckles.',  stats: '+1 DEF',         value: 40 , slots: ['feet'] },
+  'forest cloak':         { name: 'Forest Cloak',         type: 'Armor',   desc: 'Mottled green, blends with the underbrush.',          stats: '+2 DEF, +1 DEX', value: 110, slots: ['cloak'] },
+  'desert cloak':         { name: 'Desert Cloak',         type: 'Armor',   desc: 'Pale linen that turns the harshest sun.',             stats: '+1 DEF, +2 MAG', value: 105, slots: ['cloak'] },
+  'gold ring':            { name: 'Gold Ring',            type: 'Jewelry', desc: 'A heavy gold band. Hums softly when worn.',           stats: '+2 ATK',         value: 200, slots: ['ring'] },
+  'silver ring':          { name: 'Silver Ring',          type: 'Jewelry', desc: 'A simple silver loop, cool to the touch.',            stats: '+1 DEF, +1 MAG', value: 150, slots: ['ring'] },
+  'emerald ring':         { name: 'Emerald Ring',         type: 'Jewelry', desc: 'A flawless emerald set in silver. Pulses with power.', stats: '+3 MAG',        value: 320, slots: ['ring'] },
+  'black onyx ring':      { name: 'Onyx Ring',            type: 'Jewelry', desc: 'A dark onyx cabochon. Drinks the candlelight.',       stats: '+2 DEX',         value: 240, slots: ['ring'] },
+  'amulet of yendor':     { name: 'Amulet of Yendor',     type: 'Jewelry', desc: 'A relic of the deep, etched with forgotten runes.',   stats: '+2 ATK, +2 DEF', value: 999, slots: ['amulet'] },
+  'fuzzy amulet':         { name: 'Fuzzy Amulet',         type: 'Jewelry', desc: 'Strangely warm. Faintly purrs against your chest.',   stats: '+3 DEX',         value: 180, slots: ['amulet'] },
+  'jade pendant':         { name: 'Jade Pendant',         type: 'Jewelry', desc: 'Carved jade on a silver chain. Sharpens the mind.',   stats: '+3 MAG',         value: 280, slots: ['amulet'] },
+  'choker necklace':      { name: 'Silver Choker',        type: 'Jewelry', desc: 'A simple chain blessed by the temple.',               stats: '+1 DEF, +1 MAG', value: 160, slots: ['amulet'] },
   'ruby potion':          { name: 'Potion of Healing',    type: 'Potion',  desc: 'Restores a moderate amount of HP.',                   stats: '+25 HP',         value: 40  },
   'emerald potion':       { name: 'Potion of Mana',       type: 'Potion',  desc: 'Replenishes the arcane reserves.',                    stats: '+20 MP',         value: 45  },
   'yellow potion':        { name: 'Potion of Vigor',      type: 'Potion',  desc: 'Grants a surge of strength for one battle.',          stats: '+3 STR (1m)',    value: 90  },
   'orange potion':        { name: 'Potion of Fire Resist',type: 'Potion',  desc: 'Wards the body against flame.',                       stats: '+25% Fire R',    value: 70  },
   'dark green potion':    { name: 'Potion of Antidote',   type: 'Potion',  desc: 'Cleanses poison from the blood.',                     stats: 'Cure Poison',    value: 35  },
-  'white scroll':         { name: 'Scroll of Light',      type: 'Scroll',  desc: 'Conjures a sphere of pure light.',                    stats: 'Cast: Light',    value: 25  },
-  'gray scroll':          { name: 'Scroll of Smoke',      type: 'Scroll',  desc: 'A veil of grey smoke obscures vision.',               stats: 'Cast: Smoke',    value: 30  },
-  'dusty cyan scroll':    { name: 'Scroll of Recall',     type: 'Scroll',  desc: 'Returns you to the last shrine you visited.',         stats: 'Cast: Recall',   value: 200 },
+  'white scroll':         { name: 'Scroll of Light',      type: 'Scroll',  desc: 'Conjures a sphere of pure light.',                    stats: 'Cast: Light',    value: 25 , slots: ['weapon', 'offhand'] },
+  'gray scroll':          { name: 'Scroll of Smoke',      type: 'Scroll',  desc: 'A veil of grey smoke obscures vision.',               stats: 'Cast: Smoke',    value: 30 , slots: ['weapon', 'offhand'] },
+  'dusty cyan scroll':    { name: 'Scroll of Recall',     type: 'Scroll',  desc: 'Returns you to the last shrine you visited.',         stats: 'Cast: Recall',   value: 200, slots: ['weapon', 'offhand'] },
   'long scroll':          { name: 'Map of the Caves',     type: 'Scroll',  desc: 'A weathered parchment marked with the Old Roads.',    stats: 'Reveals Map',    value: 150 },
   'pile of copper coins': { name: 'Copper Coins',         type: 'Misc',    desc: 'A small handful of tarnished coppers.',               stats: 'Currency',       value: 1   },
-  'crystal ball':         { name: 'Crystal Ball',         type: 'Misc',    desc: 'Shows shapes in the swirling mists. Sometimes true.', stats: 'Foresight',      value: 800 },
+  'crystal ball':         { name: 'Crystal Ball',         type: 'Misc',    desc: 'Shows shapes in the swirling mists. Sometimes true.', stats: 'Foresight',      value: 800, slots: ['offhand'] },
   'bag':                  { name: 'Leather Bag',          type: 'Misc',    desc: 'Doubles your carrying capacity.',                     stats: '+10 slots',      value: 100 },
   'closed chest':         { name: 'Locked Chest',         type: 'Misc',    desc: 'You sense treasure within… if only you had the key.', stats: 'Locked',         value: 0   },
 };
@@ -538,14 +538,54 @@ function CharacterModal({ atlas, onClose, frameFamily = 'gray white' }) {
 // Inventory modal
 // =====================================================================
 
-function PaperDollSlot({ atlas, slot, itemId, onClick, isHighlighted, className = '' }) {
+function PaperDollSlot({
+  atlas, slot, itemId, onClick, isHighlighted, className = '',
+  draggingItemId = null, onDropItem,
+}) {
   const data = itemId ? ITEM_DATA[itemId] : null;
+  const [isOver, setIsOver] = useState(false);
+  const [isInvalid, setIsInvalid] = useState(false);
+
+  const draggingData = draggingItemId ? ITEM_DATA[draggingItemId] : null;
+  const canAccept = !!(draggingData?.slots && draggingData.slots.includes(slot.key));
+
+  const handleDragOver = (e) => {
+    if (!draggingItemId) return;
+    if (canAccept) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (!isOver) setIsOver(true);
+    } else {
+      if (!isInvalid) setIsInvalid(true);
+    }
+  };
+  const handleDragLeave = () => { setIsOver(false); setIsInvalid(false); };
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsOver(false);
+    setIsInvalid(false);
+    const id = e.dataTransfer.getData('text/plain') || draggingItemId;
+    if (id && ITEM_DATA[id]?.slots?.includes(slot.key)) onDropItem?.(slot.key, id);
+  };
+
   return (
     <button
       type="button"
-      className={`menu-paperdoll-slot${itemId ? ' is-filled' : ' is-empty'}${isHighlighted ? ' is-highlight' : ''} ${className}`}
-      onClick={onClick}
-      title={data ? `${slot.label}: ${data.name}` : `${slot.label} (empty)`}
+      className={[
+        'menu-paperdoll-slot',
+        itemId ? 'is-filled' : 'is-empty',
+        isHighlighted ? 'is-highlight' : '',
+        isOver ? 'is-droptarget' : '',
+        isInvalid ? 'is-droptarget-invalid' : '',
+        canAccept && draggingItemId && !isOver && !isInvalid ? 'is-dropeligible' : '',
+        className,
+      ].filter(Boolean).join(' ')}
+      onClick={() => onClick?.(slot.key, itemId)}
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      title={data ? `${slot.label}: ${data.name} (click to unequip)` : `${slot.label} (empty)`}
     >
       <Sprite atlas={atlas} name="brown gray square" scale={4} />
       {itemId ? (
@@ -570,8 +610,8 @@ function parseStatBonus(stats, kind) {
   return m ? parseInt(m[1], 10) : 0;
 }
 
-function PaperDoll({ atlas, character }) {
-  const eq = character.equipped || {};
+function PaperDoll({ atlas, character, equipment, draggingItemId, onEquip, onUnequip }) {
+  const eq = equipment || character.equipped || {};
   const equippedItems = Object.values(eq).filter(Boolean).map(id => ITEM_DATA[id]).filter(Boolean);
 
   const atk = character.str + equippedItems.reduce((s, i) => s + parseStatBonus(i.stats, 'ATK'), 0);
@@ -580,6 +620,15 @@ function PaperDoll({ atlas, character }) {
 
   const equippedCount = Object.values(eq).filter(Boolean).length;
   const totalSlots = EQUIPMENT_SLOTS.length;
+
+  const slotProps = (slot) => ({
+    atlas,
+    slot,
+    itemId: eq[slot.key],
+    draggingItemId,
+    onDropItem: onEquip,
+    onClick: (slotKey, itemId) => { if (itemId) onUnequip?.(slotKey); },
+  });
 
   return (
     <div className="menu-paperdoll">
@@ -590,14 +639,14 @@ function PaperDoll({ atlas, character }) {
       </div>
 
       <div className="menu-paperdoll-grid">
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[0]} itemId={eq.head}    className="pd-slot pd-slot-head" />
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[1]} itemId={eq.amulet}  className="pd-slot pd-slot-amulet" />
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[6]} itemId={eq.ring}    className="pd-slot pd-slot-ring" />
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[2]} itemId={eq.weapon}  className="pd-slot pd-slot-weapon" />
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[3]} itemId={eq.offhand} className="pd-slot pd-slot-offhand" />
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[4]} itemId={eq.body}    className="pd-slot pd-slot-body" />
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[7]} itemId={eq.cloak}   className="pd-slot pd-slot-cloak" />
-        <PaperDollSlot atlas={atlas} slot={EQUIPMENT_SLOTS[5]} itemId={eq.feet}    className="pd-slot pd-slot-feet" />
+        <PaperDollSlot {...slotProps(EQUIPMENT_SLOTS[0])} className="pd-slot pd-slot-head" />
+        <PaperDollSlot {...slotProps(EQUIPMENT_SLOTS[1])} className="pd-slot pd-slot-amulet" />
+        <PaperDollSlot {...slotProps(EQUIPMENT_SLOTS[6])} className="pd-slot pd-slot-ring" />
+        <PaperDollSlot {...slotProps(EQUIPMENT_SLOTS[2])} className="pd-slot pd-slot-weapon" />
+        <PaperDollSlot {...slotProps(EQUIPMENT_SLOTS[3])} className="pd-slot pd-slot-offhand" />
+        <PaperDollSlot {...slotProps(EQUIPMENT_SLOTS[4])} className="pd-slot pd-slot-body" />
+        <PaperDollSlot {...slotProps(EQUIPMENT_SLOTS[7])} className="pd-slot pd-slot-cloak" />
+        <PaperDollSlot {...slotProps(EQUIPMENT_SLOTS[5])} className="pd-slot pd-slot-feet" />
 
         <div className="menu-paperdoll-figure">
           <div className="menu-paperdoll-figure-glow" />
@@ -639,6 +688,25 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [equipCharIdx, setEquipCharIdx] = useState(0);
 
+  // Live, per-character equipment state. Initialised from the static CHARACTERS
+  // table but mutates as the user drags items onto paper-doll slots so the
+  // demo actually equips/unequips for the session.
+  const [equipState, setEquipState] = useState(() =>
+    CHARACTERS.map(c => ({ ...(c.equipped || {}) }))
+  );
+  const [draggingItemId, setDraggingItemId] = useState(null);
+
+  const equipCurrent = equipState[equipCharIdx] || {};
+
+  // Which inventory item ids are currently equipped by ANY character — used
+  // to dim/disable those entries in the items grid so the same dagger can't
+  // be equipped twice.
+  const equippedAnywhere = useMemo(() => {
+    const set = new Set();
+    for (const eq of equipState) for (const id of Object.values(eq)) if (id) set.add(id);
+    return set;
+  }, [equipState]);
+
   const filtered = useMemo(() => (
     category === 'all' ? INVENTORY : INVENTORY.filter(it => it.category === category)
   ), [category]);
@@ -650,6 +718,24 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
   useEffect(() => { setSelectedIdx(0); }, [category]);
 
   const gold = 1247;
+
+  const handleEquip = (slotKey, itemId) => {
+    setEquipState(prev => {
+      const next = prev.map(e => ({ ...e }));
+      // If this exact item is in another slot on the same character, swap it out first.
+      const cur = next[equipCharIdx];
+      for (const k of Object.keys(cur)) if (cur[k] === itemId) cur[k] = null;
+      cur[slotKey] = itemId;
+      return next;
+    });
+  };
+  const handleUnequip = (slotKey) => {
+    setEquipState(prev => {
+      const next = prev.map(e => ({ ...e }));
+      next[equipCharIdx][slotKey] = null;
+      return next;
+    });
+  };
 
   return (
     <Frame atlas={atlas} w={22} h={11} family={frameFamily}>
@@ -680,7 +766,14 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
                 </button>
               ))}
             </div>
-            <PaperDoll atlas={atlas} character={equipChar} />
+            <PaperDoll
+              atlas={atlas}
+              character={equipChar}
+              equipment={equipCurrent}
+              draggingItemId={draggingItemId}
+              onEquip={handleEquip}
+              onUnequip={handleUnequip}
+            />
           </div>
 
           <div className="menu-inv-items-col">
@@ -699,20 +792,43 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
             </div>
 
             <div className="menu-inventory-grid">
-              {filtered.map((it, i) => (
-                <button
-                  key={it.id}
-                  className={`menu-inventory-slot${i === selectedIdx ? ' is-selected' : ''}`}
-                  onClick={() => setSelectedIdx(i)}
-                  title={ITEM_DATA[it.id]?.name || it.id}
-                >
-                  <Sprite atlas={atlas} name="brown gray square" scale={2} />
-                  <div className="menu-inventory-slot-item">
-                    <Sprite atlas={atlas} name={it.id} scale={2} />
-                  </div>
-                  {it.count > 1 && <span className="menu-inventory-count">{it.count}</span>}
-                </button>
-              ))}
+              {filtered.map((it, i) => {
+                const data = ITEM_DATA[it.id];
+                const equippable = !!data?.slots?.length;
+                const alreadyEquipped = equippedAnywhere.has(it.id);
+                const canDrag = equippable && !alreadyEquipped;
+                return (
+                  <button
+                    key={it.id}
+                    className={[
+                      'menu-inventory-slot',
+                      i === selectedIdx ? 'is-selected' : '',
+                      alreadyEquipped ? 'is-equipped-elsewhere' : '',
+                      canDrag ? 'is-draggable' : '',
+                      draggingItemId === it.id ? 'is-dragging' : '',
+                    ].filter(Boolean).join(' ')}
+                    onClick={() => setSelectedIdx(i)}
+                    title={
+                      alreadyEquipped ? `${data?.name || it.id} — equipped` :
+                      equippable ? `${data?.name || it.id} — drag to a slot to equip` :
+                      data?.name || it.id
+                    }
+                    draggable={canDrag}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('text/plain', it.id);
+                      e.dataTransfer.effectAllowed = 'move';
+                      setDraggingItemId(it.id);
+                    }}
+                    onDragEnd={() => setDraggingItemId(null)}
+                  >
+                    <Sprite atlas={atlas} name="brown gray square" scale={2} />
+                    <div className="menu-inventory-slot-item">
+                      <Sprite atlas={atlas} name={it.id} scale={2} />
+                    </div>
+                    {it.count > 1 && <span className="menu-inventory-count">{it.count}</span>}
+                  </button>
+                );
+              })}
               {Array.from({ length: Math.max(0, 32 - filtered.length) }).map((_, i) => (
                 <div key={`empty-${i}`} className="menu-inventory-slot is-empty">
                   <Sprite atlas={atlas} name="brown gray square" scale={2} />
