@@ -11,11 +11,12 @@ import { renderTownTile } from '../autotileRender.js';
 import { seedFor } from '../save.js';
 
 const TOWN_STYLES = {
-  grass:  'day grass floor',
-  street: 'day stone floor',
-  floor:  'day brick floor',
-  wall:   'bright brick wall',
-  tree:   'light oak',
+  grass:      'day grass floor',
+  street:     'day stone floor',
+  mainStreet: 'day brick floor',
+  floor:      'day brick floor',
+  wall:       'bright brick wall',
+  tree:       'light oak',
 };
 
 export default class TownScene extends MapScene {

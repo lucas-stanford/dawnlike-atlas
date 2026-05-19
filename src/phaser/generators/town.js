@@ -18,9 +18,9 @@
  *
  * Returns: { width, height, tiles, markers, walkable(x,y), manifest }
  *
- * Tile schema: { type:'grass'|'street'|'floor'|'wall'|'door', street, wall,
- *   floor, door, doorSide, tree, decor, fountain, marker, sign, furniture,
- *   npc, flower, buildingType }.
+ * Tile schema: { type:'grass'|'street'|'floor'|'wall'|'door', street,
+ *   streetKind:'main'|'side'|null, wall, floor, door, doorSide, tree,
+ *   decor, fountain, marker, sign, furniture, npc, flower, buildingType }.
  *
  * @typedef {Object} TownNpcConfig
  * @property {number} [chance=0.8]                        Per-building probability of placing any NPCs.
@@ -152,7 +152,7 @@ export function generateTown(manifest) {
 
   const tiles = Array.from({ length: H }, () =>
     Array.from({ length: W }, () => ({
-      type: 'grass', street: false, wall: false, floor: false,
+      type: 'grass', street: false, streetKind: null, wall: false, floor: false,
       door: null, doorSide: null, tree: false, decor: null,
       fountain: false, marker: null,
       sign: null, furniture: null, npc: null, flower: null,
@@ -162,13 +162,16 @@ export function generateTown(manifest) {
   const inBounds = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
   const get = (x, y) => (inBounds(x, y) ? tiles[y][x] : null);
 
-  // 1. Plaza (PLAZA × PLAZA paved square, fountain in centre).
+  // 1. Plaza (PLAZA × PLAZA paved square, fountain in centre). Plaza is
+  //    paved with the 'main' street kind so the renderer picks the brick
+  //    style (matching the TownExample), distinct from the 'side' stone
+  //    surrounding the buildings.
   const px0 = Math.floor(W / 2) - Math.floor(PLAZA / 2);
   const py0 = Math.floor(H / 2) - Math.floor(PLAZA / 2);
   for (let y = py0; y < py0 + PLAZA; y++) {
     for (let x = px0; x < px0 + PLAZA; x++) {
       const t = get(x, y);
-      if (t) { t.type = 'street'; t.street = true; }
+      if (t) { t.type = 'street'; t.street = true; t.streetKind = 'main'; }
     }
   }
   const pcx = px0 + Math.floor(PLAZA / 2), pcy = py0 + Math.floor(PLAZA / 2);
@@ -224,12 +227,18 @@ export function generateTown(manifest) {
 
   // 3. Pave a 1-tile street ring around every building and a 1-tile ring
   //    around the plaza, then carry it through to make a connected street.
-  const pave = (x, y) => {
+  //    The ring is paved as 'side' (stone) — only the plaza and the
+  //    external road trunk are 'main' (brick).
+  const pave = (x, y, kind = 'side') => {
     if (!inBounds(x, y)) return;
     const t = get(x, y);
     if (t.wall || t.floor) return;
     t.street = true;
     t.type = 'street';
+    // Only stamp streetKind if we're upgrading to 'main' or there's no
+    // existing kind. 'main' tiles must not be downgraded to 'side' when a
+    // later pass walks over them.
+    if (kind === 'main' || !t.streetKind) t.streetKind = kind;
   };
   for (const b of placed) {
     for (let x = b.x - 1; x <= b.x + b.w; x++) {
@@ -296,7 +305,7 @@ export function generateTown(manifest) {
         t.doorSide = preferred;
         t.type = 'door';
         const o = get(door.x + outN[preferred][0], door.y + outN[preferred][1]);
-        if (o) { o.street = true; o.type = 'street'; }
+        if (o) { o.street = true; o.type = 'street'; if (!o.streetKind) o.streetKind = 'side'; }
         doorPos = { x: door.x, y: door.y, side: preferred };
       }
     }
@@ -329,7 +338,7 @@ export function generateTown(manifest) {
         const t = get(c.x, c.y);
         if (!t || t.wall || t.floor || t.door || t.sign) continue;
         t.sign = signName;
-        if (!t.street) { t.street = true; t.type = 'street'; }
+        if (!t.street) { t.street = true; t.type = 'street'; t.streetKind = 'side'; }
         break;
       }
     }
@@ -439,7 +448,9 @@ export function generateTown(manifest) {
   }
 
   // 5. External road — pick a random map edge, walk straight inward for a
-  //    few tiles, then path to the plaza via Dijkstra.
+  //    few tiles, then path to the plaza via Dijkstra. The whole trunk is
+  //    paved 'main' (brick) so it visually merges with the plaza and reads
+  //    as one continuous main road from the edge to the fountain.
   const roadSide = ['n', 's', 'e', 'w'][ROT.RNG.getUniformInt(0, 3)];
   let entryX, entryY, inward;
   if      (roadSide === 'n') { entryX = ROT.RNG.getUniformInt(3, W - 4); entryY = 0;     inward = [0,  1]; }
@@ -451,12 +462,12 @@ export function generateTown(manifest) {
   // leave town).
   const exitTile = get(entryX, entryY);
   if (exitTile) {
-    exitTile.street = true; exitTile.type = 'street'; exitTile.marker = 'worldExit';
+    exitTile.street = true; exitTile.type = 'street'; exitTile.streetKind = 'main'; exitTile.marker = 'worldExit';
   }
 
   let rx = entryX, ry = entryY;
   for (let i = 0; i < 3; i++) {
-    pave(rx, ry);
+    pave(rx, ry, 'main');
     rx += inward[0]; ry += inward[1];
   }
   if (inBounds(rx, ry)) {
@@ -466,7 +477,7 @@ export function generateTown(manifest) {
       return !!t && !t.wall && !t.floor && !t.door;
     };
     const dij = new ROT.Path.Dijkstra(pcx, pcy, passable, { topology: 4 });
-    dij.compute(rx, ry, (x, y) => { pave(x, y); });
+    dij.compute(rx, ry, (x, y) => { pave(x, y, 'main'); });
   }
 
   // 6. Tree scatter on grass tiles, well away from streets.
