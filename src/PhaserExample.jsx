@@ -1,62 +1,32 @@
 import React, { useEffect, useRef } from 'react';
-import Phaser from 'phaser';
+import { createGame } from './phaser/index.js';
 
+/**
+ * PhaserExample — thin React wrapper that mounts the Phaser roguelike
+ * into a host <div>. All game logic lives under src/phaser/.
+ *
+ * The roguelike has an overworld, a town, and a 3-level dungeon, all
+ * linked by working bidirectional exits. State (seed + per-scene player
+ * position + HP/MP) is persisted to localStorage under
+ * 'dawnlike:roguelike:v1', so reloading the page resumes exactly where
+ * you left off.
+ *
+ * Click the "New Game" button in the HUD (top-left) to wipe the save
+ * and start a fresh world.
+ */
 export default function PhaserExample() {
   const containerRef = useRef(null);
   const gameRef = useRef(null);
 
+  // Canvas dimensions:
+  //   - 96px reserved at the top for the HUD strip (see UIScene.HUD_HEIGHT)
+  //   - 600px below for the actual map viewport
+  //   - total height 696, width 800
+  const W = 800, H = 696;
+
   useEffect(() => {
     if (!containerRef.current || gameRef.current) return;
-
-    const config = {
-      type: Phaser.AUTO,
-      parent: containerRef.current,
-      width: 800,
-      height: 600,
-      pixelArt: true,
-      backgroundColor: '#1a1a1a',
-      scene: {
-        preload: function () {
-          // Load the atlas from the static 'atlas' directory
-          this.load.atlas('dawnlike', 'DawnlikeAtlas0.png', 'DawnlikeAtlas.json');
-        },
-        create: function () {
-          const { width, height } = this.scale;
-          
-          this.add.text(width / 2, 20, 'DawnLike Mega Atlas Example (Phaser 4)', {
-            fontSize: '24px',
-            fill: '#fff'
-          }).setOrigin(0.5);
-
-          // Get all frame names from the atlas
-          const frames = this.textures.get('dawnlike').getFrameNames();
-          
-          // Display 100 random sprites
-          for (let i = 0; i < 100; i++) {
-            const x = Phaser.Math.Between(50, width - 50);
-            const y = Phaser.Math.Between(100, height - 50);
-            const frame = Phaser.Utils.Array.GetRandom(frames);
-            
-            const sprite = this.add.sprite(x, y, 'dawnlike', frame);
-            sprite.setScale(2);
-            
-            // Add some simple animation/interaction
-            this.tweens.add({
-              targets: sprite,
-              y: y - 10,
-              duration: Phaser.Math.Between(1000, 2000),
-              yoyo: true,
-              repeat: -1,
-              ease: 'Sine.easeInOut',
-              delay: Phaser.Math.Between(0, 1000)
-            });
-          }
-        }
-      }
-    };
-
-    gameRef.current = new Phaser.Game(config);
-
+    gameRef.current = createGame(containerRef.current, { width: W, height: H });
     return () => {
       if (gameRef.current) {
         gameRef.current.destroy(true);
@@ -65,5 +35,10 @@ export default function PhaserExample() {
     };
   }, []);
 
-  return <div ref={containerRef} style={{ width: '100%', height: '600px' }} />;
+  return (
+    <div
+      ref={containerRef}
+      style={{ width: W, height: H, margin: '0 auto', background: '#0a0a0a' }}
+    />
+  );
 }

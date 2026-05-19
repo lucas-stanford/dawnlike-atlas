@@ -49,10 +49,18 @@ A dungeon generator built on [rot.js](https://github.com/ondras/rot.js). Pick fr
 
 A procedurally-generated overworld using simplex noise for biomes, a meandering road, and a single-line meandering river that drops a bridge where it crosses the road. The floating gear panel lets you swap terrain, dirt patch, path, river, and tree styles independently; the selected ground terrain renders under forests, roads, and rivers. Shows off `resolveDawnLikeFloorName`, `resolveDawnLikeRiverName`, and `resolveDawnLikeForestName` working together.
 
-### Examples › PhaserExample
-`stories/PhaserExample.stories.jsx` → `src/PhaserExample.jsx`
+### Examples › Phaser Roguelike
+`stories/PhaserExample.stories.jsx` → `src/PhaserExample.jsx` → `src/phaser/`
 
-A minimal [Phaser 4](https://phaser.io/) scene that loads `DawnlikeAtlas0.png` directly as a texture atlas and draws sprites by name. Use this as a starting point for integrating the atlas into a Phaser game.
+A small explorable roguelike built on [Phaser 4](https://phaser.io/): an overworld + a town + a 3-level dungeon, wired up with working bidirectional exits, a chrome-framed HUD that sits in its own band above the play area, hold-to-walk movement, sprite animations driven off `DawnlikeAtlas0.png` ↔ `DawnlikeAtlas1.png`, and `localStorage` save/resume keyed off a single seed (reload → same world, same spot). All game code lives under `src/phaser/`. Use this as a starting point for integrating the atlas into a Phaser game.
+
+## LLM Prompts
+
+The [`Example_LLM_Prompts/`](./Example_LLM_Prompts/) directory contains self-contained prompts you can hand to an LLM (Claude, GPT-4, Copilot, …) to **recreate working examples** from this repo in your own project. Each prompt links every file it needs by raw/blob GitHub URL so the model can pull the source itself.
+
+Currently available:
+
+- [`simple-roguelike.md`](./Example_LLM_Prompts/simple-roguelike.md) — recreate the Phaser Roguelike described above.
 
 ## Semantic Autotiling
 
