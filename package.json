@@ -2,7 +2,7 @@
   "name": "dawnlike-atlas",
   "version": "1.0.0",
   "type": "module",
-  "description": "Semantic Mega-Atlas for the DawnLike tileset with 16-way autotiling, AI tagging, and a manifest-driven roguelike toolkit (generators + autotile renderer + Phaser scenes).",
+  "description": "Semantic Mega-Atlas for the DawnLike 16x16 tileset: bin-packed sprite sheets, semantic name lookup, AI-generated tags, and 16-way autotile resolvers.",
   "main": "react/index.js",
   "exports": {
     ".": {
@@ -10,11 +10,6 @@
       "import": "./react/index.js",
       "default": "./react/index.js"
     },
-    "./roguelike": "./roguelike/index.js",
-    "./roguelike/generators": "./roguelike/generators.js",
-    "./roguelike/autotile":   "./roguelike/autotile.js",
-    "./roguelike/phaser":     "./roguelike/phaser.js",
-    "./roguelike/save":       "./roguelike/save.js",
     "./atlas/DawnlikeAtlas.json": "./atlas/DawnlikeAtlas.json",
     "./atlas/DawnlikeAtlas0.png": "./atlas/DawnlikeAtlas0.png",
     "./atlas/DawnlikeAtlas1.png": "./atlas/DawnlikeAtlas1.png",
@@ -22,8 +17,6 @@
   },
   "files": [
     "react",
-    "roguelike",
-    "src/phaser",
     "src/utils/autotile.js",
     "src/utils/paths.js",
     "atlas/DawnlikeAtlas.json",
@@ -37,10 +30,8 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
-    "phaser": "4",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6",
-    "rot-js": "^2.2.1"
+    "react-dom": "^19.2.6"
   },
   "license": "CC-BY-4.0",
   "private": true,
@@ -60,8 +51,10 @@
     "@types/bun": "latest",
     "@vitest/browser-playwright": "^4.1.6",
     "@vitest/coverage-v8": "^4.1.6",
+    "phaser": "4",
     "playwright": "^1.60.0",
     "prop-types": "^15.8.1",
+    "rot-js": "^2.2.1",
     "storybook": "8.6.14",
     "vite": "^5",
     "vitest": "^4.1.6"

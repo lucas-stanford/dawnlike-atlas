@@ -50,12 +50,10 @@ export const DEFAULT_TOWN_MANIFEST = Object.freeze({
 /**
  * Generate a town map.
  *
- * @param {TownManifest|number} [manifestOrSeed]  Manifest object OR a bare
- *   seed number for backward compatibility with the original `generateTown(seed)`
- *   API.
+ * @param {TownManifest} [manifest]  Manifest object; omit to use every default.
  */
-export function generateTown(manifestOrSeed) {
-  const manifest = normalizeTownManifest(manifestOrSeed);
+export function generateTown(manifest) {
+  const m = normalizeTownManifest(manifest);
   const {
     width: W,
     height: H,
@@ -66,7 +64,7 @@ export function generateTown(manifestOrSeed) {
     buildingPlacementAttempts,
     treeDensity,
     fountain: placeFountain,
-  } = manifest;
+  } = m;
 
   ROT.RNG.setSeed(seed);
 
@@ -277,14 +275,16 @@ export function generateTown(manifestOrSeed) {
     tiles,
     markers: { worldExit: { x: entryX, y: entryY } },
     walkable,
-    manifest,
+    manifest: m,
   };
 }
 
+/**
+ * Fill in defaults for every TownManifest field. The caller's argument
+ * must be a (possibly partial) manifest object or undefined.
+ */
 export function normalizeTownManifest(input) {
-  const m = (typeof input === 'number' || typeof input === 'string')
-    ? { seed: input }
-    : (input || {});
+  const m = input || {};
   const merged = {
     ...DEFAULT_TOWN_MANIFEST,
     ...m,
