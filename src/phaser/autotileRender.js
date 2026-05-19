@@ -207,7 +207,9 @@ export function renderTownTile(tiles, x, y, styles, byName) {
   }
 
   if (tile.sign && byName[tile.sign]) {
-    layers.push({ name: tile.sign, z: 2.6 });
+    // z=5.5 puts the sign at depth 55, comfortably above the player's
+    // depth 50 (MapScene). The player walks BEHIND the hanging sign.
+    layers.push({ name: tile.sign, z: 5.5 });
   }
 
   if (tile.npc && byName[tile.npc]) {

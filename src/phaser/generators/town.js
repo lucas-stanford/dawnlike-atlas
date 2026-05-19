@@ -312,33 +312,50 @@ export function generateTown(manifest) {
     b.door = doorPos;
   }
 
-  // 4.5 Signs — drop a `<type> sign` sprite on the street tile adjacent
-  //     to each door (so it sits in front of the building, facing the
-  //     plaza). Skipped when the manifest disables signs or the building
-  //     type has no known sign sprite.
+  // 4.5 Signs — hang a `<type> sign` sprite on the tile immediately
+  //     OUTSIDE the building. The sign sprite's bracket extends
+  //     horizontally, so it can only hang from an EAST or WEST face,
+  //     never N/S. For E/W doors we flank the door's exit; for N/S
+  //     doors we pivot onto the closer E/W face (at the door's row, so
+  //     the sign still reads as belonging to that doorway). The sign
+  //     tile stays walkable; the renderer draws it above the player so
+  //     the player passes beneath the hanging sign.
   if (placeSigns) {
-    const outN = { n: [0,-1], s: [0,1], e: [1,0], w: [-1,0] };
     for (const b of placed) {
       if (!b.door) continue;
       const signName = SIGN_FOR_TYPE[b.type];
       if (!signName) continue;
-      const off = outN[b.door.side];
-      // Place the sign one tile beside the door (parallel to the wall),
-      // not directly outside, so it doesn't block the doorway.
-      const candidates = (b.door.side === 'n' || b.door.side === 's')
-        ? [
-            { x: b.door.x - 1, y: b.door.y + off[1] },
-            { x: b.door.x + 1, y: b.door.y + off[1] },
-          ]
-        : [
-            { x: b.door.x + off[0], y: b.door.y - 1 },
-            { x: b.door.x + off[0], y: b.door.y + 1 },
-          ];
+      const { x: dx, y: dy, side } = b.door;
+      let candidates;
+      if (side === 'e' || side === 'w') {
+        const exitX = dx + (side === 'e' ? 1 : -1);
+        candidates = [
+          { x: exitX, y: dy - 1 },
+          { x: exitX, y: dy + 1 },
+        ];
+      } else {
+        const distW = dx - b.x;
+        const distE = (b.x + b.w - 1) - dx;
+        const primary = distW <= distE ? 'w' : 'e';
+        const primaryX = primary === 'w' ? b.x - 1 : b.x + b.w;
+        const secondaryX = primary === 'w' ? b.x + b.w : b.x - 1;
+        // Walk the door's row first, then drift inward along the
+        // building's height so we always find a non-blocked tile on
+        // the chosen face before falling back to the opposite face.
+        const rows = [dy];
+        for (let off = 1; off < b.h; off++) {
+          const r = side === 'n' ? dy + off : dy - off;
+          if (r >= b.y && r <= b.y + b.h - 1) rows.push(r);
+        }
+        candidates = [
+          ...rows.map((y) => ({ x: primaryX, y })),
+          ...rows.map((y) => ({ x: secondaryX, y })),
+        ];
+      }
       for (const c of candidates) {
         const t = get(c.x, c.y);
         if (!t || t.wall || t.floor || t.door || t.sign) continue;
         t.sign = signName;
-        if (!t.street) { t.street = true; t.type = 'street'; t.streetKind = 'side'; }
         break;
       }
     }
@@ -514,12 +531,15 @@ export function generateTown(manifest) {
     }
   }
 
-  // 7. Walkability: walls, NPCs, furniture, and signs block. Trees and
+  // 7. Walkability: walls, NPCs, and furniture block. Signs hang on wall
+  //    tiles (which already block) so we don't need to test t.sign; this
+  //    also leaves walk-through signs harmless if a sign ever lands on a
+  //    non-wall tile (e.g. a manifest-customised generator). Trees and
   //    flowers stay walkable (low-fidelity demo decoration).
   const walkable = (x, y) => {
     if (!inBounds(x, y)) return false;
     const t = get(x, y);
-    return !t.wall && !t.npc && !t.furniture && !t.sign;
+    return !t.wall && !t.npc && !t.furniture;
   };
 
   return {
