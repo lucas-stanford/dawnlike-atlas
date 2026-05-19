@@ -71,11 +71,13 @@ A procedurally-generated overworld using simplex noise for biomes, a meandering 
 ### Examples › Phaser Roguelike
 `stories/PhaserExample.stories.jsx` → `src/PhaserExample.jsx` → `src/phaser/`
 
-A small explorable roguelike built on [Phaser 4](https://phaser.io/): an overworld + a town + a 3-level dungeon, wired up with working bidirectional exits, a chrome-framed HUD that sits in its own band above the play area, hold-to-walk movement, sprite animations driven off `DawnlikeAtlas0.png` ↔ `DawnlikeAtlas1.png`, and `localStorage` save/resume keyed off a single seed (reload → same world, same spot). All game code lives under `src/phaser/`. Use this as a starting point for integrating the atlas into a Phaser game.
+A small explorable roguelike built on [Phaser 4](https://phaser.io/): an overworld + a town (with NPCs, furniture, signs and scattered flowers populating each building) + a 3-level dungeon, wired up with working bidirectional exits, a chrome-framed HUD that sits in its own band above the play area, hold-to-walk movement, sprite animations driven off `DawnlikeAtlas0.png` ↔ `DawnlikeAtlas1.png`, and `localStorage` save/resume keyed off a single seed (reload → same world, same spot). The Storybook **Controls** panel exposes the generator manifests live — tweak the world seed, biome thresholds, town building mix / NPC density / flower density, or dungeon depth and the game rebuilds in-place. All game code lives under `src/phaser/`. Use this as a starting point for integrating the atlas into a Phaser game.
 
 ## LLM Prompts
 
 The [`Example_LLM_Prompts/`](./Example_LLM_Prompts/) directory contains self-contained prompts you can hand to an LLM (Claude, GPT-4, Copilot, …) to **recreate working examples** from this repo in your own project. Each prompt links every file it needs by raw/blob GitHub URL so the model can pull the source itself.
+
+The same prompts are also available inside Storybook under **Examples › LLM Prompts** with a one-click copy button.
 
 Currently available:
 

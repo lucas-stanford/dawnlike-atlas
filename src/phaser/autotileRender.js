@@ -167,9 +167,13 @@ export function renderTownTile(tiles, x, y, styles, byName) {
   }
 
   if (tile.wall) {
+    // Doors count as walls for autotiling — otherwise the wall sprites
+    // either side of a doorway think they're at an open end and render
+    // an end-cap, breaking the visual continuity around every door.
     const isWall = (nx, ny) => {
       if (!inBounds(tiles, nx, ny)) return true;
-      return !!get(tiles, nx, ny)?.wall;
+      const t = get(tiles, nx, ny);
+      return !!(t?.wall || t?.door);
     };
     const name = resolveDawnLikeDungeonWallName(styles.wall, x, y, isWall, byName);
     if (name) layers.push({ name, z: 2 });
@@ -182,6 +186,22 @@ export function renderTownTile(tiles, x, y, styles, byName) {
 
   if (tile.fountain && byName['fountain']) {
     layers.push({ name: 'fountain', z: 3 });
+  }
+
+  if (tile.flower && byName[tile.flower]) {
+    layers.push({ name: tile.flower, z: 0.6 });
+  }
+
+  if (tile.furniture && byName[tile.furniture]) {
+    layers.push({ name: tile.furniture, z: 1.5 });
+  }
+
+  if (tile.sign && byName[tile.sign]) {
+    layers.push({ name: tile.sign, z: 2.6 });
+  }
+
+  if (tile.npc && byName[tile.npc]) {
+    layers.push({ name: tile.npc, z: 3.5 });
   }
 
   if (tile.marker === 'worldExit' && byName['small stairs up']) {
@@ -227,9 +247,14 @@ export function renderDungeonTile(tiles, x, y, styles, byName) {
   }
 
   if (tile.wall) {
+    // Doors count as walls. The current dungeon generator doesn't emit
+    // door tiles, but future expansions (vault doors, locked rooms) will,
+    // and treating them as walls here avoids broken end-caps when they
+    // do — matches the town renderer's behaviour.
     const isWall = (nx, ny) => {
       if (!inBounds(tiles, nx, ny)) return true;
-      return !!get(tiles, nx, ny)?.wall;
+      const t = get(tiles, nx, ny);
+      return !!(t?.wall || t?.door);
     };
     const name = resolveDawnLikeDungeonWallName(styles.wall, x, y, isWall, byName);
     if (name) layers.push({ name, z: 2 });
