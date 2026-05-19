@@ -65,7 +65,10 @@ export default class MapScene extends Phaser.Scene {
     // Render every tile, layer by layer. Static layers use add.image (cheap);
     // any layer whose sprite is flagged isAnimated gets an add.sprite +
     // play('anim:<name>') so it cycles between Atlas0 and Atlas1 frames.
-    const tileLayer = this.add.container(0, 0);
+    // Sprites are added directly to the scene (not nested in a container)
+    // so their setDepth values compete with the player's depth — without
+    // this, signs at z=5.5 (depth 55) would still render under the player
+    // (depth 50) because container children can only beat each other.
     for (let y = 0; y < map.height; y++) {
       for (let x = 0; x < map.width; x++) {
         const layers = this.renderTileLayers(map.tiles, x, y, atlas.byName);
@@ -81,7 +84,6 @@ export default class MapScene extends Phaser.Scene {
             obj = this.add.image(px, py, 'dawnlike0', layer.name);
           }
           obj.setDepth(layer.z * 10);
-          tileLayer.add(obj);
         }
       }
     }
