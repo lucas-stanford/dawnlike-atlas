@@ -62,6 +62,126 @@ Currently available:
 
 - [`simple-roguelike.md`](./Example_LLM_Prompts/simple-roguelike.md) — recreate the Phaser Roguelike described above.
 
+## Roguelike Toolkit (npm package subpaths)
+
+The repo also ships a **manifest-driven roguelike toolkit** as importable
+subpaths of the same `dawnlike-atlas` package, so you can drop the
+overworld / town / dungeon generators into your own game without copying
+files. Every builder takes a single `manifest` object that controls
+density, sizes, biome thresholds, dungeon dig percentage, etc.
+
+### Subpaths
+
+| Import                                       | What you get                                                                                  |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `dawnlike-atlas/roguelike/generators`        | `generateWorld`, `generateTown`, `generateDungeon` + `DEFAULT_*_MANIFEST` constants (no Phaser dep) |
+| `dawnlike-atlas/roguelike/autotile`          | `renderWorldTile`, `renderTownTile`, `renderDungeonTile` + the underlying `resolveDawnLike*` resolvers |
+| `dawnlike-atlas/roguelike/phaser`            | `createGame(parent, opts)` + all scene classes (`MapScene`, `WorldScene`, …) for Phaser 3/4   |
+| `dawnlike-atlas/roguelike/save`              | localStorage helpers: `load`, `save`, `reset`, `seedFor`, `SAVE_KEY`, `SCENE_KEYS`            |
+| `dawnlike-atlas/atlas/DawnlikeAtlas.json`    | The atlas JSON (frames, tags, semantic connections)                                           |
+| `dawnlike-atlas/atlas/DawnlikeAtlas{0,1}.png`| The two atlas sheets                                                                          |
+
+Repo files: [`roguelike/`](./roguelike), [`src/phaser/`](./src/phaser),
+[`src/utils/autotile.js`](./src/utils/autotile.js).
+
+### Pure-data generators with manifests
+
+```js
+import {
+  generateWorld,
+  generateTown,
+  generateDungeon,
+  DEFAULT_WORLD_MANIFEST,
+} from 'dawnlike-atlas/roguelike/generators';
+
+// All manifest fields are optional — omit the manifest entirely to use
+// every default.
+const world = generateWorld({
+  seed: 12345,
+  width: 60, height: 40,
+  elevationThreshold: 0.3,   // lower → more forest/mountain
+  decorChance: 0.06,
+});
+
+const town = generateTown({
+  seed: 12346,
+  plazaSize: 8,
+  buildingCount: { min: 6, max: 9 },
+  treeDensity: 0.12,
+});
+
+const dungeon = generateDungeon({
+  seed: 12347,
+  level: 1,
+  bottomLevel: 5,            // 5-level dungeon
+  roomWidth: [4, 8],
+  dugPercentage: 0.4,
+});
+
+// Each returns: { width, height, tiles, markers, walkable(x,y), manifest }.
+```
+
+Direct repo links to the generator sources (each documents every
+manifest field via JSDoc at the top of the file):
+
+- [`src/phaser/generators/world.js`](./src/phaser/generators/world.js)
+- [`src/phaser/generators/town.js`](./src/phaser/generators/town.js)
+- [`src/phaser/generators/dungeon.js`](./src/phaser/generators/dungeon.js)
+
+### Render with the autotile resolvers
+
+```js
+import { renderWorldTile } from 'dawnlike-atlas/roguelike/autotile';
+import atlas from 'dawnlike-atlas/atlas/DawnlikeAtlas.json';
+
+const styles = {
+  grass: 'day grass floor',
+  dirt:  'day dirt floor',
+  road:  'dirt trail',
+  river: 'clear river',
+  tree:  'light oak',
+  mountain: 'brown peak',
+};
+
+for (let y = 0; y < world.height; y++) {
+  for (let x = 0; x < world.width; x++) {
+    const layers = renderWorldTile(world.tiles, x, y, styles, atlas.byName);
+    // layers: [{ name: 'day grass floor c', z: -1 }, ...]
+    for (const layer of layers) {
+      myEngine.drawSprite(x, y, layer.name, layer.z);
+    }
+  }
+}
+```
+
+### Drop-in Phaser game
+
+```js
+import { createGame } from 'dawnlike-atlas/roguelike/phaser';
+
+const game = createGame(document.getElementById('host'), {
+  width: 800,
+  height: 696,
+  manifests: {
+    world:   { decorChance: 0.06 },
+    town:    { buildingCount: { min: 6, max: 8 } },
+    dungeon: { dugPercentage: 0.4 },
+  },
+  // Optional: tell the BootScene where to load the atlas from. Defaults
+  // assume the storybook layout; if you bundle the atlas as static
+  // assets, point these at the right URLs.
+  atlasPaths: {
+    json:   '/static/DawnlikeAtlas.json',
+    atlas0: '/static/DawnlikeAtlas0.png',
+    atlas1: '/static/DawnlikeAtlas1.png',
+  },
+});
+```
+
+The same Phaser package exports every scene class so you can subclass
+and customize: `BootScene`, `MapScene`, `WorldScene`, `TownScene`,
+`DungeonScene`, `UIScene`, plus `HUD_HEIGHT`.
+
 ## Semantic Autotiling
 
 ```javascript

@@ -22,7 +22,29 @@ import TownScene    from './scenes/TownScene.js';
 import DungeonScene from './scenes/DungeonScene.js';
 import UIScene      from './scenes/UIScene.js';
 
-export function createGame(parent, { width = 800, height = 600 } = {}) {
+/**
+ * Create the Phaser roguelike game.
+ *
+ * @param {HTMLElement|string} parent  Host element (or DOM id) Phaser mounts into.
+ * @param {Object} [options]
+ * @param {number} [options.width=800]   Canvas width in CSS pixels.
+ * @param {number} [options.height=600]  Canvas height in CSS pixels.
+ * @param {Object} [options.manifests]   Per-scene generator manifest overrides.
+ * @param {import('./generators/world.js').WorldManifest}     [options.manifests.world]
+ * @param {import('./generators/town.js').TownManifest}       [options.manifests.town]
+ * @param {import('./generators/dungeon.js').DungeonManifest} [options.manifests.dungeon]
+ * @param {Object} [options.atlasPaths]  Override the URLs the BootScene loads.
+ * @param {string} [options.atlasPaths.json]
+ * @param {string} [options.atlasPaths.atlas0]
+ * @param {string} [options.atlasPaths.atlas1]
+ * @returns {Phaser.Game}
+ */
+export function createGame(parent, {
+  width = 800,
+  height = 600,
+  manifests = {},
+  atlasPaths = null,
+} = {}) {
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
@@ -31,6 +53,14 @@ export function createGame(parent, { width = 800, height = 600 } = {}) {
     pixelArt: true,
     backgroundColor: '#0a0a0a',
     scale: { mode: Phaser.Scale.NONE },
+    // preBoot fires BEFORE any scene preload runs, so it's the earliest
+    // safe place to seed registry values that the BootScene needs.
+    callbacks: {
+      preBoot: (g) => {
+        g.registry.set('manifests', manifests);
+        if (atlasPaths) g.registry.set('atlasPaths', atlasPaths);
+      },
+    },
     scene: [
       BootScene,
       WorldScene,

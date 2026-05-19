@@ -21,8 +21,18 @@ const WORLD_STYLES = {
 export default class WorldScene extends MapScene {
   constructor() { super('World'); }
 
+  /**
+   * Build the manifest used for this scene. Reads any caller-supplied
+   * `manifests.world` from the game registry and stamps the seed
+   * derived from the save.
+   */
+  buildManifest(save) {
+    const manifests = this.registry.get('manifests') || {};
+    return { seed: seedFor('World', save.seed), ...(manifests.world || {}) };
+  }
+
   generate(save) {
-    return generateWorld(seedFor('World', save.seed));
+    return generateWorld(this.buildManifest(save));
   }
 
   renderTileLayers(tiles, x, y, byName) {

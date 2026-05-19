@@ -2,8 +2,35 @@
   "name": "dawnlike-atlas",
   "version": "1.0.0",
   "type": "module",
-  "description": "Semantic Mega-Atlas for the DawnLike tileset with 16-way autotiling and AI tagging",
+  "description": "Semantic Mega-Atlas for the DawnLike tileset with 16-way autotiling, AI tagging, and a manifest-driven roguelike toolkit (generators + autotile renderer + Phaser scenes).",
   "main": "react/index.js",
+  "exports": {
+    ".": {
+      "types": "./react/index.d.ts",
+      "import": "./react/index.js",
+      "default": "./react/index.js"
+    },
+    "./roguelike": "./roguelike/index.js",
+    "./roguelike/generators": "./roguelike/generators.js",
+    "./roguelike/autotile":   "./roguelike/autotile.js",
+    "./roguelike/phaser":     "./roguelike/phaser.js",
+    "./roguelike/save":       "./roguelike/save.js",
+    "./atlas/DawnlikeAtlas.json": "./atlas/DawnlikeAtlas.json",
+    "./atlas/DawnlikeAtlas0.png": "./atlas/DawnlikeAtlas0.png",
+    "./atlas/DawnlikeAtlas1.png": "./atlas/DawnlikeAtlas1.png",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "react",
+    "roguelike",
+    "src/phaser",
+    "src/utils/autotile.js",
+    "src/utils/paths.js",
+    "atlas/DawnlikeAtlas.json",
+    "atlas/DawnlikeAtlas0.png",
+    "atlas/DawnlikeAtlas1.png",
+    "README.md"
+  ],
   "scripts": {
     "dev": "bun run storybook",
     "storybook": "storybook dev -p 6006",

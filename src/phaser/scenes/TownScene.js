@@ -21,8 +21,14 @@ const TOWN_STYLES = {
 export default class TownScene extends MapScene {
   constructor() { super('Town'); }
 
+  /** Build the town manifest, merging caller overrides from the registry. */
+  buildManifest(save) {
+    const manifests = this.registry.get('manifests') || {};
+    return { seed: seedFor('Town', save.seed), ...(manifests.town || {}) };
+  }
+
   generate(save) {
-    return generateTown(seedFor('Town', save.seed));
+    return generateTown(this.buildManifest(save));
   }
 
   renderTileLayers(tiles, x, y, byName) {
@@ -48,9 +54,16 @@ export default class TownScene extends MapScene {
   handleMarker(marker /* , map */) {
     if (marker === 'worldExit') {
       // Return to overworld next to the town marker so the player can
-      // immediately walk away without re-triggering it.
+      // immediately walk away without re-triggering it. Use the SAME
+      // world manifest the WorldScene will use to render — otherwise
+      // our spawn-candidate computation would diverge from the actual
+      // world geometry.
       const save = this.registry.get('save');
-      const world = generateWorld(seedFor('World', save.seed));
+      const manifests = this.registry.get('manifests') || {};
+      const world = generateWorld({
+        seed: seedFor('World', save.seed),
+        ...(manifests.world || {}),
+      });
       const t = world.markers.townEntrance;
       let spawn = { x: t.x, y: t.y + 1 };
       if (!world.walkable(spawn.x, spawn.y)) spawn = { x: t.x - 1, y: t.y };

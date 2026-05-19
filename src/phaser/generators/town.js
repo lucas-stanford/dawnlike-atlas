@@ -1,5 +1,5 @@
 /**
- * generators/town.js — town for the Phaser roguelike.
+ * generators/town.js — town for the dawnlike-atlas roguelike toolkit.
  *
  * Compact port of src/TownExample.jsx: a paved plaza with a fountain in
  * the middle, 4–6 packed rectangular buildings each with a single door
@@ -9,10 +9,22 @@
  *   - markers.worldExit: the tile where the external road meets the map
  *     edge. Stepping on it returns the player to the world map.
  *
- * Returns: { width, height, tiles, markers, walkable(x,y) }
+ * Returns: { width, height, tiles, markers, walkable(x,y), manifest }
  *
  * Tile schema: { type:'grass'|'street'|'floor'|'wall'|'door', street, wall,
  *   floor, door, doorSide, tree, decor, fountain, marker }.
+ *
+ * @typedef {Object} TownManifest
+ * @property {number} [width=32]                          Map width in tiles.
+ * @property {number} [height=24]                         Map height in tiles.
+ * @property {number} [seed]                              Random seed. Defaults to Date.now().
+ * @property {number} [plazaSize=6]                       Side length of the central paved plaza.
+ * @property {{min:number,max:number}} [buildingCount]    Range for the number of buildings to attempt.
+ * @property {{wMin:number,wMax:number,hMin:number,hMax:number}} [buildingSize]
+ *                                                        Per-building footprint range (inclusive).
+ * @property {number} [buildingPlacementAttempts=80]      Reject sampling tries per building.
+ * @property {number} [treeDensity=0.08]                  Chance per grass tile (away from streets) to spawn a tree.
+ * @property {boolean} [fountain=true]                    Place a fountain in the centre of the plaza.
  */
 
 import * as ROT from 'rot-js';
@@ -20,9 +32,43 @@ import * as ROT from 'rot-js';
 export const TOWN_WIDTH = 32;
 export const TOWN_HEIGHT = 24;
 
-export function generateTown(seed) {
+/**
+ * Defaults for every TownManifest field.
+ */
+export const DEFAULT_TOWN_MANIFEST = Object.freeze({
+  width: TOWN_WIDTH,
+  height: TOWN_HEIGHT,
+  seed: undefined,
+  plazaSize: 6,
+  buildingCount: { min: 4, max: 6 },
+  buildingSize: { wMin: 5, wMax: 7, hMin: 4, hMax: 5 },
+  buildingPlacementAttempts: 80,
+  treeDensity: 0.08,
+  fountain: true,
+});
+
+/**
+ * Generate a town map.
+ *
+ * @param {TownManifest|number} [manifestOrSeed]  Manifest object OR a bare
+ *   seed number for backward compatibility with the original `generateTown(seed)`
+ *   API.
+ */
+export function generateTown(manifestOrSeed) {
+  const manifest = normalizeTownManifest(manifestOrSeed);
+  const {
+    width: W,
+    height: H,
+    seed,
+    plazaSize: PLAZA,
+    buildingCount,
+    buildingSize,
+    buildingPlacementAttempts,
+    treeDensity,
+    fountain: placeFountain,
+  } = manifest;
+
   ROT.RNG.setSeed(seed);
-  const W = TOWN_WIDTH, H = TOWN_HEIGHT;
 
   const tiles = Array.from({ length: H }, () =>
     Array.from({ length: W }, () => ({
@@ -34,22 +80,23 @@ export function generateTown(seed) {
   const inBounds = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
   const get = (x, y) => (inBounds(x, y) ? tiles[y][x] : null);
 
-  // 1. Plaza (6x6 paved square, fountain in centre).
-  const PLAZA = 6;
-  const px0 = Math.floor(W / 2) - 3, py0 = Math.floor(H / 2) - 3;
+  // 1. Plaza (PLAZA × PLAZA paved square, fountain in centre).
+  const px0 = Math.floor(W / 2) - Math.floor(PLAZA / 2);
+  const py0 = Math.floor(H / 2) - Math.floor(PLAZA / 2);
   for (let y = py0; y < py0 + PLAZA; y++) {
     for (let x = px0; x < px0 + PLAZA; x++) {
       const t = get(x, y);
       if (t) { t.type = 'street'; t.street = true; }
     }
   }
-  const pcx = px0 + 3, pcy = py0 + 3;
-  if (get(pcx, pcy)) get(pcx, pcy).fountain = true;
+  const pcx = px0 + Math.floor(PLAZA / 2), pcy = py0 + Math.floor(PLAZA / 2);
+  if (placeFountain && get(pcx, pcy)) get(pcx, pcy).fountain = true;
 
-  // 2. Buildings — 4 packed rectangles around the plaza. Each is 5-7 wide
-  //    by 4-5 tall, sits with a 1-tile gap from anything else, and gets
-  //    one door on the side that faces the plaza.
-  const BUILDING_COUNT = 4 + ROT.RNG.getUniformInt(0, 2);
+  // 2. Buildings — packed rectangles around the plaza. Each sits with a
+  //    1-tile gap from anything else and gets one door on the side that
+  //    faces the plaza.
+  const BUILDING_COUNT = buildingCount.min +
+    ROT.RNG.getUniformInt(0, Math.max(0, buildingCount.max - buildingCount.min));
   const placed = [];
   const overlaps = (bx, by, bw, bh) => {
     for (let y = by - 1; y < by + bh + 1; y++) {
@@ -64,9 +111,9 @@ export function generateTown(seed) {
 
   for (let i = 0; i < BUILDING_COUNT; i++) {
     let success = false;
-    for (let attempt = 0; attempt < 80; attempt++) {
-      const bw = 5 + ROT.RNG.getUniformInt(0, 2);
-      const bh = 4 + ROT.RNG.getUniformInt(0, 1);
+    for (let attempt = 0; attempt < buildingPlacementAttempts; attempt++) {
+      const bw = buildingSize.wMin + ROT.RNG.getUniformInt(0, Math.max(0, buildingSize.wMax - buildingSize.wMin));
+      const bh = buildingSize.hMin + ROT.RNG.getUniformInt(0, Math.max(0, buildingSize.hMax - buildingSize.hMin));
       const side = ROT.RNG.getItem(['n', 's', 'e', 'w']);
       let bx, by;
       if (side === 'n')      { bx = px0 + ROT.RNG.getUniformInt(-Math.floor(bw/2), PLAZA - Math.floor(bw/2)); by = py0 - bh - 2; }
@@ -213,7 +260,7 @@ export function generateTown(seed) {
     for (let x = 1; x < W - 1; x++) {
       const t = get(x, y);
       if (t.type !== 'grass' || nearStreet(x, y)) continue;
-      if (ROT.RNG.getUniform() < 0.08) t.tree = true;
+      if (ROT.RNG.getUniform() < treeDensity) t.tree = true;
     }
   }
 
@@ -230,5 +277,22 @@ export function generateTown(seed) {
     tiles,
     markers: { worldExit: { x: entryX, y: entryY } },
     walkable,
+    manifest,
   };
+}
+
+export function normalizeTownManifest(input) {
+  const m = (typeof input === 'number' || typeof input === 'string')
+    ? { seed: input }
+    : (input || {});
+  const merged = {
+    ...DEFAULT_TOWN_MANIFEST,
+    ...m,
+    buildingCount: { ...DEFAULT_TOWN_MANIFEST.buildingCount, ...(m.buildingCount || {}) },
+    buildingSize:  { ...DEFAULT_TOWN_MANIFEST.buildingSize,  ...(m.buildingSize  || {}) },
+  };
+  if (merged.seed === undefined || merged.seed === null) {
+    merged.seed = Date.now();
+  }
+  return merged;
 }

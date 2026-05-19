@@ -24,9 +24,15 @@ export default class BootScene extends Phaser.Scene {
   constructor() { super({ key: 'Boot' }); }
 
   preload() {
-    const atlasJson = resolveAssetPath('/DawnlikeAtlas.json');
-    const atlas0    = resolveAssetPath('/DawnlikeAtlas0.png');
-    const atlas1    = resolveAssetPath('/DawnlikeAtlas1.png');
+    // Caller can pass `atlasPaths: { json, atlas0, atlas1 }` via createGame
+    // to load the atlas from a custom location (e.g. when this package is
+    // consumed and the assets live somewhere other than the storybook's
+    // /public dir). Defaults reproduce the storybook behaviour via the
+    // existing path resolver.
+    const overrides = this.registry.get('atlasPaths') || {};
+    const atlasJson = overrides.json   || resolveAssetPath('/DawnlikeAtlas.json');
+    const atlas0    = overrides.atlas0 || resolveAssetPath('/DawnlikeAtlas0.png');
+    const atlas1    = overrides.atlas1 || resolveAssetPath('/DawnlikeAtlas1.png');
 
     // First atlas. We also need the JSON object accessible after load() to
     // walk frame metadata, so load it again as a plain JSON.

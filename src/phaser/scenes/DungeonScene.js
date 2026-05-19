@@ -29,8 +29,18 @@ export default class DungeonScene extends MapScene {
     this.level = parseInt(key.replace('Dungeon', ''), 10) || 1;
   }
 
+  /** Build the manifest for this dungeon level, merging registry overrides. */
+  buildManifestFor(sceneKey, level, save) {
+    const manifests = this.registry.get('manifests') || {};
+    return {
+      seed: seedFor(sceneKey, save.seed),
+      level,
+      ...(manifests.dungeon || {}),
+    };
+  }
+
   generate(save) {
-    return generateDungeon(seedFor(this.SCENE_KEY, save.seed), this.level);
+    return generateDungeon(this.buildManifestFor(this.SCENE_KEY, this.level, save));
   }
 
   renderTileLayers(tiles, x, y, byName) {
@@ -64,7 +74,11 @@ export default class DungeonScene extends MapScene {
       if (this.level === 1) {
         // Exit dungeon → back to overworld at the dungeon-entrance tile.
         const save = this.registry.get('save');
-        const world = generateWorld(seedFor('World', save.seed));
+        const manifests = this.registry.get('manifests') || {};
+        const world = generateWorld({
+          seed: seedFor('World', save.seed),
+          ...(manifests.world || {}),
+        });
         const d = world.markers.dungeonEntrance;
         const spawn = this.adjacentTo(d, world);
         this.transitionTo('World', spawn);
@@ -73,14 +87,14 @@ export default class DungeonScene extends MapScene {
         // stairsDown so we can step back down at will.
         const prevKey = `Dungeon${this.level - 1}`;
         const save = this.registry.get('save');
-        const prev = generateDungeon(seedFor(prevKey, save.seed), this.level - 1);
+        const prev = generateDungeon(this.buildManifestFor(prevKey, this.level - 1, save));
         const spawn = this.adjacentTo(prev.markers.stairsDown || prev.markers.stairsUp, prev);
         this.transitionTo(prevKey, spawn);
       }
     } else if (marker === 'stairsDown') {
       const nextKey = `Dungeon${this.level + 1}`;
       const save = this.registry.get('save');
-      const next = generateDungeon(seedFor(nextKey, save.seed), this.level + 1);
+      const next = generateDungeon(this.buildManifestFor(nextKey, this.level + 1, save));
       const spawn = this.adjacentTo(next.markers.stairsUp, next);
       this.transitionTo(nextKey, spawn);
     }

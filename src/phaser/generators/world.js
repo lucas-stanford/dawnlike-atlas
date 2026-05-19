@@ -1,5 +1,5 @@
 /**
- * generators/world.js — overworld for the Phaser roguelike.
+ * generators/world.js — overworld for the dawnlike-atlas roguelike toolkit.
  *
  * Compact port of src/OutdoorExample.jsx: simplex-noise biomes (grass,
  * forest, mountain, dirt patches) + a single straight-running road W→E
@@ -15,8 +15,28 @@
  * `tiles[y][x]` matches the schema renderWorldTile expects:
  *   { type, tree, mountain, road, river, bridge, decor, marker }.
  *
- * Deterministic — same seed always produces the same world. Uses ROT.RNG
- * exclusively; callers must not interleave other RNG work inside this fn.
+ * Deterministic — same `manifest.seed` always produces the same world.
+ * Uses ROT.RNG exclusively; callers must not interleave other RNG work
+ * inside this fn.
+ *
+ * The manifest is the single configuration object that tunes every knob.
+ * Pass `{}` (or omit it) to get the default world. Spread `DEFAULT_WORLD_MANIFEST`
+ * into your own override to inherit defaults for fields you don't set.
+ *
+ * @typedef {Object} WorldManifest
+ * @property {number} [width=40]                 Map width in tiles.
+ * @property {number} [height=30]                Map height in tiles.
+ * @property {number} [seed]                     Random seed. Defaults to Date.now().
+ * @property {number} [elevationScale=12]        Simplex coordinate divisor for elevation noise.
+ * @property {number} [biomeScale=22]            Simplex coordinate divisor for biome split noise.
+ * @property {number} [dirtPatchScale=8]         Simplex coordinate divisor for dirt patches.
+ * @property {number} [elevationThreshold=0.35]  Tile is forest/mountain when elev > this.
+ * @property {number} [biomeSplit=0]             Within elevated tiles, > this becomes mountain, else forest.
+ * @property {number} [dirtPatchThreshold=0.4]   Low-elevation tile becomes dirt when patch noise > this.
+ * @property {number} [decorChance=0.04]         Chance per eligible grass tile to spawn a decor sprite.
+ * @property {string[]} [decorVariants]          Decor sprite names to pick from.
+ * @property {number} [riverPosition=0.7]        River starting column as fraction of width.
+ * @property {{north:string,south:string,east:string,west:string}} [edges]  Which edges the road/river touch (for non-default layouts; currently informational).
  */
 
 import * as ROT from 'rot-js';
@@ -24,7 +44,7 @@ import * as ROT from 'rot-js';
 export const WORLD_WIDTH = 40;
 export const WORLD_HEIGHT = 30;
 
-const DECORS = [
+export const DEFAULT_WORLD_DECORS = [
   'white flowers', 'sparse white flowers',
   'blue flowers',  'sparse blue flowers',
   'gold flowers',  'sparse gold flowers',
@@ -32,10 +52,55 @@ const DECORS = [
   'pebble', 'pebbles', 'rock',
 ];
 
-export function generateWorld(seed) {
+/**
+ * Defaults for every WorldManifest field. Spread this into your own
+ * manifest to override only the fields you care about.
+ */
+export const DEFAULT_WORLD_MANIFEST = Object.freeze({
+  width: WORLD_WIDTH,
+  height: WORLD_HEIGHT,
+  seed: undefined,
+  elevationScale: 12,
+  biomeScale: 22,
+  dirtPatchScale: 8,
+  elevationThreshold: 0.35,
+  biomeSplit: 0,
+  dirtPatchThreshold: 0.4,
+  decorChance: 0.04,
+  decorVariants: DEFAULT_WORLD_DECORS,
+  riverPosition: 0.7,
+});
+
+/**
+ * Generate an overworld map.
+ *
+ * @param {WorldManifest|number} [manifestOrSeed]  Manifest object OR a bare
+ *   seed number for backward compatibility with the original `generateWorld(seed)`
+ *   API.
+ * @returns {{ width:number, height:number, tiles:Array<Array<Object>>,
+ *             markers:{townEntrance:{x,y}, dungeonEntrance:{x,y}},
+ *             walkable:(x:number,y:number)=>boolean,
+ *             manifest:WorldManifest }}
+ */
+export function generateWorld(manifestOrSeed) {
+  const manifest = normalizeWorldManifest(manifestOrSeed);
+  const {
+    width: W,
+    height: H,
+    seed,
+    elevationScale,
+    biomeScale,
+    dirtPatchScale,
+    elevationThreshold,
+    biomeSplit,
+    dirtPatchThreshold,
+    decorChance,
+    decorVariants,
+    riverPosition,
+  } = manifest;
+
   ROT.RNG.setSeed(seed);
   const simplex = new ROT.Noise.Simplex();
-  const W = WORLD_WIDTH, H = WORLD_HEIGHT;
 
   const tiles = Array.from({ length: H }, () =>
     Array.from({ length: W }, () => ({
@@ -49,18 +114,22 @@ export function generateWorld(seed) {
   //    than a salt-and-pepper mix.
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
-      const elev   = simplex.get(x / 12, y / 12);
-      const biome  = simplex.get(x / 22 + 500, y / 22 + 500);
-      const patch  = simplex.get(x / 8 + 100, y / 8 + 100);
+      const elev   = simplex.get(x / elevationScale, y / elevationScale);
+      const biome  = simplex.get(x / biomeScale + 500, y / biomeScale + 500);
+      const patch  = simplex.get(x / dirtPatchScale + 100, y / dirtPatchScale + 100);
       const t = tiles[y][x];
-      if (elev > 0.35) {
-        if (biome > 0) { t.mountain = true; }
-        else           { t.tree = true; }
-      } else if (patch > 0.4) {
+      if (elev > elevationThreshold) {
+        if (biome > biomeSplit) { t.mountain = true; }
+        else                    { t.tree = true; }
+      } else if (patch > dirtPatchThreshold) {
         t.type = 'dirt';
       }
-      if (t.type === 'grass' && !t.tree && !t.mountain && ROT.RNG.getUniform() > 0.96) {
-        t.decor = ROT.RNG.getItem(DECORS);
+      if (
+        t.type === 'grass' && !t.tree && !t.mountain &&
+        decorChance > 0 && ROT.RNG.getUniform() < decorChance &&
+        decorVariants && decorVariants.length > 0
+      ) {
+        t.decor = ROT.RNG.getItem(decorVariants);
       }
     }
   }
@@ -68,7 +137,7 @@ export function generateWorld(seed) {
   // 2. Road — runs W→E across the middle with a tiny wobble. Clears trees
   //    and mountains it passes over so the road stays passable.
   let ry = Math.floor(H / 2);
-  const riverX = Math.floor(W * 0.7);
+  const riverX = Math.floor(W * riverPosition);
   for (let rx = 0; rx < W; rx++) {
     const t = tiles[ry][rx];
     t.road = true; t.tree = false; t.mountain = false;
@@ -178,5 +247,23 @@ export function generateWorld(seed) {
     tiles,
     markers: { townEntrance: town, dungeonEntrance: dungeon },
     walkable,
+    manifest,
   };
+}
+
+/**
+ * Normalize the caller's argument into a complete manifest, filling
+ * in every default. Accepts either a manifest object OR a bare seed
+ * number (for backward compatibility with the original generateWorld(seed)
+ * signature).
+ */
+export function normalizeWorldManifest(input) {
+  const m = (typeof input === 'number' || typeof input === 'string')
+    ? { seed: input }
+    : (input || {});
+  const merged = { ...DEFAULT_WORLD_MANIFEST, ...m };
+  if (merged.seed === undefined || merged.seed === null) {
+    merged.seed = Date.now();
+  }
+  return merged;
 }
