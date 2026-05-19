@@ -85,8 +85,8 @@ export const AUTOTILE_MANIFESTS = {
       'ne':   'right up',
       'sw':   'left down',
       'se':   'right down',
-      'nse':  'left up down',
-      'nsw':  'right up down',
+      'nse':  'right up down',          // vertical-T: arms extend up/down + east stub
+      'nsw':  'left up down',           // vertical-T: arms extend up/down + west stub
       'new':  'left right up',
       'sew':  'left right down',
       'nsew': 'left right up down',
