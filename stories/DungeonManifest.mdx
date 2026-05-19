@@ -1,0 +1,83 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Docs/Dungeon Manifest" />
+
+# Dungeon Manifest
+
+The `DungeonManifest` is the single configuration object passed to
+[`generateDungeon(manifest)`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/generators/dungeon.js)
+to produce one deterministic dungeon level. Spread
+[`DEFAULT_DUNGEON_MANIFEST`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/generators/dungeon.js)
+into your own object to inherit defaults for the fields you don't set.
+
+```js
+import { generateDungeon, DEFAULT_DUNGEON_MANIFEST }
+  from 'dawnlike-atlas/roguelike/generators';
+
+const level2 = generateDungeon({
+  ...DEFAULT_DUNGEON_MANIFEST,
+  seed: 12345,
+  level: 2,
+  width: 60,
+  height: 40,
+  roomWidth: [4, 9],
+});
+```
+
+The live Dungeon example exposes the same knobs as Storybook controls — open
+[Zone Examples / Dungeon](?path=/story/zone-examples-dungeon--dungeon)
+to play with them visually.
+
+## Returns
+
+```ts
+{
+  width:    number,
+  height:   number,
+  tiles:    Array<Array<Tile>>,                     // tiles[y][x]
+  markers:  { stairsUp:{x,y}, stairsDown:{x,y}|null },
+  walkable: (x:number, y:number) => boolean,
+  manifest: DungeonManifest,
+}
+```
+
+Each tile is `{ wall: boolean, floor: boolean, marker: 'stairsUp' | 'stairsDown' | null }`.
+Levels at or beyond `bottomLevel` have `stairsDown: null` — that's the bottom
+of the dungeon.
+
+## Fields
+
+<table>
+  <thead>
+    <tr>
+      <th align="left">Field</th>
+      <th align="left">Type</th>
+      <th align="left">Default</th>
+      <th align="left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>width</code></td><td><code>number</code></td><td><code>36</code></td><td>Map width in tiles.</td></tr>
+    <tr><td><code>height</code></td><td><code>number</code></td><td><code>26</code></td><td>Map height in tiles.</td></tr>
+    <tr><td><code>seed</code></td><td><code>number</code></td><td><code>Date.now()</code></td><td>RNG seed. Same seed → identical layout.</td></tr>
+    <tr><td><code>level</code></td><td><code>number</code></td><td><code>1</code></td><td>Level number, used to decide whether to place stairs-down.</td></tr>
+    <tr><td><code>bottomLevel</code></td><td><code>number</code></td><td><code>3</code></td><td>Final level: no stairs-down placed at or beyond this depth.</td></tr>
+    <tr><td><code>roomWidth</code></td><td><code>[min, max]</code></td><td>rot-js default</td><td>Passed straight through to <code>ROT.Map.Digger</code>.</td></tr>
+    <tr><td><code>roomHeight</code></td><td><code>[min, max]</code></td><td>rot-js default</td><td>Passed straight through to <code>ROT.Map.Digger</code>.</td></tr>
+    <tr><td><code>corridorLength</code></td><td><code>[min, max]</code></td><td>rot-js default</td><td>Passed straight through to <code>ROT.Map.Digger</code>.</td></tr>
+    <tr><td><code>dugPercentage</code></td><td><code>number</code></td><td>rot-js default</td><td>Target fraction of cells dug (rot-js's own default if omitted).</td></tr>
+    <tr><td><code>timeLimit</code></td><td><code>number</code></td><td>rot-js default</td><td>Digger time limit in ms; see <a href="https://ondras.github.io/rot.js/manual/#map/dungeon">rot-js docs</a>.</td></tr>
+  </tbody>
+</table>
+
+Any field left `undefined` is omitted from the options object passed to
+`ROT.Map.Digger`, so rot-js applies its own default — useful when you only
+want to override one of the digger knobs.
+
+## Source
+
+- Generator: [`src/phaser/generators/dungeon.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/generators/dungeon.js)
+- Defaults: [`DEFAULT_DUNGEON_MANIFEST`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/generators/dungeon.js#L39)
+- Renderer: [`src/phaser/autotileRender.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/autotileRender.js)
+- Live demo: [`src/DungeonExample.jsx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/DungeonExample.jsx)
+- Upstream: [rot-js Map.Digger](https://ondras.github.io/rot.js/manual/#map/dungeon)

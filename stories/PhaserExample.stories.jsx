@@ -30,7 +30,9 @@ export default {
       name: 'world.seed',
       table: { category: 'World' },
       control: { type: 'number' },
-      description: 'Random seed for the overworld noise + decor placement.',
+      description:
+        'Override the overworld seed for deterministic generation. ' +
+        'Leave at **0** to use a random seed (a new one is rolled per New Game).',
     },
     worldElevationThreshold: {
       name: 'world.elevationThreshold',
@@ -166,7 +168,7 @@ export default {
   },
   args: {
     // World
-    worldSeed: 1,
+    worldSeed: 0,
     worldElevationThreshold: 0.35,
     worldBiomeSplit: 0,
     worldDecorChance: 0.04,
@@ -195,14 +197,18 @@ export default {
 };
 
 function buildManifests(args) {
+  const worldManifest = {
+    elevationThreshold: args.worldElevationThreshold,
+    biomeSplit: args.worldBiomeSplit,
+    decorChance: args.worldDecorChance,
+    dirtPatchThreshold: args.worldDirtPatchThreshold,
+  };
+  // Only pin the seed when the user supplied a positive value; otherwise
+  // let save.js's randomly-bootstrapped root seed drive generation so
+  // "New Game" produces a genuinely different overworld each time.
+  if (args.worldSeed && args.worldSeed > 0) worldManifest.seed = args.worldSeed;
   return {
-    world: {
-      seed: args.worldSeed,
-      elevationThreshold: args.worldElevationThreshold,
-      biomeSplit: args.worldBiomeSplit,
-      decorChance: args.worldDecorChance,
-      dirtPatchThreshold: args.worldDirtPatchThreshold,
-    },
+    world: worldManifest,
     town: {
       plazaSize: args.townPlazaSize,
       buildingCount: { min: args.townBuildingsMin, max: Math.max(args.townBuildingsMin, args.townBuildingsMax) },

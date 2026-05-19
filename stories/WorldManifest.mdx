@@ -1,0 +1,79 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Docs/World Manifest" />
+
+# World Manifest
+
+The `WorldManifest` is the single configuration object passed to
+[`generateWorld(manifest)`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/generators/world.js)
+to produce one deterministic overworld. Spread
+[`DEFAULT_WORLD_MANIFEST`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/generators/world.js)
+into your own object to inherit defaults for the fields you don't set.
+
+```js
+import { generateWorld, DEFAULT_WORLD_MANIFEST }
+  from 'dawnlike-atlas/roguelike/generators';
+
+const world = generateWorld({
+  ...DEFAULT_WORLD_MANIFEST,
+  seed: 12345,
+  width: 60,
+  height: 40,
+});
+```
+
+The live Wilderness example exposes the same knobs as Storybook controls — open
+[Zone Examples / Wilderness](?path=/story/zone-examples-wilderness--wilderness)
+to play with them visually.
+
+## Returns
+
+```ts
+{
+  width:    number,
+  height:   number,
+  tiles:    Array<Array<Tile>>,             // tiles[y][x]
+  markers:  { townEntrance:{x,y}, dungeonEntrance:{x,y} },
+  walkable: (x:number, y:number) => boolean,
+  manifest: WorldManifest,                  // the normalized manifest
+}
+```
+
+Each tile is
+`{ type, tree, mountain, road, river, bridge, decor, marker }` — see
+[`renderWorldTile`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/autotileRender.js)
+for the rendering contract.
+
+## Fields
+
+<table>
+  <thead>
+    <tr>
+      <th align="left">Field</th>
+      <th align="left">Type</th>
+      <th align="left">Default</th>
+      <th align="left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>width</code></td><td><code>number</code></td><td><code>40</code></td><td>Map width in tiles.</td></tr>
+    <tr><td><code>height</code></td><td><code>number</code></td><td><code>30</code></td><td>Map height in tiles.</td></tr>
+    <tr><td><code>seed</code></td><td><code>number</code></td><td><code>Date.now()</code></td><td>RNG seed. Same seed → identical world every time.</td></tr>
+    <tr><td><code>elevationScale</code></td><td><code>number</code></td><td><code>12</code></td><td>Simplex coordinate divisor for the primary elevation noise field. Lower = smaller features.</td></tr>
+    <tr><td><code>biomeScale</code></td><td><code>number</code></td><td><code>22</code></td><td>Simplex coordinate divisor for the biome-split noise field that decides forest vs mountain inside elevated terrain.</td></tr>
+    <tr><td><code>dirtPatchScale</code></td><td><code>number</code></td><td><code>8</code></td><td>Simplex coordinate divisor for the secondary noise field that paints dirt patches on low ground.</td></tr>
+    <tr><td><code>elevationThreshold</code></td><td><code>number</code></td><td><code>0.35</code></td><td>A tile becomes forest/mountain when its elevation noise exceeds this.</td></tr>
+    <tr><td><code>biomeSplit</code></td><td><code>number</code></td><td><code>0</code></td><td>Within elevated tiles, biome noise &gt; this → mountain; ≤ this → forest.</td></tr>
+    <tr><td><code>dirtPatchThreshold</code></td><td><code>number</code></td><td><code>0.4</code></td><td>Low-elevation tile becomes dirt when patch noise &gt; this.</td></tr>
+    <tr><td><code>decorChance</code></td><td><code>number</code></td><td><code>0.04</code></td><td>Per-grass-tile probability of dropping a decoration.</td></tr>
+    <tr><td><code>decorVariants</code></td><td><code>string[]</code></td><td>flowers + pebbles + rock</td><td>Sprite names to pick from when scattering decorations.</td></tr>
+    <tr><td><code>riverPosition</code></td><td><code>number</code></td><td><code>0.7</code></td><td>River starting column as a fraction of <code>width</code>.</td></tr>
+  </tbody>
+</table>
+
+## Source
+
+- Generator: [`src/phaser/generators/world.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/generators/world.js)
+- Defaults: [`DEFAULT_WORLD_MANIFEST`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/generators/world.js#L59)
+- Renderer: [`src/phaser/autotileRender.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/autotileRender.js)
+- Live demo: [`src/OutdoorExample.jsx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/OutdoorExample.jsx)
