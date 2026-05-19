@@ -38,8 +38,10 @@ const FLOOR_STYLES = [
 
 // Building archetypes: each drives furniture set, sign, and rug colour.
 const BUILDING_TYPES = ['house', 'inn', 'pub', 'smithy', 'church', 'shop'];
+// Only non-residential buildings get a hanging sign by the door. Regular
+// houses are left unmarked — a "home sign" on every door makes the town
+// read as a row of shops rather than a residential neighbourhood.
 const TYPE_SIGN = {
-  house: 'home sign',
   inn: 'inn sign',
   pub: 'pub sign',
   smithy: 'smithy sign',

@@ -79,7 +79,6 @@ const DEFAULT_FLOWER_VARIANTS = Object.freeze([
 ]);
 
 const SIGN_FOR_TYPE = Object.freeze({
-  home:   'home sign',
   inn:    'inn sign',
   smithy: 'smithy sign',
   shop:   'empty shop sign',
