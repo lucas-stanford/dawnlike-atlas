@@ -374,7 +374,8 @@ export default function TownExample() {
       }
     }
 
-    // 6. Building interior decoration: rug, furniture, sign, lanterns.
+    // 6. Building interior decoration: rug, furniture, sign.
+    //    (Lanterns were removed — they sat awkwardly on wall-corner sprites.)
     const placeFurniture = (b) => {
       const innerTiles = [];
       for (let yy = b.y + 1; yy < b.y + b.h - 1; yy++) {
@@ -457,7 +458,7 @@ export default function TownExample() {
     };
     placedBuildings.forEach(placeFurniture);
 
-    // 7. Signs + lanterns + door plants.
+    // 7. Signs + door plants.
     for (const b of placedBuildings) {
       // Sign: hang it on a street tile beside the door's exit tile so it
       // doesn't visually block the doorway. For N/S doors that means one
@@ -481,17 +482,6 @@ export default function TownExample() {
       // No fallback: if neither flank is paved, skip the sign rather than
       // place it directly on the door exit tile (which would block the doorway).
       if (signTile && atlas.byName[TYPE_SIGN[b.type]]) signTile.sign = TYPE_SIGN[b.type];
-
-      // Lanterns on the 4 corners (not on the door).
-      const corners = [
-        [b.x, b.y], [b.x + b.w - 1, b.y],
-        [b.x, b.y + b.h - 1], [b.x + b.w - 1, b.y + b.h - 1],
-      ];
-      for (const [cx2, cy2] of corners) {
-        const t = get(cx2, cy2);
-        if (!t || !t.wall) continue;
-        t.lantern = true;
-      }
 
       // Door-flanking plants (30% chance). Now that the sign sits on one
       // flank, drop the plant on the OTHER flank when possible.
@@ -807,11 +797,8 @@ export default function TownExample() {
       layers.push({ name: tile.sign, z: 3.5, reason: 'Building sign' });
     }
 
-    // z=4: lanterns / door plants (street tiles only — ground flora on grass
-    //      already drew at z=0.6).
-    if (tile.lantern && atlas.byName['brass lantern']) {
-      layers.push({ name: 'brass lantern', z: 4, reason: 'Lantern' });
-    }
+    // z=4: door plants on street tiles (ground flora on grass already
+    //      drew at z=0.6).
     if (tile.decor && tile.type !== 'grass' && atlas.byName[tile.decor]) {
       layers.push({ name: tile.decor, z: 4, reason: 'Door decoration' });
     }
