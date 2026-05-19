@@ -2,7 +2,7 @@
 
 Build the game described below in **Your game idea** using the
 [lucas-stanford/dawnlike-atlas](https://github.com/lucas-stanford/dawnlike-atlas)
-toolkit: a 16×16 sprite atlas (~4,157 sprites), manifest-driven
+toolkit: a 32×32 sprite atlas (~4,157 sprites — nearest-neighbour 2× of the original 16×16 DawnLike art), manifest-driven
 overworld/town/dungeon generators, autotile resolvers, and a reference
 Phaser game wiring it all together.
 
@@ -30,7 +30,7 @@ distinctive.
 
 - `npm install phaser@^4 rot-js`
 - Pixel art on: `Phaser.AUTO` + `Phaser.Scale.NONE` + `pixelArt: true`
-- Look up sprites by name (`byName['light oak dense']`), never by frame index. Honour `w`/`h` from the lookup (most are 16×16, some HUD icons are 48×48).
+- Look up sprites by name (`byName['light oak dense']`), never by frame index. Honour `w`/`h` from the lookup (most are 32×32; some HUD icons are 96×96 — i.e., 2× the original DawnLike sizes).
 - Sprites with `isAnimated: true` have a second frame in atlas 1 — register a 2-frame anim `anim:<name>` at ~3 fps in boot.
 - Each generator returns `walkable(x,y)` — use it as-is.
 - Exit tiles are tagged via `tile.marker`; on contact, transition and spawn the player **adjacent** to the destination marker (never on it).

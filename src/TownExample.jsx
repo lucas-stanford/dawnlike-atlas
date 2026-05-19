@@ -4,8 +4,8 @@ import { resolveAssetPath } from './utils/paths';
 import { resolveDawnLikeWallName, resolveDawnLikeFloorName, resolveAutotile, resolveDawnLikeDungeonWallName, resolveDawnLikeForestName } from './utils/autotile';
 import './Autotile.css';
 
-const TILE_SIZE = 16;
-const DEFAULT_SCALE = 2.5;
+const TILE_SIZE = 32;
+const DEFAULT_SCALE = 1.25;
 const DISPLAY_WIDTH = 45;
 const DISPLAY_HEIGHT = 30;
 
@@ -949,7 +949,7 @@ export default function TownExample({
             <div className="field-group"><label>Tree density: {treeChance}%</label><input type="range" min="0" max="30" step="1" value={treeChance} onChange={e => setTreeChance(parseInt(e.target.value))} /></div>
             <div className="field-group"><label>Flower density: {flowerChance}%</label><input type="range" min="0" max="30" step="1" value={flowerChance} onChange={e => setFlowerChance(parseInt(e.target.value))} /></div>
             <div className="field-group"><label>Graveyard chance: {graveyardChance}%</label><input type="range" min="0" max="100" step="5" value={graveyardChance} onChange={e => setGraveyardChance(parseInt(e.target.value))} /></div>
-            <div className="field-group"><label>Zoom: {scale.toFixed(1)}x</label><input type="range" min="1" max="6" step="0.5" value={scale} onChange={e => setScale(parseFloat(e.target.value))} /></div>
+            <div className="field-group"><label>Zoom: {scale.toFixed(1)}x</label><input type="range" min="0.5" max="3" step="0.25" value={scale} onChange={e => setScale(parseFloat(e.target.value))} /></div>
             <button className="primary-button" onClick={() => { setSpriteOverrides({}); setPinnedTile(null); setSeed(Math.floor(Math.random() * 1000000)); }}>🏘️ Re-generate</button>
             {overrideLog.length > 0 && (
               <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}>
@@ -1017,7 +1017,7 @@ export default function TownExample({
                   const options = spritesByBase[base] || [l.name];
                   const overrideKey = `${activeTile.x},${activeTile.y},${l.z}`;
                   const pickerOpen = pinnedTile && pickerLayerZ === l.z && options.length > 1;
-                  const sw = TILE_SIZE * 2;
+                  const sw = TILE_SIZE * 1;
                   return (
                     <div key={i} className="popup-layer">
                       <div

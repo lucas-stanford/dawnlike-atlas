@@ -13,8 +13,8 @@
  * fill, both at the same x,y — same as the React Gauge component.
  */
 
-const TILE = 16;
-const PIXEL_SCALE = 2;
+const TILE = 32;
+const PIXEL_SCALE = 1;
 
 export function heartSprite(color, value) {
   if (value >= 0.7) return `${color} heart full`;

@@ -4,8 +4,8 @@ import { resolveAssetPath } from './utils/paths';
 import { resolveDawnLikeWallName, resolveDawnLikeForestName, resolveDawnLikeRiverName, resolveDawnLikeFloorName, resolveDawnLikePoolName, resolveDawnLikeMountainName, resolveAutotile } from './utils/autotile';
 import './Autotile.css';
 
-const TILE_SIZE = 16;
-const DEFAULT_SCALE = 2.5;
+const TILE_SIZE = 32;
+const DEFAULT_SCALE = 1.25;
 const DISPLAY_WIDTH = 50;
 const DISPLAY_HEIGHT = 40;
 
@@ -636,7 +636,7 @@ export default function OutdoorExample({
             <div className="field-group"><label>River Style</label><select value={riverStyle} onChange={e => setRiverStyle(e.target.value)}>{discoveredRivers.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div className="field-group"><label>Tree Style</label><select value={treeStyle} onChange={e => setTreeStyle(e.target.value)}>{discoveredTrees.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
             <div className="field-group"><label>Mountain Style</label><select value={mountainStyle} onChange={e => setMountainStyle(e.target.value)}>{discoveredMountains.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-            <div className="field-group"><label>Zoom: {scale.toFixed(1)}x</label><input type="range" min="1" max="6" step="0.5" value={scale} onChange={e => setScale(parseFloat(e.target.value))} /></div>
+            <div className="field-group"><label>Zoom: {scale.toFixed(1)}x</label><input type="range" min="0.5" max="3" step="0.25" value={scale} onChange={e => setScale(parseFloat(e.target.value))} /></div>
             <button className="primary-button" onClick={() => { setSpriteOverrides({}); setPinnedTile(null); setSeed(Math.floor(Math.random() * 1000000)); }}>🌲 Re-generate</button>
             {overrideLog.length > 0 && (
               <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}>
@@ -708,7 +708,7 @@ export default function OutdoorExample({
                   const options = spritesByBase[base] || [l.name];
                   const overrideKey = `${activeTile.x},${activeTile.y},${l.z}`;
                   const pickerOpen = pinnedTile && pickerLayerZ === l.z && options.length > 1;
-                  const sw = TILE_SIZE * 2; // picker swatch size (2x native)
+                  const sw = TILE_SIZE * 1; // picker swatch size — exactly one native atlas tile
                   return (
                     <div key={i} className="popup-layer">
                       <div

@@ -5,8 +5,9 @@
 Recreate the small exploration roguelike from
 **[`lucas-stanford/dawnlike-atlas`](https://github.com/lucas-stanford/dawnlike-atlas)**
 (see the *Examples › Phaser Roguelike* story in its Storybook). It is a
-[Phaser 4](https://phaser.io/) game built on top of the DawnLike 16×16
-tileset that demonstrates:
+[Phaser 4](https://phaser.io/) game built on top of the DawnLike 32×32
+tileset (nearest-neighbour 2× upscale of the original 16×16 art — the
+pixelated look is preserved exactly) that demonstrates:
 
 - An **overworld** (40×30) with biomes, a meandering road, a river with
   bridge, a town entrance, and a dungeon entrance.
@@ -103,8 +104,8 @@ The Storybook story that mounts the component:
 7. **Create `src/phaser/scenes/MapScene.js`** — this is the most
    important file. Note these design decisions:
    - **Camera viewport** is offset down by `HUD_HEIGHT` so the HUD has
-     its own band above the map. Apply `cameras.main.setZoom(2)` so
-     16px tiles render at 32px and fill the viewport.
+     its own band above the map. Atlas tiles are 32px native, so no
+     extra camera zoom is needed to fill the viewport.
    - **Hold-to-walk:** in `update()`, poll `cursors.X.isDown` /
      `wasd.X.isDown` and call `tryMove` if not already moving. A
      `this.moving` flag rate-limits to one step per ~70ms tween.
