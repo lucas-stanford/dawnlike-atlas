@@ -63,25 +63,35 @@ const MOUNTAIN_STYLES = [
   'green mound',
 ];
 
-export default function OutdoorExample() {
+export default function OutdoorExample({
+  terrainStyle: terrainStyleProp,
+  roadStyle: roadStyleProp,
+  riverStyle: riverStyleProp,
+  treeStyle: treeStyleProp,
+  mountainStyle: mountainStyleProp,
+  dirtStyle: dirtStyleProp,
+  seed: seedProp,
+  scale: scaleProp,
+  showConfigInitially = false,
+} = {}) {
   const [rawMapData, setRawMapData] = useState(null);
   const [atlas, setAtlas] = useState(null);
   const [error, setError] = useState(null);
-  const [terrainStyle, setTerrainStyle] = useState('');
-  const [roadStyle, setRoadStyle] = useState('');
-  const [riverStyle, setRiverStyle] = useState('');
-  const [treeStyle, setTreeStyle] = useState('');
-  const [mountainStyle, setMountainStyle] = useState('');
-  const [dirtStyle, setDirtStyle] = useState('');
-  const [seed, setSeed] = useState(Math.floor(Math.random() * 1000000));
+  const [terrainStyle, setTerrainStyle] = useState(terrainStyleProp || '');
+  const [roadStyle, setRoadStyle] = useState(roadStyleProp || '');
+  const [riverStyle, setRiverStyle] = useState(riverStyleProp || '');
+  const [treeStyle, setTreeStyle] = useState(treeStyleProp || '');
+  const [mountainStyle, setMountainStyle] = useState(mountainStyleProp || '');
+  const [dirtStyle, setDirtStyle] = useState(dirtStyleProp || '');
+  const [seed, setSeed] = useState(seedProp ?? Math.floor(Math.random() * 1000000));
   const [loading, setLoading] = useState(true);
   const [hoverInfo, setHoverInfo] = useState(null);
   const [pinnedTile, setPinnedTile] = useState(null);
   const [pickerLayerZ, setPickerLayerZ] = useState(null);
   const [spriteOverrides, setSpriteOverrides] = useState({});
-  const [scale, setScale] = useState(DEFAULT_SCALE);
+  const [scale, setScale] = useState(scaleProp ?? DEFAULT_SCALE);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [showConfig, setShowConfig] = useState(false);
+  const [showConfig, setShowConfig] = useState(showConfigInitially);
 
   // Dynamically discover styles from atlas
   const { discoveredTrees, discoveredFloors, discoveredRoads, discoveredRivers, discoveredMountains } = useMemo(() => {

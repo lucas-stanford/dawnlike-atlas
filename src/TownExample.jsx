@@ -64,30 +64,44 @@ const GROUND_FLOWERS = [
   'red flowers', 'sparse red flowers',
 ];
 
-export default function TownExample() {
+export default function TownExample({
+  wallStyle: wallStyleProp,
+  floorStyle: floorStyleProp,
+  streetStyle: streetStyleProp,
+  mainStreetStyle: mainStreetStyleProp,
+  grassStyle: grassStyleProp,
+  treeStyle: treeStyleProp,
+  treeChance: treeChanceProp,
+  flowerChance: flowerChanceProp,
+  graveyardChance: graveyardChanceProp,
+  buildingCount: buildingCountProp,
+  seed: seedProp,
+  scale: scaleProp,
+  showConfigInitially = false,
+} = {}) {
   const [rawMapData, setRawMapData] = useState(null);
   const [buildings, setBuildings] = useState([]);
   const [atlas, setAtlas] = useState(null);
   const [error, setError] = useState(null);
-  const [wallStyle, setWallStyle] = useState('');
-  const [floorStyle, setFloorStyle] = useState('day brick floor');
-  const [streetStyle, setStreetStyle] = useState('day stone floor');
-  const [mainStreetStyle, setMainStreetStyle] = useState('day brick floor');
-  const [grassStyle, setGrassStyle] = useState('day grass floor');
-  const [treeStyle, setTreeStyle] = useState('');
-  const [treeChance, setTreeChance] = useState(8);
-  const [flowerChance, setFlowerChance] = useState(6);
-  const [graveyardChance, setGraveyardChance] = useState(30);
-  const [buildingCount, setBuildingCount] = useState(6);
-  const [seed, setSeed] = useState(Math.floor(Math.random() * 1000000));
+  const [wallStyle, setWallStyle] = useState(wallStyleProp || '');
+  const [floorStyle, setFloorStyle] = useState(floorStyleProp || 'day brick floor');
+  const [streetStyle, setStreetStyle] = useState(streetStyleProp || 'day stone floor');
+  const [mainStreetStyle, setMainStreetStyle] = useState(mainStreetStyleProp || 'day brick floor');
+  const [grassStyle, setGrassStyle] = useState(grassStyleProp || 'day grass floor');
+  const [treeStyle, setTreeStyle] = useState(treeStyleProp || '');
+  const [treeChance, setTreeChance] = useState(treeChanceProp ?? 8);
+  const [flowerChance, setFlowerChance] = useState(flowerChanceProp ?? 6);
+  const [graveyardChance, setGraveyardChance] = useState(graveyardChanceProp ?? 30);
+  const [buildingCount, setBuildingCount] = useState(buildingCountProp ?? 6);
+  const [seed, setSeed] = useState(seedProp ?? Math.floor(Math.random() * 1000000));
   const [loading, setLoading] = useState(true);
   const [hoverInfo, setHoverInfo] = useState(null);
   const [pinnedTile, setPinnedTile] = useState(null);
   const [pickerLayerZ, setPickerLayerZ] = useState(null);
   const [spriteOverrides, setSpriteOverrides] = useState({});
-  const [scale, setScale] = useState(DEFAULT_SCALE);
+  const [scale, setScale] = useState(scaleProp ?? DEFAULT_SCALE);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [showConfig, setShowConfig] = useState(false);
+  const [showConfig, setShowConfig] = useState(showConfigInitially);
 
   // Discover wall + tree bases from atlas. Same logic as AutotileExample /
   // OutdoorExample (Trees grouped from the Objects/Tree sheets).

@@ -65,27 +65,33 @@ export default function DungeonExample({
   const [hoverInfo, setHoverInfo] = useState(null);
   const [pinnedTile, setPinnedTile] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [spriteOverrides, setSpriteOverrides] = useState({});
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const [mapData, setMapData] = useState(null);
+
+  // Reusable name-cleaner that strips trailing direction/corner tokens
+  // so 'bright mine wall left up' → 'bright mine wall'. Shared by the
+  // atlas-discovery + the picker's spritesByBase index.
+  const cleanName = (name) => {
+    const directional = ['left', 'right', 'up', 'down', 'flat', 'center', 'nw', 'ne', 'sw', 'se', 'dense', 'nwe', 'nswe', 'we', 'nsw', 'ns', 'nse', 'swe', 'c', 'n', 's', 'e', 'w'];
+    let words = name.split(' ');
+    while (words.length > 1 && directional.includes(words[words.length - 1])) words.pop();
+    return words.join(' ').trim();
+  };
 
   // Discover wall + floor base names from atlas tags.
   const { discoveredWalls, discoveredFloors } = useMemo(() => {
     if (!atlas?.byName) return { discoveredWalls: [], discoveredFloors: [] };
     const walls = new Set();
     const floors = new Set();
-    const directional = ['left', 'right', 'up', 'down', 'flat', 'center', 'nw', 'ne', 'sw', 'se', 'dense', 'nwe', 'nswe', 'we', 'nsw', 'ns', 'nse', 'swe', 'c', 'n', 's', 'e', 'w'];
-    const clean = (name) => {
-      let words = name.split(' ');
-      while (words.length > 1 && directional.includes(words[words.length - 1])) words.pop();
-      return words.join(' ').trim();
-    };
     Object.entries(atlas.byName).forEach(([name, data]) => {
       if (data.tags?.includes('wall') && data.sourceFile === 'Objects/Wall') {
-        const base = clean(name);
+        const base = cleanName(name);
         if (base) walls.add(base);
       }
       if (data.sourceFile === 'Objects/Floor') {
-        const base = clean(name);
+        const base = cleanName(name);
         if (base && base !== 'empty') floors.add(base);
       }
     });
@@ -93,6 +99,21 @@ export default function DungeonExample({
       discoveredWalls: [...walls].sort(),
       discoveredFloors: [...floors].sort(),
     };
+  }, [atlas]);
+
+  // Index of every sprite grouped by its base name, for the click-to-pin
+  // sprite picker (e.g. all 16 "bright mine wall" autotile sprites).
+  const spritesByBase = useMemo(() => {
+    if (!atlas?.byName) return {};
+    const map = {};
+    for (const name of Object.keys(atlas.byName)) {
+      const base = cleanName(name);
+      if (!base) continue;
+      if (!map[base]) map[base] = [];
+      map[base].push(name);
+    }
+    for (const k of Object.keys(map)) map[k].sort();
+    return map;
   }, [atlas]);
 
   useEffect(() => {
@@ -129,12 +150,20 @@ export default function DungeonExample({
     }
     setMapData(data);
     setPinnedTile(null);
+    setSpriteOverrides({});
   }, [seed, mapType, atlas, cellularDensity, cellularSmooth, width, height]);
+
+  // Also drop overrides when the user swaps wall/floor base styles — the
+  // overridden sprite names belong to the OLD base and don't make sense
+  // against the new one.
+  useEffect(() => { setSpriteOverrides({}); }, [wallStyle, floorStyle]);
 
   const outOfBounds = (tx, ty) => tx < 0 || tx >= width || ty < 0 || ty >= height;
   const isWallAt = (tx, ty) => outOfBounds(tx, ty) || (mapData && mapData[`${tx},${ty}`] === 1);
 
-  // Resolve a tile + tell the user WHY this sprite was picked.
+  // Resolve a tile + tell the user WHY this sprite was picked. Returns a
+  // `context` object with the autotile truth-table — included verbatim in
+  // the override log so an LLM has all it needs to fix a misbehaving rule.
   const describeTile = (x, y) => {
     if (!mapData || !atlas) return null;
     const value = mapData[`${x},${y}`];
@@ -152,6 +181,7 @@ export default function DungeonExample({
         spriteName: resolved.name,
         reason: resolved.reason || `Floor; neighbours: ${neighbours}`,
         neighbours,
+        context: { kind: 'floor', baseStyle: floorStyle, neighbors: { n, s, e, w } },
       };
     }
     const spriteName = resolveDawnLikeDungeonWallName(wallStyle, x, y, isWallAt, atlas.byName);
@@ -162,6 +192,7 @@ export default function DungeonExample({
         spriteName: null,
         reason: 'Buried wall (no exposed face)',
         neighbours: '',
+        context: { kind: 'dungeonWall', baseStyle: wallStyle, surface: false },
       };
     }
     const isSurfaceWall = (tx, ty) => {
@@ -186,7 +217,49 @@ export default function DungeonExample({
       spriteName,
       reason: `Surface wall; connects to: ${connected}`,
       neighbours: connected,
+      context: { kind: 'dungeonWall', baseStyle: wallStyle, surface: true, neighbors: { n, s, e, w } },
     };
+  };
+
+  // The actually-rendered sprite for (x, y): user override if any, else
+  // the autotile-resolved sprite from describeTile. Returns null for
+  // tiles with no sprite (e.g. buried walls).
+  const resolveDisplaySprite = (x, y) => {
+    const override = spriteOverrides[`${x},${y}`];
+    if (override) return { name: override, overridden: true };
+    const info = describeTile(x, y);
+    return info?.spriteName ? { name: info.spriteName, overridden: false } : null;
+  };
+
+  // Reset the picker dropdown whenever a different tile is pinned.
+  useEffect(() => { setPickerOpen(false); }, [pinnedTile?.x, pinnedTile?.y]);
+
+  // Compact log of every overridden tile — auto-resolved sprite, the
+  // user-picked replacement, and the autotile context (neighbor truth
+  // table). Designed to paste back to an LLM so it has everything it
+  // needs to fix the autotile rule.
+  const overrideLog = useMemo(() => {
+    const entries = [];
+    for (const key of Object.keys(spriteOverrides)) {
+      const [xs, ys] = key.split(',');
+      const x = parseInt(xs), y = parseInt(ys);
+      const auto = describeTile(x, y);
+      if (!auto) continue;
+      entries.push({
+        pos: { x, y },
+        type: auto.type,
+        auto: auto.spriteName,
+        picked: spriteOverrides[key],
+        context: auto.context || null,
+      });
+    }
+    entries.sort((a, b) => a.pos.y - b.pos.y || a.pos.x - b.pos.x);
+    return entries;
+  }, [spriteOverrides, mapData, atlas, wallStyle, floorStyle]);
+
+  const copyLog = () => {
+    const text = JSON.stringify(overrideLog, null, 2);
+    if (navigator.clipboard) navigator.clipboard.writeText(text);
   };
 
   const stats = useMemo(() => {
@@ -270,7 +343,7 @@ export default function DungeonExample({
                      onChange={e => setScale(parseFloat(e.target.value))} />
             </div>
             <button className="primary-button"
-                    onClick={() => setSeed(Math.floor(Math.random() * 1000000))}>
+                    onClick={() => { setSpriteOverrides({}); setSeed(Math.floor(Math.random() * 1000000)); }}>
               🏰 Re-generate
             </button>
             <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}>
@@ -279,6 +352,20 @@ export default function DungeonExample({
                 <div className="stat-item"><span className="stat-label">Floor Tiles</span><span className="stat-value">{stats.floors}</span></div>
               </div>
             </div>
+            {overrideLog.length > 0 && (
+              <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <strong>Overrides ({overrideLog.length})</strong>
+                  <span>
+                    <button onClick={copyLog} title="Copy log JSON to clipboard">📋 Copy</button>
+                    <button onClick={() => setSpriteOverrides({})} style={{ marginLeft: 4 }} title="Clear all overrides">Clear</button>
+                  </span>
+                </div>
+                <pre data-testid="dungeon-override-log" style={{ maxHeight: 240, overflow: 'auto', fontSize: 11, margin: 0, background: 'rgba(0,0,0,0.35)', padding: 6, borderRadius: 4, color: '#fff' }}>
+{JSON.stringify(overrideLog, null, 2)}
+                </pre>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -295,8 +382,8 @@ export default function DungeonExample({
         >
           {mapData && Array.from({ length: height }).map((_, y) => (
             Array.from({ length: width }).map((_, x) => {
-              const info = describeTile(x, y);
-              const sprite = info?.spriteName ? atlas.byName[info.spriteName] : null;
+              const display = resolveDisplaySprite(x, y);
+              const sprite = display ? atlas.byName[display.name] : null;
               return (
                 <div
                   key={`${x},${y}`}
@@ -354,18 +441,106 @@ export default function DungeonExample({
                 )}
               </div>
               <div className="popup-layers">
-                <div className="popup-layer">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span className="layer-tag">{activeInfo.type === 'wall' ? 'WALL' : 'FLOOR'}</span>
-                    <span className="layer-name" style={{ flex: 1 }}>
-                      {activeInfo.spriteName || '— buried —'}
-                    </span>
-                  </div>
-                  <div className="layer-reason">{activeInfo.reason}</div>
-                  <div className="layer-reason" style={{ opacity: 0.7, marginTop: 2 }}>
-                    base style: <code>{activeInfo.baseStyle}</code>
-                  </div>
-                </div>
+                {(() => {
+                  const base = activeInfo.baseStyle;
+                  const options = (spritesByBase[base] || (activeInfo.spriteName ? [activeInfo.spriteName] : []));
+                  const overrideKey = `${activeTile.x},${activeTile.y}`;
+                  const isOverridden = !!spriteOverrides[overrideKey];
+                  const canPick = pinnedTile && options.length > 1 && activeInfo.spriteName;
+                  const sw = TILE_SIZE * 2;
+                  return (
+                    <div className="popup-layer">
+                      <div
+                        onClick={() => { if (canPick) setPickerOpen(o => !o); }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: canPick ? 'pointer' : 'default' }}
+                      >
+                        <span className="layer-tag">{activeInfo.type === 'wall' ? 'WALL' : 'FLOOR'}</span>
+                        <span className="layer-name" style={{ flex: 1 }}>
+                          {(spriteOverrides[overrideKey] || activeInfo.spriteName) || '— buried —'}{isOverridden ? ' *' : ''}
+                        </span>
+                        {canPick && (
+                          <span style={{ opacity: 0.6, fontSize: '0.8em' }}>{pickerOpen ? '▾' : '▸'} {options.length}</span>
+                        )}
+                      </div>
+                      <div className="layer-reason">{activeInfo.reason}</div>
+                      {isOverridden && (
+                        <div className="layer-reason" style={{ opacity: 0.7, marginTop: 2 }}>
+                          auto would be: <code>{activeInfo.spriteName}</code>
+                        </div>
+                      )}
+                      <div className="layer-reason" style={{ opacity: 0.7, marginTop: 2 }}>
+                        base style: <code>{base}</code>
+                      </div>
+                      {pickerOpen && canPick && (
+                        <div
+                          data-testid="dungeon-picker"
+                          style={{
+                            marginTop: 6,
+                            padding: 6,
+                            background: 'rgba(0,0,0,0.35)',
+                            borderRadius: 4,
+                            display: 'grid',
+                            gridTemplateColumns: `repeat(auto-fill, ${sw + 4}px)`,
+                            gap: 4,
+                            maxHeight: 260,
+                            overflowY: 'auto',
+                          }}>
+                          {options.map(opt => {
+                            const sp = atlas.byName[opt];
+                            if (!sp) return null;
+                            const selected = opt === (spriteOverrides[overrideKey] || activeInfo.spriteName);
+                            return (
+                              <div
+                                key={opt}
+                                title={opt}
+                                data-testid={`dungeon-swatch:${opt}`}
+                                onClick={() => {
+                                  setSpriteOverrides(prev => {
+                                    const next = { ...prev };
+                                    if (activeInfo.spriteName === opt) delete next[overrideKey];
+                                    else next[overrideKey] = opt;
+                                    return next;
+                                  });
+                                  setPickerOpen(false);
+                                }}
+                                style={{
+                                  width: sw,
+                                  height: sw,
+                                  cursor: 'pointer',
+                                  border: selected ? '2px solid #ffd166' : '2px solid transparent',
+                                  borderRadius: 3,
+                                  boxSizing: 'content-box',
+                                  position: 'relative',
+                                  background: 'rgba(255,255,255,0.04)',
+                                }}
+                              >
+                                <div style={{
+                                  position: 'absolute',
+                                  inset: 0,
+                                  backgroundImage: `url(${atlasImage})`,
+                                  backgroundPosition: `-${sp.x * (sw / TILE_SIZE)}px -${sp.y * (sw / TILE_SIZE)}px`,
+                                  backgroundSize: `${atlas.meta.size.w * (sw / TILE_SIZE)}px ${atlas.meta.size.h * (sw / TILE_SIZE)}px`,
+                                  imageRendering: 'pixelated',
+                                }} />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {pinnedTile && isOverridden && (
+                        <button
+                          onClick={() => setSpriteOverrides(prev => {
+                            const next = { ...prev };
+                            delete next[overrideKey];
+                            return next;
+                          })}
+                          style={{ marginTop: 6 }}
+                          data-testid="dungeon-reset-tile"
+                        >Reset this tile</button>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}
