@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { resolveAssetPath } from './utils/paths';
 import './Menu.css';
 
-const TILE = 16;
-const SCALE = 3;
+const TILE = 32;
+const SCALE = 1.5;
 
 // =====================================================================
 // Primitives
@@ -64,7 +64,7 @@ function Frame({ atlas, w, h, family = 'gray white', scale = SCALE, children, st
 }
 
 // Multi-segment gauge: colored fill under chrome frame.
-function Gauge({ atlas, color, value, segments = 4, scale = 2 }) {
+function Gauge({ atlas, color, value, segments = 4, scale = 1 }) {
   const segWidth = 1 / segments;
   const pickLevel = (i) => {
     const segStart = i * segWidth, segEnd = (i + 1) * segWidth;
@@ -381,14 +381,14 @@ function DialogueModal({ atlas, onClose, frameFamily = 'gray white' }) {
     <div className="menu-dialogue-wrap">
       {/* Name plate above the box */}
       <div className="menu-nameplate">
-        <Frame atlas={atlas} w={6} h={2} family="red black" scale={1.25}>
+        <Frame atlas={atlas} w={6} h={2} family="red black" scale={0.625}>
           <div className="menu-nameplate-text">{line.speaker}</div>
         </Frame>
       </div>
 
       <Frame atlas={atlas} w={16} h={6} family={frameFamily}>
         <button className="menu-modal-close" onClick={onClose} title="Close (Esc)">
-          <Sprite atlas={atlas} name="cancel box" scale={1.5} />
+          <Sprite atlas={atlas} name="cancel box" scale={0.75} />
         </button>
         <div className="menu-modal-content menu-modal-content-dialogue" onClick={advance}>
           <div className="menu-dialogue">
@@ -408,9 +408,9 @@ function DialogueModal({ atlas, onClose, frameFamily = 'gray white' }) {
                       onMouseEnter={() => setChoiceIdx(i)}
                     >
                       <div className="menu-choice-cursor">
-                        {i === choiceIdx && <Sprite atlas={atlas} name="pointer e" scale={1.5} />}
+                        {i === choiceIdx && <Sprite atlas={atlas} name="pointer e" scale={0.75} />}
                       </div>
-                      <Sprite atlas={atlas} name={c.icon} scale={1.5} />
+                      <Sprite atlas={atlas} name={c.icon} scale={0.75} />
                       <span className="pixel-small">{c.label}</span>
                     </button>
                   ))}
@@ -419,7 +419,7 @@ function DialogueModal({ atlas, onClose, frameFamily = 'gray white' }) {
 
               {done && !showChoices && (
                 <div className="menu-dialogue-continue">
-                  <Sprite atlas={atlas} name="pointer s" scale={1.5} />
+                  <Sprite atlas={atlas} name="pointer s" scale={0.75} />
                 </div>
               )}
             </div>
@@ -440,9 +440,9 @@ function PartyCard({ atlas, ch }) {
     <div className="menu-party-card">
       <div className="menu-party-card-header">
         <div className="menu-party-portrait">
-          <Frame atlas={atlas} w={3} h={3} family="white black" scale={1.5}>
+          <Frame atlas={atlas} w={3} h={3} family="white black" scale={0.75}>
             <div className="menu-party-portrait-inner">
-              <Sprite atlas={atlas} name={ch.portrait} scale={2.5} />
+              <Sprite atlas={atlas} name={ch.portrait} scale={1.25} />
             </div>
           </Frame>
           <div className="menu-party-level-badge">Lv {ch.level}</div>
@@ -456,17 +456,17 @@ function PartyCard({ atlas, ch }) {
       <div className="menu-party-card-bars">
         <div className="menu-party-bar-row">
           <span className="menu-party-bar-label">HP</span>
-          <Gauge atlas={atlas} color="red" value={ch.hp / ch.hpMax} segments={5} scale={1.5} />
+          <Gauge atlas={atlas} color="red" value={ch.hp / ch.hpMax} segments={5} scale={0.75} />
           <span className="pixel-small menu-party-bar-value">{ch.hp}/{ch.hpMax}</span>
         </div>
         <div className="menu-party-bar-row">
           <span className="menu-party-bar-label">MP</span>
-          <Gauge atlas={atlas} color="blue" value={ch.mp / ch.mpMax} segments={5} scale={1.5} />
+          <Gauge atlas={atlas} color="blue" value={ch.mp / ch.mpMax} segments={5} scale={0.75} />
           <span className="pixel-small menu-party-bar-value">{ch.mp}/{ch.mpMax}</span>
         </div>
         <div className="menu-party-bar-row">
           <span className="menu-party-bar-label">XP</span>
-          <Gauge atlas={atlas} color="yellow" value={xpPct} segments={5} scale={1.5} />
+          <Gauge atlas={atlas} color="yellow" value={xpPct} segments={5} scale={0.75} />
           <span className="pixel-small menu-party-bar-value">{Math.round(xpPct * 100)}%</span>
         </div>
       </div>
@@ -496,7 +496,7 @@ function PartyCard({ atlas, ch }) {
           const { icon } = RESIST_COLORS[type];
           return (
             <div key={type} className="menu-party-resist" title={`${type}: ${Math.round(val * 100)}%`}>
-              <Sprite atlas={atlas} name={icon} scale={1.25} />
+              <Sprite atlas={atlas} name={icon} scale={0.625} />
               <span className="pixel-small">{Math.round(val * 100)}</span>
             </div>
           );
@@ -507,9 +507,9 @@ function PartyCard({ atlas, ch }) {
       <div className="menu-party-card-abilities">
         {ch.abilities.map(a => (
           <div key={a.name} className="menu-party-card-ability" title={a.name}>
-            <Sprite atlas={atlas} name="brown gray square" scale={1.5} />
+            <Sprite atlas={atlas} name="brown gray square" scale={0.75} />
             <div className="menu-party-card-ability-icon">
-              <Sprite atlas={atlas} name={a.icon} scale={1.5} />
+              <Sprite atlas={atlas} name={a.icon} scale={0.75} />
             </div>
           </div>
         ))}
@@ -523,7 +523,7 @@ function CharacterModal({ atlas, onClose, frameFamily = 'gray white' }) {
     <Frame atlas={atlas} w={22} h={11} family={frameFamily}>
       <div className="menu-modal-title">Party Roster</div>
       <button className="menu-modal-close" onClick={onClose}>
-        <Sprite atlas={atlas} name="cancel box" scale={1.5} />
+        <Sprite atlas={atlas} name="cancel box" scale={0.75} />
       </button>
       <div className="menu-modal-content">
         <div className="menu-party-grid">
@@ -587,14 +587,14 @@ function PaperDollSlot({
       onDrop={handleDrop}
       title={data ? `${slot.label}: ${data.name} (click to unequip)` : `${slot.label} (empty)`}
     >
-      <Sprite atlas={atlas} name="brown gray square" scale={4} />
+      <Sprite atlas={atlas} name="brown gray square" scale={2} />
       {itemId ? (
         <div className="menu-paperdoll-slot-icon">
-          <Sprite atlas={atlas} name={itemId} scale={3} />
+          <Sprite atlas={atlas} name={itemId} scale={1.5} />
         </div>
       ) : slot.placeholder && atlas.byName[slot.placeholder] ? (
         <div className="menu-paperdoll-slot-placeholder">
-          <Sprite atlas={atlas} name={slot.placeholder} scale={3} />
+          <Sprite atlas={atlas} name={slot.placeholder} scale={1.5} />
         </div>
       ) : null}
       <span className="menu-paperdoll-slot-label pixel-small">{slot.label}</span>
@@ -651,26 +651,26 @@ function PaperDoll({ atlas, character, equipment, draggingItemId, onEquip, onUne
         <div className="menu-paperdoll-figure">
           <div className="menu-paperdoll-figure-glow" />
           <div className="menu-paperdoll-figure-pedestal" />
-          <Sprite atlas={atlas} name={character.portrait} scale={6} />
+          <Sprite atlas={atlas} name={character.portrait} scale={3} />
         </div>
       </div>
 
       <div className="menu-paperdoll-footer">
         <div className="menu-paperdoll-stats">
           <div className="menu-pd-stat" title="Attack">
-            <Sprite atlas={atlas} name="broadsword" scale={1.5} />
+            <Sprite atlas={atlas} name="broadsword" scale={0.75} />
             <span className="menu-pd-stat-label pixel-small">ATK</span>
             <span className="menu-pd-stat-value">{atk}</span>
           </div>
           <div className="menu-paperdoll-stat-divider" />
           <div className="menu-pd-stat" title="Defense">
-            <Sprite atlas={atlas} name="small shield" scale={1.5} />
+            <Sprite atlas={atlas} name="small shield" scale={0.75} />
             <span className="menu-pd-stat-label pixel-small">DEF</span>
             <span className="menu-pd-stat-value">{def}</span>
           </div>
           <div className="menu-paperdoll-stat-divider" />
           <div className="menu-pd-stat" title="Magic">
-            <Sprite atlas={atlas} name="crystal ball" scale={1.5} />
+            <Sprite atlas={atlas} name="crystal ball" scale={0.75} />
             <span className="menu-pd-stat-label pixel-small">MAG</span>
             <span className="menu-pd-stat-value">{mag}</span>
           </div>
@@ -741,11 +741,11 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
     <Frame atlas={atlas} w={22} h={11} family={frameFamily}>
       <div className="menu-modal-title">Inventory</div>
       <div className="menu-inv-gold-top">
-        <Sprite atlas={atlas} name="gold coin" scale={1.5} />
+        <Sprite atlas={atlas} name="gold coin" scale={0.75} />
         <span className="pixel-small">{gold} g</span>
       </div>
       <button className="menu-modal-close" onClick={onClose}>
-        <Sprite atlas={atlas} name="cancel box" scale={1.5} />
+        <Sprite atlas={atlas} name="cancel box" scale={0.75} />
       </button>
       <div className="menu-modal-content">
         <div className="menu-inv-body">
@@ -759,9 +759,9 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
                   onClick={() => setEquipCharIdx(i)}
                   title={c.name}
                 >
-                  <Sprite atlas={atlas} name="brown gray square" scale={1.5} />
+                  <Sprite atlas={atlas} name="brown gray square" scale={0.75} />
                   <div className="menu-paperdoll-char-tab-icon">
-                    <Sprite atlas={atlas} name={c.portrait} scale={1.5} />
+                    <Sprite atlas={atlas} name={c.portrait} scale={0.75} />
                   </div>
                 </button>
               ))}
@@ -786,7 +786,7 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
                   title={c.label}
                   aria-label={c.label}
                 >
-                  <Sprite atlas={atlas} name={c.icon} scale={1.5} />
+                  <Sprite atlas={atlas} name={c.icon} scale={0.75} />
                 </button>
               ))}
             </div>
@@ -821,9 +821,9 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
                     }}
                     onDragEnd={() => setDraggingItemId(null)}
                   >
-                    <Sprite atlas={atlas} name="brown gray square" scale={2} />
+                    <Sprite atlas={atlas} name="brown gray square" scale={1} />
                     <div className="menu-inventory-slot-item">
-                      <Sprite atlas={atlas} name={it.id} scale={2} />
+                      <Sprite atlas={atlas} name={it.id} scale={1} />
                     </div>
                     {it.count > 1 && <span className="menu-inventory-count">{it.count}</span>}
                   </button>
@@ -831,7 +831,7 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
               })}
               {Array.from({ length: Math.max(0, 32 - filtered.length) }).map((_, i) => (
                 <div key={`empty-${i}`} className="menu-inventory-slot is-empty">
-                  <Sprite atlas={atlas} name="brown gray square" scale={2} />
+                  <Sprite atlas={atlas} name="brown gray square" scale={1} />
                 </div>
               ))}
             </div>
@@ -841,9 +841,9 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
             {selectedData ? (
               <>
                 <div className="menu-inv-detail-head">
-                  <Frame atlas={atlas} w={3} h={3} family="white black" scale={2}>
+                  <Frame atlas={atlas} w={3} h={3} family="white black" scale={1}>
                     <div className="menu-inv-detail-icon">
-                      <Sprite atlas={atlas} name={selected.id} scale={2} />
+                      <Sprite atlas={atlas} name={selected.id} scale={1} />
                     </div>
                   </Frame>
                   <div className="menu-inv-detail-head-text">
@@ -859,15 +859,15 @@ function InventoryModal({ atlas, onClose, frameFamily = 'gray white' }) {
                 </div>
                 <div className="menu-inv-actions">
                   <button className="menu-action-btn">
-                    <Sprite atlas={atlas} name="confirm box" scale={2} />
+                    <Sprite atlas={atlas} name="confirm box" scale={1} />
                     <span>Use</span>
                   </button>
                   <button className="menu-action-btn">
-                    <Sprite atlas={atlas} name="yes box" scale={2} />
+                    <Sprite atlas={atlas} name="yes box" scale={1} />
                     <span>Equip</span>
                   </button>
                   <button className="menu-action-btn">
-                    <Sprite atlas={atlas} name="cancel box" scale={2} />
+                    <Sprite atlas={atlas} name="cancel box" scale={1} />
                     <span>Drop</span>
                   </button>
                 </div>
@@ -960,21 +960,21 @@ export default function MenuExample({ frameFamily = 'gray white' }) {
     <div className="menu-stage">
       {/* Atmospheric decorations */}
       <div className="menu-deco menu-deco-tr">
-        <Sprite atlas={atlas} name="magic dragon skull" scale={3} />
+        <Sprite atlas={atlas} name="magic dragon skull" scale={1.5} />
       </div>
       <div className="menu-deco menu-deco-tl-far">
-        <Sprite atlas={atlas} name="old skull" scale={2} />
+        <Sprite atlas={atlas} name="old skull" scale={1} />
       </div>
       <div className="menu-deco menu-deco-bl">
-        <Sprite atlas={atlas} name="candle pair" scale={3} />
-        <div className="menu-deco-flame"><Sprite atlas={atlas} name="little flame" scale={2} /></div>
+        <Sprite atlas={atlas} name="candle pair" scale={1.5} />
+        <div className="menu-deco-flame"><Sprite atlas={atlas} name="little flame" scale={1} /></div>
       </div>
       <div className="menu-deco menu-deco-br">
-        <Sprite atlas={atlas} name="candle pair" scale={3} />
-        <div className="menu-deco-flame menu-deco-flame-br"><Sprite atlas={atlas} name="little flame" scale={2} /></div>
+        <Sprite atlas={atlas} name="candle pair" scale={1.5} />
+        <div className="menu-deco-flame menu-deco-flame-br"><Sprite atlas={atlas} name="little flame" scale={1} /></div>
       </div>
       <div className="menu-deco menu-deco-bottom-center">
-        <Sprite atlas={atlas} name="old bones" scale={3} />
+        <Sprite atlas={atlas} name="old bones" scale={1.5} />
       </div>
 
       {/* HUD */}
@@ -985,8 +985,8 @@ export default function MenuExample({ frameFamily = 'gray white' }) {
           onClick={() => setHp(cycleDown)}
           title="Click to drain HP"
         >
-          <Sprite atlas={atlas} name={heartSprite('red', hp)} scale={2} />
-          <Gauge atlas={atlas} color="red" value={hp} segments={6} scale={2} />
+          <Sprite atlas={atlas} name={heartSprite('red', hp)} scale={1} />
+          <Gauge atlas={atlas} color="red" value={hp} segments={6} scale={1} />
           <span className="menu-hud-label">{Math.round(hp * 100)}</span>
         </button>
         <button
@@ -995,8 +995,8 @@ export default function MenuExample({ frameFamily = 'gray white' }) {
           onClick={() => setMp(cycleDown)}
           title="Click to drain MP"
         >
-          <Sprite atlas={atlas} name={heartSprite('blue', mp)} scale={2} />
-          <Gauge atlas={atlas} color="blue" value={mp} segments={6} scale={2} />
+          <Sprite atlas={atlas} name={heartSprite('blue', mp)} scale={1} />
+          <Gauge atlas={atlas} color="blue" value={mp} segments={6} scale={1} />
           <span className="menu-hud-label">{Math.round(mp * 100)}</span>
         </button>
       </div>
@@ -1004,9 +1004,9 @@ export default function MenuExample({ frameFamily = 'gray white' }) {
       {/* Title with skull motifs */}
       <div className="menu-title-block">
         <div className="menu-title-row">
-          <Sprite atlas={atlas} name="old skull" scale={3} style={{ transform: 'scaleX(-1)' }} />
+          <Sprite atlas={atlas} name="old skull" scale={1.5} style={{ transform: 'scaleX(-1)' }} />
           <h1 className="menu-title">DAWNLIKE</h1>
-          <Sprite atlas={atlas} name="old skull" scale={3} />
+          <Sprite atlas={atlas} name="old skull" scale={1.5} />
         </div>
         <p className="menu-subtitle pixel-small">Tales from the Lost Kingdom</p>
       </div>
@@ -1021,9 +1021,9 @@ export default function MenuExample({ frameFamily = 'gray white' }) {
             onMouseEnter={() => setMenuIdx(i)}
           >
             <div className="menu-option-cursor">
-              {i === menuIdx && <Sprite atlas={atlas} name="pointer e" scale={2} />}
+              {i === menuIdx && <Sprite atlas={atlas} name="pointer e" scale={1} />}
             </div>
-            <Sprite atlas={atlas} name={opt.icon} scale={3} />
+            <Sprite atlas={atlas} name={opt.icon} scale={1.5} />
             <span className="menu-option-label">{opt.label}</span>
           </button>
         ))}

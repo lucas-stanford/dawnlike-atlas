@@ -17,8 +17,8 @@ import Phaser from 'phaser';
 import { drawFrame, drawGauge, heartSprite } from '../ui/hud.js';
 import { reset as resetSave } from '../save.js';
 
-const TILE = 16;
-const SCALE = 2;
+const TILE = 32;
+const SCALE = 1;
 
 // Total HUD height in pixels — matches the canvas-top band reserved by
 // the map scenes' camera viewports.
@@ -49,6 +49,8 @@ export default class UIScene extends Phaser.Scene {
 
     // Chrome frame spans the whole HUD strip (3 tiles tall × N tiles
     // wide). Tile pixel size = TILE * SCALE = 32; HUD strip = 3 tiles.
+    // (TILE is the atlas tile size in pixels; SCALE is the chrome's
+    // pixel multiplier — kept at 1 since the atlas is already 32px.)
     const tilesWide = Math.floor(canvasW / (TILE * SCALE));
     this.frame = drawFrame(this, 0, 0, tilesWide, 3, 'gray white');
 

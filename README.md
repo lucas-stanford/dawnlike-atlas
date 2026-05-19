@@ -1,15 +1,15 @@
 # DawnLike Semantic Atlas
 
-A bin-packed **mega-atlas** and rich metadata for the [DawnLike](https://dragondeplatino.itch.io/dawnlike) 16×16 roguelike tileset, plus a small React/Storybook playground that demonstrates semantic lookup, 16-way autotiling, and integration with rendering libraries.
+A bin-packed **mega-atlas** and rich metadata for the [DawnLike](https://dragondeplatino.itch.io/dawnlike) roguelike tileset (32×32 cells — a strict nearest-neighbour 2× upscale of the original 16×16 art, so every source pixel is preserved as a clean 2×2 block), plus a small React/Storybook playground that demonstrates semantic lookup, 16-way autotiling, and integration with rendering libraries.
 
 **🔗 Live demo:** https://lucas-stanford.github.io/dawnlike-atlas/
 
 ## Contents
 
 - `atlas/`
-  - `DawnlikeAtlas0.png` — primary frames (4,157 sprites)
+  - `DawnlikeAtlas0.png` — primary frames (4,157 sprites, 2048×2080)
   - `DawnlikeAtlas1.png` — alt frames for the 2,226 animated sprites
-  - `DawnlikeAtlas.json` — `byName` lookup + AI-generated tags + semantic connections
+  - `DawnlikeAtlas.json` — `byName` lookup (with `meta.tile = {w:32,h:32}`) + AI-generated tags + semantic connections
 - `src/` — autotile resolvers (`src/utils/autotile.js`) and the example components
 - `react/` — re-exports for consuming the atlas from a React project
 - `stories/` — Storybook stories that render the examples

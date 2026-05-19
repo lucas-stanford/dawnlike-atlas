@@ -1,13 +1,12 @@
 # Dawnlike Mega-Atlas — Usage Guide
 
-Generated 2026-05-17 from:
-- `source/Characters`
-- `source/Items`
-- `source/Objects`
-- `source/GUI`
+Bin-packed from the original DawnLike sprite source, then upscaled
+**2× via strict nearest-neighbour** so every source pixel becomes a
+clean 2×2 block. The packed atlas is therefore stored at 32×32 per
+tile while preserving the original pixelated DawnLike look exactly.
 
 **4157 named sprites** across 4 categories,
-bin-packed into 1024×1040px (64×65 grid, 16px tiles).
+bin-packed into 2048×2080px (64×65 grid, 32px tiles).
 Wasted cells: 3 of 4160
 (0.07% empty).
 
@@ -18,14 +17,14 @@ Wasted cells: 3 of 4160
 - **Objects**: 15 groups, 2453 sprites
 - **GUI**: 1 groups, 241 sprites
 
-## Phaser 3
+## Phaser 3 / 4
 
 ```javascript
 // preload
 this.load.atlas('dawnlike',  'DawnlikeAtlas0.png', 'DawnlikeAtlas.json');
 this.load.atlas('dawnlike1', 'DawnlikeAtlas1.png', 'DawnlikeAtlas.json');
 
-// create — static sprite by name
+// create — static sprite by name (native 32px)
 this.add.sprite(x, y, 'dawnlike', 'wizard');
 
 // 2-frame walk animation (only meaningful when isAnimated: true)
@@ -50,8 +49,8 @@ this.anims.create({
     Object.assign(el.style, {
       backgroundImage:    'url(DawnlikeAtlas0.png)',
       backgroundPosition: `-${x}px -${y}px`,
-      width:  '16px',
-      height: '16px',
+      width:  '32px',
+      height: '32px',
       imageRendering: 'pixelated',
       display: 'inline-block',
     });
@@ -71,14 +70,15 @@ import atlas from './DawnlikeAtlas.json';
   src="DawnlikeAtlas0.png"
   frame={atlas.byName['wizard'].globalFrame}
   cols={64}
-  tileSize={16}
+  tileSize={32}
 />
 
-// Full atlas browser — tooltips load automatically from sidecar:
+// Full atlas browser:
 <SpriteSheet
   imagePath="/atlas/DawnlikeAtlas0.png"
+  metadataPath="/atlas/DawnlikeAtlas.json"
   columns={64}
-  tileSize={16}
+  tileSize={32}
   animated={true}
   animationPair="/atlas/DawnlikeAtlas1.png"
 />

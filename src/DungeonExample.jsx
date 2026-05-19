@@ -21,7 +21,7 @@ import { resolveAssetPath } from './utils/paths';
 import { resolveDawnLikeFloorName, resolveDawnLikeDungeonWallName } from './utils/autotile';
 import './Autotile.css';
 
-const TILE_SIZE = 16;
+const TILE_SIZE = 32;
 
 const MAP_TYPES = [
   { id: 'digger',   label: 'Digger (Dungeon)',  class: ROT.Map.Digger },
@@ -39,7 +39,7 @@ export default function DungeonExample({
   wallStyle:          initialWallStyle       = '',
   floorStyle:         initialFloorStyle      = '',
   seed:               initialSeed            = null,
-  scale:              initialScale           = 2,
+  scale:              initialScale           = 1,
   cellularDensity:    initialCellularDensity = 50,
   cellularSmooth:     initialCellularSmooth  = 4,
   width:              initialWidth           = 40,
@@ -339,7 +339,7 @@ export default function DungeonExample({
             </div>
             <div className="field-group">
               <label>Zoom: {scale.toFixed(1)}x</label>
-              <input type="range" min="1" max="6" step="0.5" value={scale}
+              <input type="range" min="0.5" max="3" step="0.25" value={scale}
                      onChange={e => setScale(parseFloat(e.target.value))} />
             </div>
             <button className="primary-button"
@@ -447,7 +447,7 @@ export default function DungeonExample({
                   const overrideKey = `${activeTile.x},${activeTile.y}`;
                   const isOverridden = !!spriteOverrides[overrideKey];
                   const canPick = pinnedTile && options.length > 1 && activeInfo.spriteName;
-                  const sw = TILE_SIZE * 2;
+                  const sw = TILE_SIZE * 1;
                   return (
                     <div className="popup-layer">
                       <div

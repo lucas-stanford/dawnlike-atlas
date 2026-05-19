@@ -22,7 +22,7 @@ import Phaser from 'phaser';
 import { HUD_HEIGHT } from './UIScene.js';
 import { save as persistSave } from '../save.js';
 
-const TILE = 16;
+const TILE = 32;
 
 export default class MapScene extends Phaser.Scene {
   constructor(key) {
@@ -52,13 +52,13 @@ export default class MapScene extends Phaser.Scene {
     this.map = map;
 
     // Constrain the map camera to the band BELOW the HUD strip so the
-    // HUD never overlaps map tiles. Zoom 2× so each 16px tile renders at
-    // 32px on screen — fills the canvas instead of leaving black gutters
-    // around the small map.
+    // HUD never overlaps map tiles. Tiles render at their native 32px
+    // (the atlas is 32x32 nearest-neighbour upscaled from 16x16), so no
+    // camera zoom is needed to fill the canvas.
     const canvasW = this.scale.width;
     const canvasH = this.scale.height;
     this.cameras.main.setViewport(0, HUD_HEIGHT, canvasW, canvasH - HUD_HEIGHT);
-    this.cameras.main.setZoom(2);
+    this.cameras.main.setZoom(1);
     this.cameras.main.setBackgroundColor('#000');
     this.cameras.main.setRoundPixels(true);
 
