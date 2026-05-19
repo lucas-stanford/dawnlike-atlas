@@ -20,7 +20,26 @@ A bin-packed **mega-atlas** and rich metadata for the [DawnLike](https://dragond
 - **AI-generated tags**: 3,700+ sprites tagged with descriptive keywords (`creature`, `metallic`, `glowing`, …).
 - **16-way autotiling**: cardinal-neighbor resolvers for walls, floors, rivers, pools, and forest canopies.
 
-## Getting Started
+## Install
+
+```bash
+npm install dawnlike-atlas
+# or: bun add dawnlike-atlas
+```
+
+Import the atlas + React sprite components from the package root, and the raw atlas assets from their subpaths:
+
+```js
+import { Sprite, AnimatedSprite } from 'dawnlike-atlas';
+import atlas from 'dawnlike-atlas/atlas/DawnlikeAtlas.json';
+import { resolveDawnLikeWallName } from 'dawnlike-atlas/autotile';
+
+// The two atlas PNGs are also published — point your bundler at them:
+//   dawnlike-atlas/atlas/DawnlikeAtlas0.png
+//   dawnlike-atlas/atlas/DawnlikeAtlas1.png
+```
+
+## Getting Started (local dev)
 
 The hosted Storybook is available at https://lucas-stanford.github.io/dawnlike-atlas/.
 To run it locally:

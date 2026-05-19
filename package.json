@@ -1,6 +1,6 @@
 {
   "name": "dawnlike-atlas",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "type": "module",
   "description": "Semantic Mega-Atlas for the DawnLike 16x16 tileset: bin-packed sprite sheets, semantic name lookup, AI-generated tags, and 16-way autotile resolvers.",
   "main": "react/index.js",
@@ -10,6 +10,7 @@
       "import": "./react/index.js",
       "default": "./react/index.js"
     },
+    "./autotile": "./src/utils/autotile.js",
     "./atlas/DawnlikeAtlas.json": "./atlas/DawnlikeAtlas.json",
     "./atlas/DawnlikeAtlas0.png": "./atlas/DawnlikeAtlas0.png",
     "./atlas/DawnlikeAtlas1.png": "./atlas/DawnlikeAtlas1.png",
@@ -29,12 +30,33 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucas-stanford/dawnlike-atlas.git"
+  },
+  "homepage": "https://lucas-stanford.github.io/dawnlike-atlas/",
+  "bugs": {
+    "url": "https://github.com/lucas-stanford/dawnlike-atlas/issues"
+  },
+  "keywords": [
+    "dawnlike",
+    "atlas",
+    "tileset",
+    "sprites",
+    "roguelike",
+    "pixel-art",
+    "autotile",
+    "react"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "dependencies": {
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
   "license": "CC-BY-4.0",
-  "private": true,
   "devDependencies": {
     "@chromatic-com/storybook": "^5.2.1",
     "@storybook/addon-a11y": "8.6.14",
