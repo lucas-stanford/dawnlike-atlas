@@ -1,17 +1,19 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { resolveAssetPath } from '../src/utils/paths';
 
 /**
- * AtlasComparison — side-by-side preview of the original 16x16 DawnLike
- * sprites vs the new 2x xBRZ-upscaled mirror at the same physical
- * display size. Helps decide whether the 2x version should become the
- * default everywhere.
+ * AtlasComparison — verifies that the 2x atlas mirror preserves the
+ * original pixelated DawnLike look while giving us 2x source pixels.
  *
- * Each row shows the same set of curated sprites. Both columns render
- * at the same on-screen px size (default 64px) — the left column is the
- * 16px source nearest-neighbour scaled up by CSS; the right column is
- * the 32px xBRZ source displayed at a smaller CSS scale. Differences
- * are the algorithm's, not the resolution's.
+ * Three columns per row:
+ *   1. Original 16x16 atlas at native size (16px display)
+ *   2. Original 16x16 atlas CSS-scaled to 32px (image-rendering: pixelated)
+ *   3. New 32x32 mirror at native size (32px display)
+ *
+ * Columns 2 and 3 should look IDENTICAL — that's the whole point of
+ * the nearest-neighbour upscale: 1 source pixel becomes a clean 2x2
+ * block, indistinguishable from CSS pixelated scaling. Column 1 is
+ * the "true" original at the size it's drawn at.
  */
 
 const CURATED = {
@@ -70,19 +72,21 @@ function useAtlas(jsonPath) {
   return data;
 }
 
-function Section({ title, names, atlas1x, atlas2x, displayPx }) {
+function Section({ title, names, atlas1x, atlas2x }) {
+  const cols = [
+    { label: 'Original 16×16 (native 16px)',                 atlas: atlas1x, sheet: '/DawnlikeAtlas0.png',     displayPx: 16 },
+    { label: 'Original 16×16 → CSS scaled 32px (pixelated)', atlas: atlas1x, sheet: '/DawnlikeAtlas0.png',     displayPx: 32 },
+    { label: 'New 32×32 @2x (native 32px)',                  atlas: atlas2x, sheet: '/DawnlikeAtlas0@2x.png', displayPx: 32 },
+  ];
   return (
     <div style={{ marginBottom: 24 }}>
       <h3 style={{ color: '#ddd', font: '600 13px/1.3 -apple-system, system-ui, sans-serif', margin: '0 0 8px' }}>{title}</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        {[
-          { label: 'Original 16×16 (nearest-neighbour)', atlas: atlas1x, sheet: '/DawnlikeAtlas0.png' },
-          { label: '2× xBRZ-upscaled 32×32',             atlas: atlas2x, sheet: '/DawnlikeAtlas0@2x.png' },
-        ].map(col => (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+        {cols.map(col => (
           <div key={col.label}>
             <div style={{ font: '11px -apple-system, system-ui, sans-serif', color: '#999', marginBottom: 6 }}>{col.label}</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: 8, background: '#111', borderRadius: 4 }}>
-              {names.map(n => <Cell key={n} atlas={col.atlas} sheet={col.sheet} name={n} displayPx={displayPx} />)}
+              {names.map(n => <Cell key={n} atlas={col.atlas} sheet={col.sheet} name={n} displayPx={col.displayPx} />)}
             </div>
           </div>
         ))}
@@ -91,25 +95,28 @@ function Section({ title, names, atlas1x, atlas2x, displayPx }) {
   );
 }
 
-function Page({ displayPx }) {
+function Page() {
   const atlas1x = useAtlas('/DawnlikeAtlas.json');
   const atlas2x = useAtlas('/DawnlikeAtlas@2x.json');
   const loaded = atlas1x && atlas2x;
   return (
     <div style={{ padding: 16, background: '#0a0a0a', minHeight: '100vh', color: '#ddd', fontFamily: '-apple-system, system-ui, sans-serif' }}>
-      <h2 style={{ marginTop: 0 }}>Atlas comparison: 16×16 vs xBRZ 2× (32×32)</h2>
+      <h2 style={{ marginTop: 0 }}>Atlas comparison: 16×16 → nearest-neighbour 2× (32×32)</h2>
       <p style={{ color: '#aaa', maxWidth: 800 }}>
-        Same sprites side-by-side at the same display size. Left column: the
-        original 1024×1040 atlas, nearest-neighbour scaled by CSS. Right column:
-        the new 2048×2080 xBRZ-upscaled mirror (atlas/DawnlikeAtlas0@2x.png + atlas/DawnlikeAtlas@2x.json),
-        scaled to the same display size — so any visual difference is the
-        xBRZ algorithm rounding pixel-art curves and anti-aliasing edges, not
-        the resolution itself. Once approved, the 1× atlas will be retired and
-        the 2× version becomes the default everywhere.
+        The new <code>@2x</code> atlas is a strict nearest-neighbour upscale: every source
+        pixel becomes a clean 2×2 block, preserving the pixelated DawnLike
+        look exactly. Column 1 is the original drawn at its native size.
+        Columns 2 and 3 should look identical — column 2 is the original
+        CSS-scaled to 32px with <code>image-rendering: pixelated</code>; column 3 is
+        the new 32×32 mirror displayed at native 32px size. The benefit of
+        the 2× mirror is that engines that don't handle pixelated CSS
+        scaling cleanly (or want crisp output on HiDPI displays) can render
+        at 1 atlas-pixel ≡ 1 screen-pixel and still get the doubled
+        pixel-art look.
       </p>
       {!loaded && <p>Loading atlases…</p>}
       {loaded && Object.entries(CURATED).map(([title, names]) => (
-        <Section key={title} title={title} names={names} atlas1x={atlas1x} atlas2x={atlas2x} displayPx={displayPx} />
+        <Section key={title} title={title} names={names} atlas1x={atlas1x} atlas2x={atlas2x} />
       ))}
     </div>
   );
@@ -118,13 +125,10 @@ function Page({ displayPx }) {
 export default {
   title: 'DawnLike/Atlas Comparison',
   parameters: { layout: 'fullscreen' },
-  argTypes: {
-    displayPx: { control: { type: 'range', min: 32, max: 192, step: 16 }, description: 'Display size per sprite (px)' },
-  },
-  args: { displayPx: 96 },
 };
 
 export const SideBySide = {
-  name: '16×16 vs xBRZ 2× (32×32)',
-  render: ({ displayPx }) => <Page displayPx={displayPx} />,
+  name: '16×16 vs nearest-neighbour 2× (32×32)',
+  render: () => <Page />,
 };
+

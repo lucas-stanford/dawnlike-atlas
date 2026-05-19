@@ -1,23 +1,24 @@
 /**
  * scripts/upscale-atlas.mjs
  *
- * Generate a 2x-upscaled mirror of the DawnLike atlas using the xBRZ
- * pixel-art upscaler. Output:
+ * Generate a 2x-upscaled mirror of the DawnLike atlas using a strict
+ * NEAREST-NEIGHBOUR upscale. Each 16x16 (or 48x48) source pixel
+ * becomes a 2x2 block — so the result preserves the original
+ * pixelated look exactly, just at twice the resolution. Useful when
+ * you want renderers to display at native pixel size (1 atlas px =
+ * 1 screen px) and still get the doubled pixel-art look without
+ * relying on CSS image-rendering: pixelated.
  *
  *   atlas/DawnlikeAtlas0@2x.png    — 2x of DawnlikeAtlas0.png
  *   atlas/DawnlikeAtlas1@2x.png    — 2x of DawnlikeAtlas1.png
  *   atlas/DawnlikeAtlas@2x.json    — frames JSON with doubled coords +
  *                                    meta.tile = 32x32 and meta.scale = 2.
  *
- * Each sprite is upscaled INDIVIDUALLY (extract → xBRZ → paste at 2x
- * position) so adjacent cells in the packed atlas can't bleed into
- * each other. This keeps sprite edges clean.
- *
  * Run with:  bun run scripts/upscale-atlas.mjs   (or node)
  *
- * Requires `@kayahr/xbrz` and `sharp`. The script tries the repo's
- * node_modules first; if missing, falls back to /tmp/upscale/node_modules
- * (set up with `cd /tmp/upscale && npm install @kayahr/xbrz sharp`).
+ * Requires `sharp`. The script tries the repo's node_modules first;
+ * if missing, falls back to /tmp/upscale/node_modules
+ * (set up with `cd /tmp/upscale && npm install sharp`).
  */
 
 import { readFile, writeFile } from 'node:fs/promises';
@@ -38,9 +39,8 @@ async function importDep(name) {
       return await import(req.resolve(name));
     } catch {}
   }
-  throw new Error(`Cannot resolve ${name}. Run: cd /tmp/upscale && npm install @kayahr/xbrz sharp`);
+  throw new Error(`Cannot resolve ${name}. Run: cd /tmp/upscale && npm install sharp`);
 }
-const { Scaler } = await importDep('@kayahr/xbrz');
 const sharp = (await importDep('sharp')).default;
 
 async function loadAtlasMeta() {
@@ -48,48 +48,8 @@ async function loadAtlasMeta() {
   return JSON.parse(raw);
 }
 
-async function loadSheet(name) {
-  const buf = await readFile(path.join(atlasDir, name));
-  const { data, info } = await sharp(buf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  return { data, width: info.width, height: info.height };
-}
-
-function upscaleSubImage(srcRGBA, srcW, x, y, w, h, scaler) {
-  const sub = new Uint8ClampedArray(w * h * 4);
-  for (let row = 0; row < h; row++) {
-    const srcOff = ((y + row) * srcW + x) * 4;
-    const dstOff = row * w * 4;
-    sub.set(srcRGBA.subarray(srcOff, srcOff + w * 4), dstOff);
-  }
-  // Copy the result so we can keep it after the scaler reuses its
-  // internal buffer on the next call.
-  return new Uint8ClampedArray(scaler.scale(sub));
-}
-
-function pasteRGBA(dstRGBA, dstW, srcRGBA, srcW, srcH, x, y) {
-  for (let row = 0; row < srcH; row++) {
-    const srcOff = row * srcW * 4;
-    const dstOff = ((y + row) * dstW + x) * 4;
-    dstRGBA.set(srcRGBA.subarray(srcOff, srcOff + srcW * 4), dstOff);
-  }
-}
-
-async function saveSheet(dstRGBA, dstW, dstH, outPath) {
-  await sharp(Buffer.from(dstRGBA.buffer), {
-    raw: { width: dstW, height: dstH, channels: 4 },
-  })
-    .png({ compressionLevel: 9 })
-    .toFile(outPath);
-}
-
 function scaledFrames(frames) {
   const out = {};
-  const scalerCache = new Map();
-  const getScaler = (w, h) => {
-    const key = `${w}x${h}`;
-    if (!scalerCache.has(key)) scalerCache.set(key, new Scaler(w, h, SCALE));
-    return scalerCache.get(key);
-  };
   for (const [name, frame] of Object.entries(frames)) {
     const fr = frame.frame;
     const ss = frame.spriteSourceSize;
@@ -100,26 +60,18 @@ function scaledFrames(frames) {
       spriteSourceSize: { x: ss.x * SCALE, y: ss.y * SCALE, w: ss.w * SCALE, h: ss.h * SCALE },
       sourceSize: { w: src.w * SCALE, h: src.h * SCALE },
     };
-    getScaler(fr.w, fr.h);
   }
-  return { out, getScaler };
+  return out;
 }
 
-async function upscaleSheet(srcRGBA, srcW, srcH, frames, getScaler) {
-  const dstW = srcW * SCALE;
-  const dstH = srcH * SCALE;
-  const dst = new Uint8ClampedArray(dstW * dstH * 4);
-  let n = 0;
-  for (const [, frame] of Object.entries(frames)) {
-    const { x, y, w, h } = frame.frame; // ORIGINAL 1x coords
-    const scaler = getScaler(w, h);
-    const scaled = upscaleSubImage(srcRGBA, srcW, x, y, w, h, scaler);
-    pasteRGBA(dst, dstW, scaled, w * SCALE, h * SCALE, x * SCALE, y * SCALE);
-    n++;
-    if (n % 500 === 0) process.stdout.write(`  ${n} sprites\r`);
-  }
-  process.stdout.write(`  ${n} sprites total\n`);
-  return { rgba: dst, w: dstW, h: dstH };
+async function upscaleSheet(srcPath, dstPath, srcW, srcH) {
+  // Sharp's nearest-neighbour kernel preserves every source pixel
+  // exactly — no anti-aliasing, no smoothing. Each source pixel
+  // becomes a SCALE x SCALE block.
+  await sharp(srcPath)
+    .resize(srcW * SCALE, srcH * SCALE, { kernel: sharp.kernel.nearest })
+    .png({ compressionLevel: 9 })
+    .toFile(dstPath);
 }
 
 async function main() {
@@ -128,7 +80,7 @@ async function main() {
   const origFrames = meta.frames;
   console.log(`  ${Object.keys(origFrames).length} sprites`);
 
-  const { out: doubledFrames, getScaler } = scaledFrames(origFrames);
+  const doubledFrames = scaledFrames(origFrames);
   const byName = {};
   for (const [name, fr] of Object.entries(doubledFrames)) {
     byName[name] = {
@@ -145,7 +97,7 @@ async function main() {
       size: { w: meta.meta.size.w * SCALE, h: meta.meta.size.h * SCALE },
       scale: SCALE,
       sheets: meta.meta.sheets.map(s => s.replace(/\.png$/, '@2x.png')),
-      note: (meta.meta.note || '') + ` 2x xBRZ-upscaled mirror.`,
+      note: (meta.meta.note || '') + ` 2x nearest-neighbour mirror — preserves the original pixelated look.`,
     },
     frames: doubledFrames,
     byName,
@@ -161,13 +113,12 @@ async function main() {
       continue;
     }
     console.log(`Upscaling ${sheetName}...`);
-    const sheet = await loadSheet(sheetName);
-    const { rgba, w, h } = await upscaleSheet(sheet.data, sheet.width, sheet.height, origFrames, getScaler);
     const outName = sheetName.replace(/\.png$/, '@2x.png');
-    await saveSheet(rgba, w, h, path.join(atlasDir, outName));
-    console.log(`  Wrote ${outName} (${w}x${h})`);
+    await upscaleSheet(inPath, path.join(atlasDir, outName), meta.meta.size.w, meta.meta.size.h);
+    console.log(`  Wrote ${outName} (${meta.meta.size.w * SCALE}x${meta.meta.size.h * SCALE})`);
   }
   console.log('\nDone.');
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
+
