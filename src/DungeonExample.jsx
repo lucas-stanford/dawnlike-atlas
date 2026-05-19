@@ -1,12 +1,27 @@
+/**
+ * DungeonExample — rot.js dungeon generator demo with the same gear-button
+ * floating-config overlay that Wilderness and Town use.
+ *
+ * Every knob is exposed two ways:
+ *   1. As a prop, so Storybook can drive it from the Controls panel (the
+ *      story re-mounts via key= when args change so prop updates always win).
+ *   2. As an in-canvas widget in the floating config card, so visitors who
+ *      open the story in isolation can tweak without the Controls panel.
+ *
+ * Hover any tile to see a popup with its coordinates, sprite name, and the
+ * autotile reason (which neighbours triggered the chosen sprite). Click a
+ * tile to pin the popup so the picker / autotile reason stays put while you
+ * compare with other tiles. Click outside the popup to unpin.
+ */
+
 import React, { useState, useEffect, useMemo } from 'react';
+import PropTypes from 'prop-types';
 import * as ROT from 'rot-js';
 import { resolveAssetPath } from './utils/paths';
 import { resolveDawnLikeFloorName, resolveDawnLikeDungeonWallName } from './utils/autotile';
 import './Autotile.css';
 
 const TILE_SIZE = 16;
-const DISPLAY_WIDTH = 40;
-const DISPLAY_HEIGHT = 30;
 
 const MAP_TYPES = [
   { id: 'digger',   label: 'Digger (Dungeon)',  class: ROT.Map.Digger },
@@ -17,23 +32,43 @@ const MAP_TYPES = [
   { id: 'eller',    label: 'Eller Maze',        class: ROT.Map.EllerMaze },
 ];
 
-export default function DungeonExample() {
-  const [mapData, setMapData] = useState(null);
+export const MAP_TYPE_IDS = MAP_TYPES.map(t => t.id);
+
+export default function DungeonExample({
+  mapType:            initialMapType         = 'digger',
+  wallStyle:          initialWallStyle       = '',
+  floorStyle:         initialFloorStyle      = '',
+  seed:               initialSeed            = null,
+  scale:              initialScale           = 2,
+  cellularDensity:    initialCellularDensity = 50,
+  cellularSmooth:     initialCellularSmooth  = 4,
+  width:              initialWidth           = 40,
+  height:             initialHeight          = 30,
+  showConfigInitially = false,
+} = {}) {
   const [atlas, setAtlas] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [mapType, setMapType]     = useState('digger');
-  const [wallStyle, setWallStyle]   = useState('');
-  const [floorStyle, setFloorStyle] = useState('');
-  const [seed, setSeed] = useState(Math.floor(Math.random() * 1000000));
-  const [scale, setScale] = useState(2);
-  const [cellularDensity, setCellularDensity] = useState(50);
-  const [cellularSmooth, setCellularSmooth] = useState(4);
+  const [mapType,        setMapType]        = useState(initialMapType);
+  const [wallStyle,      setWallStyle]      = useState(initialWallStyle);
+  const [floorStyle,     setFloorStyle]     = useState(initialFloorStyle);
+  const [seed,           setSeed]           = useState(() =>
+    initialSeed ?? Math.floor(Math.random() * 1000000));
+  const [scale,          setScale]          = useState(initialScale);
+  const [cellularDensity, setCellularDensity] = useState(initialCellularDensity);
+  const [cellularSmooth,  setCellularSmooth]  = useState(initialCellularSmooth);
+  const [width,  setWidth]  = useState(initialWidth);
+  const [height, setHeight] = useState(initialHeight);
 
-  const [showConfig, setShowConfig] = useState(false);
+  const [showConfig, setShowConfig] = useState(showConfigInitially);
+  const [hoverInfo, setHoverInfo] = useState(null);
+  const [pinnedTile, setPinnedTile] = useState(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-  // Discover wall + floor base names from the atlas tags.
+  const [mapData, setMapData] = useState(null);
+
+  // Discover wall + floor base names from atlas tags.
   const { discoveredWalls, discoveredFloors } = useMemo(() => {
     if (!atlas?.byName) return { discoveredWalls: [], discoveredFloors: [] };
     const walls = new Set();
@@ -77,13 +112,13 @@ export default function DungeonExample() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Generate the map any time a generator-relevant option changes.
+  // Regenerate map on any generator-relevant change.
   useEffect(() => {
     if (!atlas) return;
     ROT.RNG.setSeed(seed);
-    const selectedType = MAP_TYPES.find(t => t.id === mapType);
-    const MapClass = selectedType.class;
-    const map = new MapClass(DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    const selected = MAP_TYPES.find(t => t.id === mapType);
+    const MapClass = selected.class;
+    const map = new MapClass(width, height);
     const data = {};
     if (mapType === 'cellular') {
       map.randomize(cellularDensity / 100);
@@ -93,22 +128,65 @@ export default function DungeonExample() {
       map.create((x, y, value) => { data[`${x},${y}`] = value; });
     }
     setMapData(data);
-  }, [seed, mapType, atlas, cellularDensity, cellularSmooth]);
+    setPinnedTile(null);
+  }, [seed, mapType, atlas, cellularDensity, cellularSmooth, width, height]);
 
-  const getTile = (x, y) => {
+  const outOfBounds = (tx, ty) => tx < 0 || tx >= width || ty < 0 || ty >= height;
+  const isWallAt = (tx, ty) => outOfBounds(tx, ty) || (mapData && mapData[`${tx},${ty}`] === 1);
+
+  // Resolve a tile + tell the user WHY this sprite was picked.
+  const describeTile = (x, y) => {
     if (!mapData || !atlas) return null;
     const value = mapData[`${x},${y}`];
-    const outOfBounds = (tx, ty) => tx < 0 || tx >= DISPLAY_WIDTH || ty < 0 || ty >= DISPLAY_HEIGHT;
     if (value === 0) {
       const isFloor = (tx, ty) => !outOfBounds(tx, ty) && mapData[`${tx},${ty}`] === 0;
       const n = isFloor(x, y - 1);
       const s = isFloor(x, y + 1);
       const w = isFloor(x - 1, y);
       const e = isFloor(x + 1, y);
-      return resolveDawnLikeFloorName(floorStyle, { n, s, e, w }, atlas.byName).name;
+      const resolved = resolveDawnLikeFloorName(floorStyle, { n, s, e, w }, atlas.byName);
+      const neighbours = [n && 'N', s && 'S', e && 'E', w && 'W'].filter(Boolean).join('') || 'none';
+      return {
+        type: 'floor',
+        baseStyle: floorStyle,
+        spriteName: resolved.name,
+        reason: resolved.reason || `Floor; neighbours: ${neighbours}`,
+        neighbours,
+      };
     }
-    const isWall = (tx, ty) => outOfBounds(tx, ty) || mapData[`${tx},${ty}`] === 1;
-    return resolveDawnLikeDungeonWallName(wallStyle, x, y, isWall, atlas.byName);
+    const spriteName = resolveDawnLikeDungeonWallName(wallStyle, x, y, isWallAt, atlas.byName);
+    if (!spriteName) {
+      return {
+        type: 'wall',
+        baseStyle: wallStyle,
+        spriteName: null,
+        reason: 'Buried wall (no exposed face)',
+        neighbours: '',
+      };
+    }
+    const isSurfaceWall = (tx, ty) => {
+      if (!isWallAt(tx, ty)) return false;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (dx === 0 && dy === 0) continue;
+        if (!isWallAt(tx + dx, ty + dy)) return true;
+      }
+      return false;
+    };
+    const isOpen = (tx, ty) => !isWallAt(tx, ty);
+    const lateralOpen = (ny) => isOpen(x - 1, y) || isOpen(x + 1, y) || isOpen(x - 1, ny) || isOpen(x + 1, ny);
+    const verticalOpen = (nx) => isOpen(x, y - 1) || isOpen(x, y + 1) || isOpen(nx, y - 1) || isOpen(nx, y + 1);
+    const n = isSurfaceWall(x, y - 1) && lateralOpen(y - 1);
+    const s = isSurfaceWall(x, y + 1) && lateralOpen(y + 1);
+    const w = isSurfaceWall(x - 1, y) && verticalOpen(x - 1);
+    const e = isSurfaceWall(x + 1, y) && verticalOpen(x + 1);
+    const connected = [n && 'N', s && 'S', e && 'E', w && 'W'].filter(Boolean).join('') || 'none';
+    return {
+      type: 'wall',
+      baseStyle: wallStyle,
+      spriteName,
+      reason: `Surface wall; connects to: ${connected}`,
+      neighbours: connected,
+    };
   };
 
   const stats = useMemo(() => {
@@ -118,11 +196,20 @@ export default function DungeonExample() {
     return { walls, floors };
   }, [mapData]);
 
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
+
   if (error)   return <div className="autotile-layout full-viewport"><div className="control-card" style={{color:'red'}}>Error: {error}</div></div>;
   if (loading) return <div className="autotile-layout full-viewport"><div className="control-card">Loading Atlas Metadata...</div></div>;
 
   const atlasImage = resolveAssetPath('/DawnlikeAtlas0.png');
   const isCellular = mapType === 'cellular';
+  const activeTile = pinnedTile || hoverInfo;
+  const activeInfo = activeTile ? describeTile(activeTile.x, activeTile.y) : null;
+  const popupX = pinnedTile ? pinnedTile.screenX : mousePos.x;
+  const popupY = pinnedTile ? pinnedTile.screenY : mousePos.y;
 
   return (
     <div className="autotile-layout full-viewport">
@@ -164,6 +251,16 @@ export default function DungeonExample() {
               </>
             )}
             <div className="field-group">
+              <label>Width: {width}</label>
+              <input type="range" min="20" max="80" step="1" value={width}
+                     onChange={e => setWidth(parseInt(e.target.value))} />
+            </div>
+            <div className="field-group">
+              <label>Height: {height}</label>
+              <input type="range" min="15" max="60" step="1" value={height}
+                     onChange={e => setHeight(parseInt(e.target.value))} />
+            </div>
+            <div className="field-group">
               <label>Seed</label>
               <input type="number" value={seed} onChange={e => setSeed(Number(e.target.value))} />
             </div>
@@ -189,35 +286,104 @@ export default function DungeonExample() {
         <div
           className="map-grid"
           style={{
-            width: DISPLAY_WIDTH * TILE_SIZE * scale,
-            height: DISPLAY_HEIGHT * TILE_SIZE * scale,
+            width: width * TILE_SIZE * scale,
+            height: height * TILE_SIZE * scale,
           }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={() => setHoverInfo(null)}
+          onClick={() => setPinnedTile(null)}
         >
-          {mapData && Array.from({ length: DISPLAY_HEIGHT }).map((_, y) => (
-            Array.from({ length: DISPLAY_WIDTH }).map((_, x) => {
-              const tileName = getTile(x, y);
-              const sprite = atlas.byName[tileName];
-              if (!sprite) return null;
+          {mapData && Array.from({ length: height }).map((_, y) => (
+            Array.from({ length: width }).map((_, x) => {
+              const info = describeTile(x, y);
+              const sprite = info?.spriteName ? atlas.byName[info.spriteName] : null;
               return (
                 <div
                   key={`${x},${y}`}
+                  onMouseEnter={() => setHoverInfo({ x, y })}
+                  onClick={e => {
+                    e.stopPropagation();
+                    const rect = e.currentTarget.parentElement.getBoundingClientRect();
+                    setPinnedTile({ x, y, screenX: e.clientX - rect.left, screenY: e.clientY - rect.top });
+                  }}
                   style={{
                     position: 'absolute',
                     left: x * TILE_SIZE * scale,
                     top: y * TILE_SIZE * scale,
                     width: TILE_SIZE * scale,
                     height: TILE_SIZE * scale,
-                    backgroundImage: `url(${atlasImage})`,
-                    backgroundPosition: `-${sprite.x * scale}px -${sprite.y * scale}px`,
-                    backgroundSize: `${atlas.meta.size.w * scale}px ${atlas.meta.size.h * scale}px`,
+                    cursor: 'pointer',
                   }}
-                  title={tileName}
-                />
+                >
+                  {sprite && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        backgroundImage: `url(${atlasImage})`,
+                        backgroundPosition: `-${sprite.x * scale}px -${sprite.y * scale}px`,
+                        backgroundSize: `${atlas.meta.size.w * scale}px ${atlas.meta.size.h * scale}px`,
+                      }}
+                    />
+                  )}
+                </div>
               );
             })
           ))}
+          {activeTile && activeInfo && (
+            <div
+              className="logic-popup"
+              data-testid="dungeon-popup"
+              onClick={e => e.stopPropagation()}
+              style={{
+                position: 'absolute',
+                left: popupX + 20,
+                top: popupY + 20,
+                zIndex: 1000,
+                pointerEvents: pinnedTile ? 'auto' : 'none',
+              }}
+            >
+              <div className="popup-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>Tile {activeTile.x}, {activeTile.y}{pinnedTile ? ' 📌' : ''}</span>
+                {pinnedTile && (
+                  <button
+                    onClick={() => setPinnedTile(null)}
+                    style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1.1em', padding: '0 4px' }}
+                    title="Close"
+                  >✕</button>
+                )}
+              </div>
+              <div className="popup-layers">
+                <div className="popup-layer">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span className="layer-tag">{activeInfo.type === 'wall' ? 'WALL' : 'FLOOR'}</span>
+                    <span className="layer-name" style={{ flex: 1 }}>
+                      {activeInfo.spriteName || '— buried —'}
+                    </span>
+                  </div>
+                  <div className="layer-reason">{activeInfo.reason}</div>
+                  <div className="layer-reason" style={{ opacity: 0.7, marginTop: 2 }}>
+                    base style: <code>{activeInfo.baseStyle}</code>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
+DungeonExample.propTypes = {
+  mapType:             PropTypes.oneOf(MAP_TYPE_IDS),
+  wallStyle:           PropTypes.string,
+  floorStyle:          PropTypes.string,
+  seed:                PropTypes.number,
+  scale:               PropTypes.number,
+  cellularDensity:     PropTypes.number,
+  cellularSmooth:      PropTypes.number,
+  width:               PropTypes.number,
+  height:              PropTypes.number,
+  showConfigInitially: PropTypes.bool,
+};
