@@ -143,7 +143,13 @@ export default class UIScene extends Phaser.Scene {
     // tween onComplete writes that race with resetSave and re-write the
     // file before the page settles). A full reload sidesteps all of
     // them and guarantees state == "first visit".
+    // Wipe the save first. The reset guard inside save.js then no-ops
+    // any further save() calls from the still-running Phaser game, so
+    // pending tween-onComplete writes can't race with the reload and
+    // resurrect the old position / currentScene. Then destroy the game
+    // (which stops scene update() ticks immediately) and reload.
     resetSave();
+    if (this.game) this.game.destroy(true);
     if (typeof window !== 'undefined' && window.location) {
       window.location.reload();
     }

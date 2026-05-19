@@ -23,6 +23,14 @@ export const SAVE_KEY = 'dawnlike:roguelike:v1';
 
 export const SCENE_KEYS = ['World', 'Town', 'Dungeon1', 'Dungeon2', 'Dungeon3'];
 
+// Set by `reset()` to suppress any later `save()` calls that the running
+// Phaser game might fire after the user clicks "New Game" but before
+// `window.location.reload()` actually navigates away. Without this guard,
+// a pending async save() can re-create the entry (with the old position
+// and currentScene) on top of the freshly-bootstrapped one — the new
+// game would then load that stale state instead of a true reset.
+let _resetGuard = false;
+
 function emptyPositions() {
   return SCENE_KEYS.reduce((acc, k) => { acc[k] = null; return acc; }, {});
 }
@@ -72,6 +80,7 @@ export function load() {
 }
 
 export function save(partial) {
+  if (_resetGuard) return;
   const ls = safeStorage();
   if (!ls) return;
   const current = load();
@@ -86,6 +95,7 @@ export function save(partial) {
 }
 
 export function reset() {
+  _resetGuard = true;
   const ls = safeStorage();
   if (!ls) return;
   try { ls.removeItem(SAVE_KEY); } catch (_) { /* ignore */ }

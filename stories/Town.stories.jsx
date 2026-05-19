@@ -2,7 +2,7 @@ import React from 'react';
 import TownExample from '../src/TownExample';
 
 export default {
-  title: 'Examples/Outdoor/Town',
+  title: 'Zone Examples/Town',
   component: TownExample,
 };
 

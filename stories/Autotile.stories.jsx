@@ -2,7 +2,7 @@ import React from 'react';
 import AutotileExample from '../src/AutotileExample';
 
 export default {
-  title: 'Examples/Autotile (rot.js)',
+  title: 'Zone Examples/Autotile (rot.js)',
   component: AutotileExample,
 };
 

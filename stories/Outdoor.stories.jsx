@@ -2,7 +2,7 @@ import React from 'react';
 import OutdoorExample from '../src/OutdoorExample';
 
 export default {
-  title: 'Examples/Outdoor/Wilderness',
+  title: 'Zone Examples/Wilderness',
   component: OutdoorExample,
 };
 
