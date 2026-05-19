@@ -18,7 +18,14 @@
 
 import Phaser from 'phaser';
 import { resolveAssetPath } from '../../utils/paths.js';
-import { load as loadSave } from '../save.js';
+import { load as loadSave, clearSave } from '../save.js';
+
+// When the user clicks "New Game" we reload the page with this URL flag
+// so the next BootScene honours the reset regardless of any state that
+// might have slipped through the live-game shutdown path. After the
+// reset we strip the flag from the URL so a future reload doesn't keep
+// nuking the save.
+const NEW_GAME_FLAG = 'dawnlike-newgame';
 
 export default class BootScene extends Phaser.Scene {
   constructor() { super({ key: 'Boot' }); }
@@ -43,6 +50,19 @@ export default class BootScene extends Phaser.Scene {
 
   create() {
     const atlasMeta = this.cache.json.get('atlasMeta');
+
+    // Honour the "?dawnlike-newgame=1" URL flag set by UIScene.confirmNewGame.
+    // We do this BEFORE loadSave() so the bootstrap path always wins,
+    // then we scrub the flag from the URL so a regular reload doesn't
+    // keep wiping the save on every refresh.
+    if (typeof window !== 'undefined' && window.location?.search?.includes(NEW_GAME_FLAG)) {
+      clearSave();
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete(NEW_GAME_FLAG);
+        window.history.replaceState({}, '', url.toString());
+      } catch (_) { /* ignore */ }
+    }
 
     // Register a per-sprite anim for every animated frame in the atlas.
     // Two-frame loop alternating Atlas0 ↔ Atlas1.

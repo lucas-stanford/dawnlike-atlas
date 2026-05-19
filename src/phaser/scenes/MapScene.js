@@ -20,6 +20,7 @@
 
 import Phaser from 'phaser';
 import { HUD_HEIGHT } from './UIScene.js';
+import { save as persistSave } from '../save.js';
 
 const TILE = 16;
 
@@ -64,7 +65,10 @@ export default class MapScene extends Phaser.Scene {
     // Render every tile, layer by layer. Static layers use add.image (cheap);
     // any layer whose sprite is flagged isAnimated gets an add.sprite +
     // play('anim:<name>') so it cycles between Atlas0 and Atlas1 frames.
-    const tileLayer = this.add.container(0, 0);
+    // Sprites are added directly to the scene (not nested in a container)
+    // so their setDepth values compete with the player's depth — without
+    // this, signs at z=5.5 (depth 55) would still render under the player
+    // (depth 50) because container children can only beat each other.
     for (let y = 0; y < map.height; y++) {
       for (let x = 0; x < map.width; x++) {
         const layers = this.renderTileLayers(map.tiles, x, y, atlas.byName);
@@ -80,7 +84,6 @@ export default class MapScene extends Phaser.Scene {
             obj = this.add.image(px, py, 'dawnlike0', layer.name);
           }
           obj.setDepth(layer.z * 10);
-          tileLayer.add(obj);
         }
       }
     }
@@ -219,11 +222,13 @@ export default class MapScene extends Phaser.Scene {
     };
     this.registry.set('save', next);
     // Write through to localStorage on every step so a refresh always
-    // returns the player to where they actually are.
-    import('../save.js').then(m => m.save({
+    // returns the player to where they actually are. MUST be synchronous
+    // — a dynamic import here creates a microtask that can race with
+    // resetSave() during "New Game" and resurrect stale state.
+    persistSave({
       currentScene: this.SCENE_KEY,
       positions: { [this.SCENE_KEY]: { ...tile } },
-    }));
+    });
   }
 
   /**
@@ -256,13 +261,13 @@ export default class MapScene extends Phaser.Scene {
       },
     };
     this.registry.set('save', next);
-    import('../save.js').then(m => m.save({
+    persistSave({
       currentScene: targetSceneKey,
       positions: {
         [this.SCENE_KEY]: { ...sourcePos },
         [targetSceneKey]: targetSpawn ? { ...targetSpawn } : undefined,
       },
-    }));
+    });
     this.cameras.main.fadeOut(180, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
       this.scene.start(targetSceneKey, { spawn: targetSpawn });

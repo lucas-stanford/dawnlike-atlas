@@ -74,16 +74,14 @@ export const DEFAULT_WORLD_MANIFEST = Object.freeze({
 /**
  * Generate an overworld map.
  *
- * @param {WorldManifest|number} [manifestOrSeed]  Manifest object OR a bare
- *   seed number for backward compatibility with the original `generateWorld(seed)`
- *   API.
+ * @param {WorldManifest} [manifest]  Manifest object; omit to use every default.
  * @returns {{ width:number, height:number, tiles:Array<Array<Object>>,
  *             markers:{townEntrance:{x,y}, dungeonEntrance:{x,y}},
  *             walkable:(x:number,y:number)=>boolean,
  *             manifest:WorldManifest }}
  */
-export function generateWorld(manifestOrSeed) {
-  const manifest = normalizeWorldManifest(manifestOrSeed);
+export function generateWorld(manifest) {
+  const m = normalizeWorldManifest(manifest);
   const {
     width: W,
     height: H,
@@ -97,7 +95,7 @@ export function generateWorld(manifestOrSeed) {
     decorChance,
     decorVariants,
     riverPosition,
-  } = manifest;
+  } = m;
 
   ROT.RNG.setSeed(seed);
   const simplex = new ROT.Noise.Simplex();
@@ -247,21 +245,16 @@ export function generateWorld(manifestOrSeed) {
     tiles,
     markers: { townEntrance: town, dungeonEntrance: dungeon },
     walkable,
-    manifest,
+    manifest: m,
   };
 }
 
 /**
- * Normalize the caller's argument into a complete manifest, filling
- * in every default. Accepts either a manifest object OR a bare seed
- * number (for backward compatibility with the original generateWorld(seed)
- * signature).
+ * Fill in defaults for every WorldManifest field. The caller's argument
+ * must be a (possibly partial) manifest object or undefined.
  */
 export function normalizeWorldManifest(input) {
-  const m = (typeof input === 'number' || typeof input === 'string')
-    ? { seed: input }
-    : (input || {});
-  const merged = { ...DEFAULT_WORLD_MANIFEST, ...m };
+  const merged = { ...DEFAULT_WORLD_MANIFEST, ...(input || {}) };
   if (merged.seed === undefined || merged.seed === null) {
     merged.seed = Date.now();
   }

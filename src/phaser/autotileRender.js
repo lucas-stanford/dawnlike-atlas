@@ -119,7 +119,11 @@ export function renderWorldTile(tiles, x, y, styles, byName) {
  * Render layers for a TOWN tile.
  *
  * Tile schema (town): { type:'grass'|'street'|'floor'|'wall'|'door',
- *   wall, floor, door, street, tree, decor, fountain, marker }.
+ *   wall, floor, door, street, streetKind:'main'|'side'|null, tree, decor,
+ *   fountain, marker }. `streetKind === 'main'` paves with `styles.mainStreet`
+ *   (brick) — the plaza and external road trunk. Anything else paves with
+ *   `styles.street` (stone). The two surfaces autotile independently so
+ *   brick and stone meet at a clean edge instead of merging.
  */
 export function renderTownTile(tiles, x, y, styles, byName) {
   const tile = get(tiles, x, y);
@@ -139,10 +143,16 @@ export function renderTownTile(tiles, x, y, styles, byName) {
   }
 
   if (tile.street) {
-    const same = (nx, ny) => !!get(tiles, nx, ny)?.street;
+    const kind = tile.streetKind || 'side';
+    const isSameKind = (nx, ny) => {
+      const n = get(tiles, nx, ny);
+      return !!(n?.street && (n.streetKind || 'side') === kind);
+    };
+    const style = kind === 'main' ? (styles.mainStreet || styles.street) : styles.street;
     layers.push({
-      name: resolveDawnLikeFloorName(styles.street, {
-        n: same(x, y - 1), s: same(x, y + 1), e: same(x + 1, y), w: same(x - 1, y),
+      name: resolveDawnLikeFloorName(style, {
+        n: isSameKind(x, y - 1), s: isSameKind(x, y + 1),
+        e: isSameKind(x + 1, y), w: isSameKind(x - 1, y),
       }, byName).name,
       z: 0.5,
     });
@@ -167,9 +177,13 @@ export function renderTownTile(tiles, x, y, styles, byName) {
   }
 
   if (tile.wall) {
+    // Doors count as walls for autotiling — otherwise the wall sprites
+    // either side of a doorway think they're at an open end and render
+    // an end-cap, breaking the visual continuity around every door.
     const isWall = (nx, ny) => {
       if (!inBounds(tiles, nx, ny)) return true;
-      return !!get(tiles, nx, ny)?.wall;
+      const t = get(tiles, nx, ny);
+      return !!(t?.wall || t?.door);
     };
     const name = resolveDawnLikeDungeonWallName(styles.wall, x, y, isWall, byName);
     if (name) layers.push({ name, z: 2 });
@@ -182,6 +196,24 @@ export function renderTownTile(tiles, x, y, styles, byName) {
 
   if (tile.fountain && byName['fountain']) {
     layers.push({ name: 'fountain', z: 3 });
+  }
+
+  if (tile.flower && byName[tile.flower]) {
+    layers.push({ name: tile.flower, z: 0.6 });
+  }
+
+  if (tile.furniture && byName[tile.furniture]) {
+    layers.push({ name: tile.furniture, z: 1.5 });
+  }
+
+  if (tile.sign && byName[tile.sign]) {
+    // z=5.5 puts the sign at depth 55, comfortably above the player's
+    // depth 50 (MapScene). The player walks BEHIND the hanging sign.
+    layers.push({ name: tile.sign, z: 5.5 });
+  }
+
+  if (tile.npc && byName[tile.npc]) {
+    layers.push({ name: tile.npc, z: 3.5 });
   }
 
   if (tile.marker === 'worldExit' && byName['small stairs up']) {
@@ -227,9 +259,14 @@ export function renderDungeonTile(tiles, x, y, styles, byName) {
   }
 
   if (tile.wall) {
+    // Doors count as walls. The current dungeon generator doesn't emit
+    // door tiles, but future expansions (vault doors, locked rooms) will,
+    // and treating them as walls here avoids broken end-caps when they
+    // do — matches the town renderer's behaviour.
     const isWall = (nx, ny) => {
       if (!inBounds(tiles, nx, ny)) return true;
-      return !!get(tiles, nx, ny)?.wall;
+      const t = get(tiles, nx, ny);
+      return !!(t?.wall || t?.door);
     };
     const name = resolveDawnLikeDungeonWallName(styles.wall, x, y, isWall, byName);
     if (name) layers.push({ name, z: 2 });

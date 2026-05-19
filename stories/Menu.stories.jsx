@@ -18,6 +18,8 @@ export default {
   },
 };
 
-export const Default = {
+// Single-story hoisting: export name == last segment of title makes
+// the sidebar leaf disappear so the title doubles as the entry point.
+export const MenuHUD = {
   render: (args) => <MenuExample {...args} />,
 };

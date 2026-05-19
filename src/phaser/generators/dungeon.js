@@ -52,14 +52,10 @@ export const DEFAULT_DUNGEON_MANIFEST = Object.freeze({
 /**
  * Generate a single dungeon level.
  *
- * @param {DungeonManifest|number} [manifestOrSeed]  Manifest object OR a
- *   bare seed number (legacy `generateDungeon(seed, level)` callers
- *   should switch to passing `{ seed, level, ... }`).
- * @param {number} [legacyLevel]                     Legacy positional level
- *   argument. Honored only when the first arg is a number.
+ * @param {DungeonManifest} [manifest]  Manifest object; omit to use every default.
  */
-export function generateDungeon(manifestOrSeed, legacyLevel) {
-  const manifest = normalizeDungeonManifest(manifestOrSeed, legacyLevel);
+export function generateDungeon(manifest) {
+  const m = normalizeDungeonManifest(manifest);
   const {
     width: W,
     height: H,
@@ -67,7 +63,7 @@ export function generateDungeon(manifestOrSeed, legacyLevel) {
     level,
     bottomLevel,
     roomWidth, roomHeight, corridorLength, dugPercentage, timeLimit,
-  } = manifest;
+  } = m;
 
   ROT.RNG.setSeed(seed);
 
@@ -136,19 +132,16 @@ export function generateDungeon(manifestOrSeed, legacyLevel) {
     tiles,
     markers: { stairsUp: { x: upX, y: upY }, stairsDown: downPos },
     walkable,
-    manifest,
+    manifest: m,
   };
 }
 
-export function normalizeDungeonManifest(input, legacyLevel) {
-  let m;
-  if (typeof input === 'number' || typeof input === 'string') {
-    m = { seed: input };
-    if (typeof legacyLevel === 'number') m.level = legacyLevel;
-  } else {
-    m = input || {};
-  }
-  const merged = { ...DEFAULT_DUNGEON_MANIFEST, ...m };
+/**
+ * Fill in defaults for every DungeonManifest field. The caller's argument
+ * must be a (possibly partial) manifest object or undefined.
+ */
+export function normalizeDungeonManifest(input) {
+  const merged = { ...DEFAULT_DUNGEON_MANIFEST, ...(input || {}) };
   if (merged.seed === undefined || merged.seed === null) {
     merged.seed = Date.now();
   }

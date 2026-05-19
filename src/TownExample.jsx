@@ -38,8 +38,10 @@ const FLOOR_STYLES = [
 
 // Building archetypes: each drives furniture set, sign, and rug colour.
 const BUILDING_TYPES = ['house', 'inn', 'pub', 'smithy', 'church', 'shop'];
+// Only non-residential buildings get a hanging sign by the door. Regular
+// houses are left unmarked — a "home sign" on every door makes the town
+// read as a row of shops rather than a residential neighbourhood.
 const TYPE_SIGN = {
-  house: 'home sign',
   inn: 'inn sign',
   pub: 'pub sign',
   smithy: 'smithy sign',
@@ -64,30 +66,44 @@ const GROUND_FLOWERS = [
   'red flowers', 'sparse red flowers',
 ];
 
-export default function TownExample() {
+export default function TownExample({
+  wallStyle: wallStyleProp,
+  floorStyle: floorStyleProp,
+  streetStyle: streetStyleProp,
+  mainStreetStyle: mainStreetStyleProp,
+  grassStyle: grassStyleProp,
+  treeStyle: treeStyleProp,
+  treeChance: treeChanceProp,
+  flowerChance: flowerChanceProp,
+  graveyardChance: graveyardChanceProp,
+  buildingCount: buildingCountProp,
+  seed: seedProp,
+  scale: scaleProp,
+  showConfigInitially = false,
+} = {}) {
   const [rawMapData, setRawMapData] = useState(null);
   const [buildings, setBuildings] = useState([]);
   const [atlas, setAtlas] = useState(null);
   const [error, setError] = useState(null);
-  const [wallStyle, setWallStyle] = useState('');
-  const [floorStyle, setFloorStyle] = useState('day brick floor');
-  const [streetStyle, setStreetStyle] = useState('day stone floor');
-  const [mainStreetStyle, setMainStreetStyle] = useState('day brick floor');
-  const [grassStyle, setGrassStyle] = useState('day grass floor');
-  const [treeStyle, setTreeStyle] = useState('');
-  const [treeChance, setTreeChance] = useState(8);
-  const [flowerChance, setFlowerChance] = useState(6);
-  const [graveyardChance, setGraveyardChance] = useState(30);
-  const [buildingCount, setBuildingCount] = useState(6);
-  const [seed, setSeed] = useState(Math.floor(Math.random() * 1000000));
+  const [wallStyle, setWallStyle] = useState(wallStyleProp || '');
+  const [floorStyle, setFloorStyle] = useState(floorStyleProp || 'day brick floor');
+  const [streetStyle, setStreetStyle] = useState(streetStyleProp || 'day stone floor');
+  const [mainStreetStyle, setMainStreetStyle] = useState(mainStreetStyleProp || 'day brick floor');
+  const [grassStyle, setGrassStyle] = useState(grassStyleProp || 'day grass floor');
+  const [treeStyle, setTreeStyle] = useState(treeStyleProp || '');
+  const [treeChance, setTreeChance] = useState(treeChanceProp ?? 8);
+  const [flowerChance, setFlowerChance] = useState(flowerChanceProp ?? 6);
+  const [graveyardChance, setGraveyardChance] = useState(graveyardChanceProp ?? 30);
+  const [buildingCount, setBuildingCount] = useState(buildingCountProp ?? 6);
+  const [seed, setSeed] = useState(seedProp ?? Math.floor(Math.random() * 1000000));
   const [loading, setLoading] = useState(true);
   const [hoverInfo, setHoverInfo] = useState(null);
   const [pinnedTile, setPinnedTile] = useState(null);
   const [pickerLayerZ, setPickerLayerZ] = useState(null);
   const [spriteOverrides, setSpriteOverrides] = useState({});
-  const [scale, setScale] = useState(DEFAULT_SCALE);
+  const [scale, setScale] = useState(scaleProp ?? DEFAULT_SCALE);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [showConfig, setShowConfig] = useState(false);
+  const [showConfig, setShowConfig] = useState(showConfigInitially);
 
   // Discover wall + tree bases from atlas. Same logic as AutotileExample /
   // OutdoorExample (Trees grouped from the Objects/Tree sheets).
@@ -492,33 +508,57 @@ export default function TownExample() {
 
     // 7. Signs + door plants.
     for (const b of placedBuildings) {
-      // Sign: hang it on a street tile beside the door's exit tile so it
-      // doesn't visually block the doorway. For N/S doors that means one
-      // tile to the left/right of the exit tile; for E/W doors it's one
-      // tile above/below. Walk both flanks and pick the first paved street
-      // tile that isn't already a sign/decor/door from another building.
-      const outNeighbor = { n: [0,-1], s: [0,1], e: [1,0], w: [-1,0] }[b.doorSide];
-      const exitX = b.doorX + outNeighbor[0];
-      const exitY = b.doorY + outNeighbor[1];
-      const flank = (b.doorSide === 'n' || b.doorSide === 's')
-        ? [[-1, 0], [1, 0]]
-        : [[0, -1], [0, 1]];
+      // Sign: hang it OFF the building's wall. The sign sprite's bracket
+      // extends horizontally, so signs can ONLY hang from east or west
+      // walls. For E/W doors we flank the door's exit. For N/S doors we
+      // pivot the sign onto the closer east/west face (at the door's
+      // row, so the sign still reads as the doorway's marker). The sign
+      // tile stays walkable and renders above the player.
+      const dx = b.doorX, dy = b.doorY, side = b.doorSide;
+      let signCandidates;
+      if (side === 'e' || side === 'w') {
+        const sx = dx + (side === 'e' ? 1 : -1);
+        signCandidates = [
+          { x: sx, y: dy - 1 },
+          { x: sx, y: dy + 1 },
+        ];
+      } else {
+        const distW = dx - b.x;
+        const distE = (b.x + b.w - 1) - dx;
+        const primary = distW <= distE ? 'w' : 'e';
+        const primaryX = primary === 'w' ? b.x - 1 : b.x + b.w;
+        const secondaryX = primary === 'w' ? b.x + b.w : b.x - 1;
+        const rows = [dy];
+        for (let off = 1; off < b.h; off++) {
+          const r = side === 'n' ? dy + off : dy - off;
+          if (r >= b.y && r <= b.y + b.h - 1) rows.push(r);
+        }
+        signCandidates = [
+          ...rows.map((y) => ({ x: primaryX, y })),
+          ...rows.map((y) => ({ x: secondaryX, y })),
+        ];
+      }
       let signTile = null;
-      for (const [fx, fy] of flank) {
-        const cand = get(exitX + fx, exitY + fy);
-        if (cand && cand.street && !cand.sign && !cand.decor && !cand.wall && !cand.door) {
+      for (const c of signCandidates) {
+        const cand = get(c.x, c.y);
+        if (cand && !cand.wall && !cand.floor && !cand.door && !cand.sign) {
           signTile = cand;
           break;
         }
       }
-      // No fallback: if neither flank is paved, skip the sign rather than
-      // place it directly on the door exit tile (which would block the doorway).
       if (signTile && atlas.byName[TYPE_SIGN[b.type]]) signTile.sign = TYPE_SIGN[b.type];
 
-      // Door-flanking plants (30% chance). Now that the sign sits on one
-      // flank, drop the plant on the OTHER flank when possible.
+      // Door-flanking plants (30% chance). Drop a plant on a street tile
+      // flanking the door's exit (independent of the sign — the sign now
+      // hangs off the side of the building rather than blocking a flank).
       if (ROT.RNG.getUniform() < 0.3) {
         const plant = ROT.RNG.getItem(DOOR_PLANTS);
+        const outNeighbor = { n: [0,-1], s: [0,1], e: [1,0], w: [-1,0] }[side];
+        const exitX = dx + outNeighbor[0];
+        const exitY = dy + outNeighbor[1];
+        const flank = (side === 'n' || side === 's')
+          ? [[-1, 0], [1, 0]]
+          : [[0, -1], [0, 1]];
         for (const [fx, fy] of flank) {
           const fTile = get(exitX + fx, exitY + fy);
           if (fTile && fTile.street && !fTile.sign && !fTile.decor && atlas.byName[plant]) {
@@ -784,11 +824,14 @@ export default function TownExample() {
 
     // z=2: walls — use the rot.js dungeon-style autotile so corners +
     //      T-junctions resolve correctly even for small building blobs.
+    //      Doors count as walls so the wall sprites flanking a doorway
+    //      don't render end-caps where the wall is "open" for the door.
     if (tile.wall) {
       const inBoundsRender = (nx, ny) => nx >= 0 && ny >= 0 && nx < DISPLAY_WIDTH && ny < DISPLAY_HEIGHT;
       const isWall = (nx, ny) => {
         if (!inBoundsRender(nx, ny)) return true; // treat OOB as wall so the border closes
-        return !!mapData[`${nx},${ny}`]?.wall;
+        const t = mapData[`${nx},${ny}`];
+        return !!(t?.wall || t?.door);
       };
       const name = resolveDawnLikeDungeonWallName(
         wallStyle || 'bright brick wall', x, y, isWall, atlas.byName
