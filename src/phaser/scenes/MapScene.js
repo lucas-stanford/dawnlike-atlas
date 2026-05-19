@@ -32,6 +32,15 @@ export default class MapScene extends Phaser.Scene {
   init(data) {
     // Subclasses may receive a spawn hint via scene.start(key, { spawn }).
     this.spawnHint = data?.spawn || null;
+    // Phaser reuses scene instances across scene.start() calls. If the
+    // previous run of this scene was interrupted mid-tween or mid-transition
+    // (held-key tween killed by scene shutdown, fade-out scene.start, etc.)
+    // these flags can remain true, which would freeze the player on
+    // re-entry. Defensively reset all per-run state every time the scene
+    // boots so we never inherit stale flags.
+    this.moving = false;
+    this.transitioning = false;
+    this.previousTile = null;
   }
 
   create() {
@@ -144,7 +153,13 @@ export default class MapScene extends Phaser.Scene {
   }
 
   tryMove(dx, dy) {
-    if (this.moving) return;
+    // Refuse new input while a transition is mid-fade or a tween is in
+    // flight. Without the transitioning gate, the update()-loop polling
+    // held keys would happily keep walking the player PAST a marker tile
+    // during the 180ms camera fade-out (the marker's onComplete already
+    // set this.moving=false before kicking off the fade), so the user
+    // ends up two or three tiles past where they should have transitioned.
+    if (this.moving || this.transitioning) return;
     const tx = this.playerTile.x + dx;
     const ty = this.playerTile.y + dy;
     if (!this.map.walkable(tx, ty)) return;
@@ -186,17 +201,12 @@ export default class MapScene extends Phaser.Scene {
    * the OS's keyboard auto-repeat (which has a long initial delay).
    */
   update() {
-    if (this.moving || !this.cursors) return;
+    if (this.moving || this.transitioning || !this.cursors) return;
     const k = this.cursors, w = this.wasd;
     if (k.left.isDown  || w.left.isDown)  return this.tryMove(-1, 0);
     if (k.right.isDown || w.right.isDown) return this.tryMove( 1, 0);
     if (k.up.isDown    || w.up.isDown)    return this.tryMove( 0,-1);
     if (k.down.isDown  || w.down.isDown)  return this.tryMove( 0, 1);
-  }
-
-  checkMarkerOnTile(x, y) {
-    const t = this.map.tiles[y]?.[x];
-    if (t?.marker) this.handleMarker(t.marker, this.map);
   }
 
   persistPosition(overrideTile) {
@@ -224,6 +234,16 @@ export default class MapScene extends Phaser.Scene {
    * re-entering the source scene doesn't immediately re-trigger.
    */
   transitionTo(targetSceneKey, targetSpawn) {
+    // Lock out further movement immediately. Without this, update()
+    // would keep stepping the player through the 180ms fade-out window,
+    // letting them walk PAST the marker that just fired (and possibly
+    // off the map or onto another marker).
+    if (this.transitioning) return;
+    this.transitioning = true;
+    // Cancel any in-flight tween targeting the player so they snap to
+    // their logical tile rather than drifting visually mid-fade.
+    this.tweens.killTweensOf(this.player);
+
     const sourcePos = this.previousTile || this.playerTile;
     const save = this.registry.get('save');
     const next = {

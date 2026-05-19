@@ -30,6 +30,15 @@ export default class UIScene extends Phaser.Scene {
   create() {
     this.scene.bringToTop();
 
+    // Phaser scene instances are reused across scene.start/launch cycles
+    // (e.g. when the player clicks "New Game" and we relaunch Boot, the
+    // UI instance is the same object). The 'hud-update' listener added
+    // below is on the GAME-level event emitter, which is shared across
+    // scene restarts — without this removeAllListeners it would
+    // accumulate one duplicate per restart, firing redraw() N times per
+    // event.
+    this.game.events.off('hud-update');
+
     const canvasW = this.scale.width;
     // Constrain the UI camera to the top strip ONLY — anything drawn
     // below y=HUD_HEIGHT here would be clipped away, but we keep all UI
@@ -127,10 +136,16 @@ export default class UIScene extends Phaser.Scene {
       const ok = window.confirm('Start a new game? Current world will be lost.');
       if (!ok) return;
     }
+    // Wipe the save first, then hard-reload the page. Tearing down the
+    // Phaser game and rebuilding it from inside a scene-shutdown chain
+    // leaves a long tail of subtle bugs (stale instance flags on reused
+    // scene objects, accumulated event listeners on game.events, partial
+    // tween onComplete writes that race with resetSave and re-write the
+    // file before the page settles). A full reload sidesteps all of
+    // them and guarantees state == "first visit".
     resetSave();
-    this.scene.manager.scenes
-      .filter(s => s.scene.key !== 'UI')
-      .forEach(s => { if (s.scene.isActive() || s.scene.isPaused()) s.scene.stop(); });
-    this.scene.start('Boot');
+    if (typeof window !== 'undefined' && window.location) {
+      window.location.reload();
+    }
   }
 }
