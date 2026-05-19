@@ -136,22 +136,25 @@ export default class UIScene extends Phaser.Scene {
       const ok = window.confirm('Start a new game? Current world will be lost.');
       if (!ok) return;
     }
-    // Wipe the save first, then hard-reload the page. Tearing down the
-    // Phaser game and rebuilding it from inside a scene-shutdown chain
-    // leaves a long tail of subtle bugs (stale instance flags on reused
-    // scene objects, accumulated event listeners on game.events, partial
-    // tween onComplete writes that race with resetSave and re-write the
-    // file before the page settles). A full reload sidesteps all of
-    // them and guarantees state == "first visit".
     // Wipe the save first. The reset guard inside save.js then no-ops
     // any further save() calls from the still-running Phaser game, so
     // pending tween-onComplete writes can't race with the reload and
     // resurrect the old position / currentScene. Then destroy the game
-    // (which stops scene update() ticks immediately) and reload.
+    // (which stops scene update() ticks immediately) and navigate with
+    // a `dawnlike-newgame=1` URL flag — BootScene honours that flag on
+    // the next boot and calls reset() once more before loadSave(), so
+    // even if some other write managed to slip in after destroy but
+    // before navigation, the fresh boot still starts from scratch.
     resetSave();
     if (this.game) this.game.destroy(true);
     if (typeof window !== 'undefined' && window.location) {
-      window.location.reload();
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('dawnlike-newgame', '1');
+        window.location.replace(url.toString());
+      } catch (_) {
+        window.location.reload();
+      }
     }
   }
 }

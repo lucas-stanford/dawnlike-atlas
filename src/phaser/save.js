@@ -94,6 +94,18 @@ export function save(partial) {
   } catch (_) { /* quota / private mode — ignore */ }
 }
 
+/**
+ * Wipe the persisted save without arming the reset-guard. Used by
+ * BootScene to honour the `?dawnlike-newgame=1` URL flag — at that
+ * point the game hasn't started yet, so we need future save() calls
+ * to work normally.
+ */
+export function clearSave() {
+  const ls = safeStorage();
+  if (!ls) return;
+  try { ls.removeItem(SAVE_KEY); } catch (_) { /* ignore */ }
+}
+
 export function reset() {
   _resetGuard = true;
   const ls = safeStorage();
