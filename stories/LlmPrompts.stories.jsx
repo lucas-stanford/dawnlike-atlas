@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 // Vite's `?raw` suffix gives us the file contents as a string at build time
 // so the prompt is bundled with Storybook and works on the static site.
+import gameTemplatePrompt from '../Example_LLM_Prompts/game-template.md?raw';
 import simpleRoguelikePrompt from '../Example_LLM_Prompts/simple-roguelike.md?raw';
 
 /**
@@ -130,6 +131,17 @@ function PromptPanel({ title, subtitle, body }) {
     </div>
   );
 }
+
+export const GameTemplate = {
+  name: 'Game Template',
+  render: () => (
+    <PromptPanel
+      title="Game template prompt"
+      subtitle="Paste-and-go template: drop your game idea into the <<<...>>> slot and hand the result to Claude / GPT / Copilot to build it on top of dawnlike-atlas."
+      body={gameTemplatePrompt}
+    />
+  ),
+};
 
 export const SimpleRoguelike = {
   name: 'Simple Roguelike',

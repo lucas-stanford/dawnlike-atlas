@@ -10,6 +10,10 @@ no back-and-forth required.
 
 ## Available prompts
 
+- [`game-template.md`](./game-template.md) — **Paste-and-go template.**
+  Drop your game idea into the `<<<INSERT YOUR GAME IDEA HERE>>>`
+  slot and hand the result to an LLM to build any 2D browser game on
+  top of this toolkit. Best starting point for a new game.
 - [`simple-roguelike.md`](./simple-roguelike.md) — Recreate the
   Phaser-based roguelike from `src/PhaserExample.jsx`: overworld + town
   + 3-level dungeon, with working bidirectional exits, sprite
