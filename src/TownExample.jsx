@@ -376,7 +376,39 @@ export default function TownExample() {
 
     // 6. Building interior decoration: rug, furniture, sign.
     //    (Lanterns were removed — they sat awkwardly on wall-corner sprites.)
+    const SHOP_STOCK = ['closed chest', 'closed big chest', 'closed barrel', 'food shelves', 'empty shelves'];
+    const placeShopLayout = (b) => {
+      // Shops get a counter that stretches the full inner width on the
+      // wall opposite the door, with a row of chests/barrels/shelves
+      // tucked between the counter and the back wall. The remaining
+      // interior tiles form the customer-side walking area.
+      const xL = b.x + 1, xR = b.x + b.w - 2;
+      const yT = b.y + 1, yB = b.y + b.h - 2;
+      const chests = [], counter = [];
+      if (b.doorSide === 's') {
+        for (let x = xL; x <= xR; x++) { chests.push([x, yT]);  counter.push([x, yT + 1]); }
+      } else if (b.doorSide === 'n') {
+        for (let x = xL; x <= xR; x++) { chests.push([x, yB]);  counter.push([x, yB - 1]); }
+      } else if (b.doorSide === 'w') {
+        for (let y = yT; y <= yB; y++) { chests.push([xR, y]);  counter.push([xR - 1, y]); }
+      } else {
+        for (let y = yT; y <= yB; y++) { chests.push([xL, y]);  counter.push([xL + 1, y]); }
+      }
+      for (const [x, y] of chests) {
+        const t = get(x, y);
+        if (t && t.floor) t.furniture = ROT.RNG.getItem(SHOP_STOCK);
+      }
+      for (const [x, y] of counter) {
+        const t = get(x, y);
+        if (t && t.floor) t.furniture = 'wooden table';
+      }
+    };
+
     const placeFurniture = (b) => {
+      if (b.type === 'shop') {
+        placeShopLayout(b);
+        return;
+      }
       const innerTiles = [];
       for (let yy = b.y + 1; yy < b.y + b.h - 1; yy++) {
         for (let xx = b.x + 1; xx < b.x + b.w - 1; xx++) {
