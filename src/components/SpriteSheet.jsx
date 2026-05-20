@@ -59,6 +59,10 @@ export const SpriteSheet = ({
   defaultScale = 3,
   animated = false,
   animationPair = null,
+  // When set, force the component to start on (and lock to) a single tab,
+  // hiding the tab-nav buttons. Stories use this to present each tab as
+  // its own top-level Storybook entry.
+  initialTab = null,
 }) => {
   const [scale, setScale] = useState(defaultScale);
   const [selectedFrame, setSelectedFrame] = useState(null);
@@ -66,7 +70,7 @@ export const SpriteSheet = ({
   const [isAnimating, setIsAnimating] = useState(animated);
   const [showGrid, setShowGrid] = useState(initialShowGrid);
   const [showTooltips, setShowTooltips] = useState(true);
-  const [activeTab, setActiveTab] = useState('sprites');
+  const [activeTab, setActiveTab] = useState(initialTab ?? 'sprites');
   const [frameDataJson, setFrameDataJson] = useState(null);
   const [filterTag, setFilterTag] = useState('All');
   const [filterSource, setFilterSource] = useState('All');
@@ -328,27 +332,29 @@ export const SpriteSheet = ({
         {description && <p className="description">{description}</p>}
       </div>
 
-      {/* Tab Navigation */}
-      <div className="spritesheet-tabs">
-        <button
-          className={`tab-button ${activeTab === 'sprites' ? 'active' : ''}`}
-          onClick={() => setActiveTab('sprites')}
-        >
-          Sprites
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'library' ? 'active' : ''}`}
-          onClick={() => setActiveTab('library')}
-        >
-          Library
-        </button>
-        <button
-          className={`tab-button ${activeTab === 'json' ? 'active' : ''}`}
-          onClick={() => setActiveTab('json')}
-        >
-          JSON Data
-        </button>
-      </div>
+      {/* Tab Navigation — hidden when a single tab is forced via initialTab */}
+      {!initialTab && (
+        <div className="spritesheet-tabs">
+          <button
+            className={`tab-button ${activeTab === 'sprites' ? 'active' : ''}`}
+            onClick={() => setActiveTab('sprites')}
+          >
+            Sprites
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'library' ? 'active' : ''}`}
+            onClick={() => setActiveTab('library')}
+          >
+            Library
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'json' ? 'active' : ''}`}
+            onClick={() => setActiveTab('json')}
+          >
+            JSON Data
+          </button>
+        </div>
+      )}
 
       {activeTab === 'sprites' && (
         <>
