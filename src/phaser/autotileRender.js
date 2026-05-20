@@ -70,10 +70,16 @@ export function renderWorldTile(tiles, x, y, styles, byName) {
     const rs = !!get(tiles, x, y + 1)?.road;
     const re = !!get(tiles, x + 1, y)?.road;
     const rw = !!get(tiles, x - 1, y)?.road;
+    // Bridges follow the road axis. Straight runs pick `n s` / `e w`; road
+    // turns sitting on the bridge pick the matching diagonal sprite. Mirrors
+    // OutdoorExample's bridge resolver so both renderers agree.
     let name = 'bridge e w';
     if (rn && rs) name = 'bridge n s';
     else if (re && rw) name = 'bridge e w';
+    else if ((rn && re) || (rs && rw)) name = 'bridge ne sw';
+    else if ((rn && rw) || (rs && re)) name = 'bridge nw se';
     else if (rn || rs) name = 'bridge n s';
+    else if (re || rw) name = 'bridge e w';
     if (!byName[name]) name = 'bridge n s';
     layers.push({ name, z: 1.5 });
   }

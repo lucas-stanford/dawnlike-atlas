@@ -221,9 +221,14 @@ export function generateWorld(manifest) {
     const dij = new ROT.Path.Dijkstra(roadTarget.x, roadTarget.y, carveAnyPassable, { topology: 4 });
     dij.compute(dungeon.x, dungeon.y, (x, y) => {
       const t = tiles[y][x];
-      if (t.marker === 'dungeon' || t.road) return;
+      // Don't overwrite the dungeon marker tile, but lay road on every other
+      // step. Without this, bridges placed across a river crossing have no
+      // road neighbours, so the bridge resolver can't pick the right
+      // orientation (straight vs turn) and falls back to the default.
+      if (t.marker === 'dungeon') return;
       t.mountain = false;
       t.tree = false;
+      t.road = true;
       // If the carve crosses an unbridged river, lay a bridge so the
       // player can walk over it.
       if (t.river && !t.bridge) t.bridge = true;

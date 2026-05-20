@@ -5,7 +5,7 @@ import { resolveDawnLikeWallName, resolveDawnLikeFloorName, resolveAutotile, res
 import './Autotile.css';
 
 const TILE_SIZE = 32;
-const DEFAULT_SCALE = 1.25;
+const DEFAULT_SCALE = 1;
 const DISPLAY_WIDTH = 45;
 const DISPLAY_HEIGHT = 30;
 
