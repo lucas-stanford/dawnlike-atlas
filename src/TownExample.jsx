@@ -21,6 +21,8 @@ const cleanName = (name) => {
 };
 
 // Building archetypes: each drives furniture set, sign, and rug colour.
+// `bank` is excluded from the random pool — every town gets exactly one,
+// force-placed as the first building so it has room for a vault.
 const BUILDING_TYPES = ['house', 'inn', 'pub', 'smithy', 'church', 'shop'];
 // Only non-residential buildings get a hanging sign by the door. Regular
 // houses are left unmarked — a "home sign" on every door makes the town
@@ -31,6 +33,7 @@ const TYPE_SIGN = {
   smithy: 'smithy sign',
   church: 'church sign',
   shop: 'empty shop sign',
+  bank: 'sign a',
 };
 const TYPE_RUG = {
   house: 'red carpet',
@@ -39,7 +42,17 @@ const TYPE_RUG = {
   shop: 'gray carpet',
   smithy: 'gray carpet',
   church: null,
+  bank: 'gray carpet',
 };
+
+// Loot table for vault tiles. Picked uniformly per tile.
+const VAULT_LOOT = [
+  'closed big chest', 'closed big chest', 'closed safe', 'closed big safe', 'closed chest',
+  'pile of gold coins', 'pile of gold coins', 'pile of silver coins', 'pile of copper coins',
+  'gleaming red gem', 'gleaming blue gem', 'gleaming green gem',
+  'gleaming violet gem', 'gleaming orange gem', 'gleaming clear gem',
+  'gleaming white gem', 'gleaming black gem',
+];
 
 const DOOR_PLANTS = ['potted plants', 'red flowers', 'gold flowers', 'white flowers', 'blue flowers'];
 
@@ -211,10 +224,13 @@ export default function TownExample({
     };
 
     for (let i = 0; i < buildingCount; i++) {
+      const wantBank = (i === 0); // first building is always the bank
       let placed = false;
       for (let attempt = 0; attempt < 120; attempt++) {
-        const w = 5 + ROT.RNG.getUniformInt(0, 3);
-        const h = 5 + ROT.RNG.getUniformInt(0, 2);
+        // Banks need a larger footprint so the vault sub-room fits with room
+        // to spare for the banker hall + a counter.
+        const w = wantBank ? (7 + ROT.RNG.getUniformInt(0, 1)) : (5 + ROT.RNG.getUniformInt(0, 3));
+        const h = wantBank ? (6 + ROT.RNG.getUniformInt(0, 1)) : (5 + ROT.RNG.getUniformInt(0, 2));
 
         // Anchor either to plaza or to an existing building, pick a side, then
         // offset so the new building sits with a 1-tile street gap from it.
@@ -244,7 +260,7 @@ export default function TownExample({
         if (bx < 1 || by < 1 || bx + w > DISPLAY_WIDTH - 1 || by + h > DISPLAY_HEIGHT - 1) continue;
         if (overlaps(bx, by, w, h)) continue;
 
-        const type = ROT.RNG.getItem(BUILDING_TYPES);
+        const type = wantBank ? 'bank' : ROT.RNG.getItem(BUILDING_TYPES);
         const building = { id: i, x: bx, y: by, w, h, type, side };
 
         // Stamp perimeter as walls, interior as floor.
@@ -402,9 +418,129 @@ export default function TownExample({
       }
     };
 
+    const placeBankLayout = (b) => {
+      // Bank has a locked vault sub-room in the corner farthest from the door,
+      // separated from the banker hall by an interior wall with a single
+      // locked iron-portcullis door. The vault interior is filled with gems,
+      // coin piles, chests, and safes — one item per tile.
+      const innerL = b.x + 1, innerR = b.x + b.w - 2;
+      const innerT = b.y + 1, innerB = b.y + b.h - 2;
+      const door = b.doorSide;
+
+      // Vault size: ~half the interior, minimum 2x2.
+      const vaultW = Math.max(2, Math.floor((innerR - innerL + 1) / 2));
+      const vaultH = Math.max(2, Math.floor((innerB - innerT + 1) / 2));
+
+      // Place vault in the corner OPPOSITE the door so customers walk through
+      // the banker hall first.
+      let vx, vy;
+      if (door === 's') vy = innerT;
+      else if (door === 'n') vy = innerB - vaultH + 1;
+      else vy = innerT + Math.floor(((innerB - innerT + 1) - vaultH) / 2);
+      if (door === 'e') vx = innerL;
+      else if (door === 'w') vx = innerR - vaultW + 1;
+      else vx = innerL + Math.floor(((innerR - innerL + 1) - vaultW) / 2);
+
+      // Partition orientation: vertical when door is N/S (split left/right),
+      // horizontal when door is E/W (split top/bottom).
+      const orientation = (door === 'n' || door === 's') ? 'vertical' : 'horizontal';
+      const partition = [];
+      if (orientation === 'vertical') {
+        const col = (vx === innerL) ? (vx + vaultW) : (vx - 1);
+        for (let yy = innerT; yy <= innerB; yy++) partition.push({ x: col, y: yy });
+      } else {
+        const row = (vy === innerT) ? (vy + vaultH) : (vy - 1);
+        for (let xx = innerL; xx <= innerR; xx++) partition.push({ x: xx, y: row });
+      }
+
+      // Stamp partition as walls.
+      for (const p of partition) {
+        const t = get(p.x, p.y);
+        if (!t) continue;
+        t.wall = true; t.floor = false; t.type = 'wall'; t.vaultWall = true;
+      }
+
+      // Cut a single locked door near the middle of the partition.
+      const mid = Math.floor(partition.length / 2);
+      let lockedDoor = null;
+      for (let off = 0; off < partition.length && !lockedDoor; off++) {
+        for (const sign of [0, -1, 1]) {
+          const idx = mid + sign * off;
+          if (idx < 0 || idx >= partition.length) continue;
+          const p = partition[idx];
+          // Avoid building corners (the building's own perimeter walls cross
+          // the partition at its endpoints).
+          if (p.x === b.x || p.x === b.x + b.w - 1 || p.y === b.y || p.y === b.y + b.h - 1) continue;
+          lockedDoor = p;
+          break;
+        }
+      }
+      if (lockedDoor) {
+        const t = get(lockedDoor.x, lockedDoor.y);
+        t.wall = false;
+        t.floor = false;
+        t.door = (orientation === 'horizontal') ? 'front' : 'side';
+        t.doorLocked = true;
+        t.type = 'door';
+        t.vaultWall = false;
+      }
+
+      // Stuff the vault with loot — one valuable per inner vault tile.
+      for (let yy = vy; yy < vy + vaultH; yy++) {
+        for (let xx = vx; xx < vx + vaultW; xx++) {
+          const t = get(xx, yy);
+          if (!t) continue;
+          // The partition may have overwritten one column/row of the vault
+          // interior — restore floor on tiles that aren't the partition.
+          if (t.vaultWall) continue;
+          t.floor = true; t.type = 'floor'; t.floorBase = floorStyle;
+          t.vault = true;
+          const pick = ROT.RNG.getItem(VAULT_LOOT);
+          if (pick && atlas.byName[pick]) t.furniture = pick;
+        }
+      }
+
+      // Banker hall: drop a small carpet and a counter (stone table) near
+      // the locked door.
+      const rugBase = TYPE_RUG.bank;
+      const bankerTiles = [];
+      for (let yy = innerT; yy <= innerB; yy++) {
+        for (let xx = innerL; xx <= innerR; xx++) {
+          const t = get(xx, yy);
+          if (!t || !t.floor || t.vault) continue;
+          bankerTiles.push({ x: xx, y: yy });
+        }
+      }
+      if (rugBase && bankerTiles.length >= 2) {
+        // 2x1 strip of carpet centred in the banker hall.
+        const r = bankerTiles[Math.floor(bankerTiles.length / 2)];
+        const t1 = get(r.x, r.y);
+        if (t1 && t1.floor) { t1.rug = true; t1.rugBase = rugBase; }
+      }
+      if (bankerTiles.length && lockedDoor) {
+        // Counter: pick the banker tile closest to the locked door.
+        bankerTiles.sort((a, c) => {
+          const da = Math.abs(a.x - lockedDoor.x) + Math.abs(a.y - lockedDoor.y);
+          const dc = Math.abs(c.x - lockedDoor.x) + Math.abs(c.y - lockedDoor.y);
+          return da - dc;
+        });
+        for (const cand of bankerTiles) {
+          const t = get(cand.x, cand.y);
+          if (t && t.floor && !t.furniture && !t.rug) {
+            t.furniture = 'stone table';
+            break;
+          }
+        }
+      }
+    };
+
     const placeFurniture = (b) => {
       if (b.type === 'shop') {
         placeShopLayout(b);
+        return;
+      }
+      if (b.type === 'bank') {
+        placeBankLayout(b);
         return;
       }
       const innerTiles = [];
@@ -832,10 +968,13 @@ export default function TownExample({
       layers.push({ name, z: 2.3, reason: 'Graveyard fence', context: { kind: 'fence', neighbors: { n, s, e, w } } });
     }
 
-    // z=2.5: door.
+    // z=2.5: door (locked vault doors render as iron portcullis).
     if (tile.door) {
-      const name = tile.door === 'side' ? 'open wooden door side' : 'open wooden door front';
-      if (atlas.byName[name]) layers.push({ name, z: 2.5, reason: 'Door' });
+      const isSide = tile.door === 'side';
+      const name = tile.doorLocked
+        ? (isSide ? 'locked iron portcullis side' : 'locked iron portcullis front')
+        : (isSide ? 'open wooden door side' : 'open wooden door front');
+      if (atlas.byName[name]) layers.push({ name, z: 2.5, reason: tile.doorLocked ? 'Locked vault door' : 'Door' });
     }
 
     // z=3: furniture / fountain / gravestone / coffin.
