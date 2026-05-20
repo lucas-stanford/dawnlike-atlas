@@ -5,7 +5,6 @@ import { resolveDawnLikeWallName, resolveDawnLikeFloorName, resolveAutotile, res
 import './Autotile.css';
 
 const TILE_SIZE = 32;
-const DEFAULT_SCALE = 1;
 const DISPLAY_WIDTH = 45;
 const DISPLAY_HEIGHT = 30;
 
@@ -20,21 +19,6 @@ const cleanName = (name) => {
   }
   return words.join(' ').trim();
 };
-
-const GRASS_STYLES = [
-  'morning grass floor', 'day grass floor', 'noon grass floor',
-  'evening grass floor', 'night grass floor',
-];
-
-const STREET_STYLES = [
-  'day stone floor', 'day brick floor', 'day dirt floor', 'day tile floor',
-  'morning stone floor', 'morning brick floor',
-];
-
-const FLOOR_STYLES = [
-  'day brick floor', 'day stone floor', 'day tile floor',
-  'morning brick floor', 'morning stone floor', 'morning tile floor',
-];
 
 // Building archetypes: each drives furniture set, sign, and rug colour.
 const BUILDING_TYPES = ['house', 'inn', 'pub', 'smithy', 'church', 'shop'];
@@ -78,7 +62,6 @@ export default function TownExample({
   graveyardChance: graveyardChanceProp,
   buildingCount: buildingCountProp,
   seed: seedProp,
-  scale: scaleProp,
   showConfigInitially = false,
 } = {}) {
   const [rawMapData, setRawMapData] = useState(null);
@@ -101,7 +84,6 @@ export default function TownExample({
   const [pinnedTile, setPinnedTile] = useState(null);
   const [pickerLayerZ, setPickerLayerZ] = useState(null);
   const [spriteOverrides, setSpriteOverrides] = useState({});
-  const [scale, setScale] = useState(scaleProp ?? DEFAULT_SCALE);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [showConfig, setShowConfig] = useState(showConfigInitially);
 
@@ -938,22 +920,17 @@ export default function TownExample({
       {showConfig && (
         <div className="floating-config">
           <div className="control-card">
-            <h3>Town Config</h3>
-            <div className="field-group"><label>Wall Style</label><select value={wallStyle} onChange={e => setWallStyle(e.target.value)}>{discoveredWalls.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-            <div className="field-group"><label>Building Floor</label><select value={floorStyle} onChange={e => setFloorStyle(e.target.value)}>{FLOOR_STYLES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-            <div className="field-group"><label>Main Road (brick)</label><select value={mainStreetStyle} onChange={e => setMainStreetStyle(e.target.value)}>{STREET_STYLES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-            <div className="field-group"><label>Side Street</label><select value={streetStyle} onChange={e => setStreetStyle(e.target.value)}>{STREET_STYLES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-            <div className="field-group"><label>Grass Style</label><select value={grassStyle} onChange={e => setGrassStyle(e.target.value)}>{GRASS_STYLES.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-            <div className="field-group"><label>Tree Style</label><select value={treeStyle} onChange={e => setTreeStyle(e.target.value)}>{discoveredTrees.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-            <div className="field-group"><label>Buildings: {buildingCount}</label><input type="range" min="3" max="10" step="1" value={buildingCount} onChange={e => setBuildingCount(parseInt(e.target.value))} /></div>
-            <div className="field-group"><label>Tree density: {treeChance}%</label><input type="range" min="0" max="30" step="1" value={treeChance} onChange={e => setTreeChance(parseInt(e.target.value))} /></div>
-            <div className="field-group"><label>Flower density: {flowerChance}%</label><input type="range" min="0" max="30" step="1" value={flowerChance} onChange={e => setFlowerChance(parseInt(e.target.value))} /></div>
-            <div className="field-group"><label>Graveyard chance: {graveyardChance}%</label><input type="range" min="0" max="100" step="5" value={graveyardChance} onChange={e => setGraveyardChance(parseInt(e.target.value))} /></div>
-            <div className="field-group"><label>Zoom: {scale.toFixed(1)}x</label><input type="range" min="0.5" max="3" step="0.25" value={scale} onChange={e => setScale(parseFloat(e.target.value))} /></div>
-            <button className="primary-button" onClick={() => { setSpriteOverrides({}); setPinnedTile(null); setSeed(Math.floor(Math.random() * 1000000)); }}>🏘️ Re-generate</button>
-            {overrideLog.length > 0 && (
-              <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <h3>Tile Overrides</h3>
+            {overrideLog.length === 0 ? (
+              <div style={{ color: '#bbb', fontSize: 13 }}>
+                No overrides yet. Click any tile to pin its inspector, then
+                pick an alternate sprite from the swatch picker to override
+                the autotile choice. Use the Storybook Controls panel for
+                generator settings (seed, styles, etc.).
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, color: '#fff' }}>
                   <strong>Overrides ({overrideLog.length})</strong>
                   <span>
                     <button onClick={copyLog} title="Copy log JSON">📋 Copy</button>
@@ -963,13 +940,13 @@ export default function TownExample({
                 <pre style={{ maxHeight: 240, overflow: 'auto', fontSize: 11, margin: 0, background: 'rgba(0,0,0,0.35)', padding: 6, borderRadius: 4, color: '#fff' }}>
 {JSON.stringify(overrideLog, null, 2)}
                 </pre>
-              </div>
+              </>
             )}
           </div>
         </div>
       )}
       <div className="map-viewport maximized">
-        <div className="map-grid" style={{ width: DISPLAY_WIDTH * TILE_SIZE * scale, height: DISPLAY_HEIGHT * TILE_SIZE * scale }} onMouseMove={handleMouseMove} onMouseLeave={() => setHoverInfo(null)} onClick={() => setPinnedTile(null)}>
+        <div className="map-grid" style={{ width: DISPLAY_WIDTH * TILE_SIZE, height: DISPLAY_HEIGHT * TILE_SIZE }} onMouseMove={handleMouseMove} onMouseLeave={() => setHoverInfo(null)} onClick={() => setPinnedTile(null)}>
           {Array.from({ length: DISPLAY_HEIGHT }).map((_, y) => (
             Array.from({ length: DISPLAY_WIDTH }).map((_, x) => {
               const layers = applyOverrides(x, y, getTileLayers(x, y));
@@ -982,7 +959,7 @@ export default function TownExample({
                     const rect = e.currentTarget.parentElement.getBoundingClientRect();
                     setPinnedTile({ x, y, screenX: e.clientX - rect.left, screenY: e.clientY - rect.top });
                   }}
-                  style={{ position: 'absolute', left: x * TILE_SIZE * scale, top: y * TILE_SIZE * scale, width: TILE_SIZE * scale, height: TILE_SIZE * scale, cursor: 'pointer' }}
+                  style={{ position: 'absolute', left: x * TILE_SIZE, top: y * TILE_SIZE, width: TILE_SIZE, height: TILE_SIZE, cursor: 'pointer' }}
                 >
                   {layers.map((layer, idx) => {
                     const sprite = atlas.byName[layer.name];
@@ -992,7 +969,7 @@ export default function TownExample({
                     if (layer.flipY) trans.push('scaleY(-1)');
                     if (layer.rotate) trans.push(`rotate(${layer.rotate}deg)`);
                     return (
-                      <div key={idx} style={{ position: 'absolute', inset: 0, backgroundImage: `url(${resolveAssetPath('/DawnlikeAtlas0.png')})`, backgroundPosition: `-${sprite.x * scale}px -${sprite.y * scale}px`, backgroundSize: `${atlas.meta.size.w * scale}px ${atlas.meta.size.h * scale}px`, zIndex: layer.z * 10, transform: trans.join(' ') }} />
+                      <div key={idx} style={{ position: 'absolute', inset: 0, backgroundImage: `url(${resolveAssetPath('/DawnlikeAtlas0.png')})`, backgroundPosition: `-${sprite.x}px -${sprite.y}px`, backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`, zIndex: layer.z * 10, transform: trans.join(' ') }} />
                     );
                   })}
                 </div>

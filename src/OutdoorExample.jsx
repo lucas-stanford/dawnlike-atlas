@@ -5,7 +5,6 @@ import { resolveDawnLikeWallName, resolveDawnLikeForestName, resolveDawnLikeRive
 import './Autotile.css';
 
 const TILE_SIZE = 32;
-const DEFAULT_SCALE = 1;
 const DISPLAY_WIDTH = 50;
 const DISPLAY_HEIGHT = 40;
 
@@ -23,46 +22,6 @@ const cleanName = (name) => {
   return words.join(' ').trim();
 };
 
-const TERRAIN_STYLES = [
-  'morning grass floor',
-  'day grass floor',
-  'noon grass floor',
-  'evening grass floor',
-  'night grass floor',
-  'morning stone floor',
-  'morning tile floor',
-];
-
-const ROAD_STYLES = [
-  'dirt trail',
-  'sand trail',
-  'rocky trail',
-  'arduous trail',
-];
-
-const RIVER_STYLES = [
-  'clear river',
-  'cloudy river',
-  'noxious river',
-  'lava flow',
-];
-
-// Mountain "blob" families discovered in the atlas. Each has 10 sprites
-// (alone, c, n/s/e/w, ne/nw/se/sw). Includes peak (rocky), snowcap, volcano
-// and mound (rolling-hill) variants.
-const MOUNTAIN_STYLES = [
-  'brown peak',
-  'dark peak',
-  'green peak',
-  'red peak',
-  'yellow peak',
-  'blue peak',
-  'brown snowcap',
-  'dark snowcap',
-  'red volcano',
-  'green mound',
-];
-
 export default function OutdoorExample({
   terrainStyle: terrainStyleProp,
   roadStyle: roadStyleProp,
@@ -71,7 +30,6 @@ export default function OutdoorExample({
   mountainStyle: mountainStyleProp,
   dirtStyle: dirtStyleProp,
   seed: seedProp,
-  scale: scaleProp,
   showConfigInitially = false,
 } = {}) {
   const [rawMapData, setRawMapData] = useState(null);
@@ -89,7 +47,6 @@ export default function OutdoorExample({
   const [pinnedTile, setPinnedTile] = useState(null);
   const [pickerLayerZ, setPickerLayerZ] = useState(null);
   const [spriteOverrides, setSpriteOverrides] = useState({});
-  const [scale, setScale] = useState(scaleProp ?? DEFAULT_SCALE);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [showConfig, setShowConfig] = useState(showConfigInitially);
 
@@ -629,18 +586,17 @@ export default function OutdoorExample({
       {showConfig && (
         <div className="floating-config">
           <div className="control-card">
-            <h3>Outdoor Config</h3>
-            <div className="field-group"><label>Terrain</label><select value={terrainStyle} onChange={e => setTerrainStyle(e.target.value)}>{discoveredFloors.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-            <div className="field-group"><label>Dirt Patch</label><select value={dirtStyle} onChange={e => setDirtStyle(e.target.value)}>{discoveredFloors.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-            <div className="field-group"><label>Path Style</label><select value={roadStyle} onChange={e => setRoadStyle(e.target.value)}>{discoveredRoads.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-            <div className="field-group"><label>River Style</label><select value={riverStyle} onChange={e => setRiverStyle(e.target.value)}>{discoveredRivers.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-            <div className="field-group"><label>Tree Style</label><select value={treeStyle} onChange={e => setTreeStyle(e.target.value)}>{discoveredTrees.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-            <div className="field-group"><label>Mountain Style</label><select value={mountainStyle} onChange={e => setMountainStyle(e.target.value)}>{discoveredMountains.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-            <div className="field-group"><label>Zoom: {scale.toFixed(1)}x</label><input type="range" min="0.5" max="3" step="0.25" value={scale} onChange={e => setScale(parseFloat(e.target.value))} /></div>
-            <button className="primary-button" onClick={() => { setSpriteOverrides({}); setPinnedTile(null); setSeed(Math.floor(Math.random() * 1000000)); }}>🌲 Re-generate</button>
-            {overrideLog.length > 0 && (
-              <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <h3>Tile Overrides</h3>
+            {overrideLog.length === 0 ? (
+              <div style={{ color: '#bbb', fontSize: 13 }}>
+                No overrides yet. Click any tile to pin its inspector, then
+                pick an alternate sprite from the swatch picker to override
+                the autotile choice. Use the Storybook Controls panel for
+                generator settings (seed, styles, etc.).
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, color: '#fff' }}>
                   <strong>Overrides ({overrideLog.length})</strong>
                   <span>
                     <button onClick={copyLog} title="Copy log JSON to clipboard">📋 Copy</button>
@@ -650,13 +606,13 @@ export default function OutdoorExample({
                 <pre style={{ maxHeight: 240, overflow: 'auto', fontSize: 11, margin: 0, background: 'rgba(0,0,0,0.35)', padding: 6, borderRadius: 4, color: '#fff' }}>
 {JSON.stringify(overrideLog, null, 2)}
                 </pre>
-              </div>
+              </>
             )}
           </div>
         </div>
       )}
       <div className="map-viewport maximized">
-        <div className="map-grid" style={{ width: DISPLAY_WIDTH * TILE_SIZE * scale, height: DISPLAY_HEIGHT * TILE_SIZE * scale }} onMouseMove={handleMouseMove} onMouseLeave={() => setHoverInfo(null)} onClick={() => setPinnedTile(null)}>
+        <div className="map-grid" style={{ width: DISPLAY_WIDTH * TILE_SIZE, height: DISPLAY_HEIGHT * TILE_SIZE }} onMouseMove={handleMouseMove} onMouseLeave={() => setHoverInfo(null)} onClick={() => setPinnedTile(null)}>
           {Array.from({ length: DISPLAY_HEIGHT }).map((_, y) => (
             Array.from({ length: DISPLAY_WIDTH }).map((_, x) => {
               const layers = applyOverrides(x, y, getTileLayers(x, y));
@@ -669,7 +625,7 @@ export default function OutdoorExample({
                     const rect = e.currentTarget.parentElement.getBoundingClientRect();
                     setPinnedTile({ x, y, screenX: e.clientX - rect.left, screenY: e.clientY - rect.top });
                   }}
-                  style={{ position: 'absolute', left: x * TILE_SIZE * scale, top: y * TILE_SIZE * scale, width: TILE_SIZE * scale, height: TILE_SIZE * scale, cursor: 'pointer' }}
+                  style={{ position: 'absolute', left: x * TILE_SIZE, top: y * TILE_SIZE, width: TILE_SIZE, height: TILE_SIZE, cursor: 'pointer' }}
                 >
                   {layers.map((layer, idx) => {
                     const sprite = atlas.byName[layer.name];
@@ -679,7 +635,7 @@ export default function OutdoorExample({
                     if (layer.flipY) trans.push('scaleY(-1)');
                     if (layer.rotate) trans.push(`rotate(${layer.rotate}deg)`);
                     return (
-                      <div key={idx} style={{ position: 'absolute', inset: 0, backgroundImage: `url(${resolveAssetPath('/DawnlikeAtlas0.png')})`, backgroundPosition: `-${sprite.x * scale}px -${sprite.y * scale}px`, backgroundSize: `${atlas.meta.size.w * scale}px ${atlas.meta.size.h * scale}px`, zIndex: layer.z * 10, transform: trans.join(' ') }} />
+                      <div key={idx} style={{ position: 'absolute', inset: 0, backgroundImage: `url(${resolveAssetPath('/DawnlikeAtlas0.png')})`, backgroundPosition: `-${sprite.x}px -${sprite.y}px`, backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`, zIndex: layer.z * 10, transform: trans.join(' ') }} />
                     );
                   })}
                 </div>

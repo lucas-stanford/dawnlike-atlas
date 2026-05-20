@@ -39,10 +39,10 @@ export default {
     docs: {
       description: {
         component:
-          'rot.js dungeon generator demo with a gear-button floating-config overlay. ' +
-          'Every knob below is also editable from inside the example via the ⚙️ button. ' +
+          'rot.js dungeon generator demo. Edit generator settings here in the ' +
+          'Controls panel; the in-canvas ⚙️ gear button shows the tile-override log. ' +
           'Hover any tile to see its coordinates, sprite name and the autotile reason; ' +
-          'click a tile to pin the popup.',
+          'click a tile to pin the popup and use the swatch picker to override any sprite.',
       },
     },
   },
@@ -92,15 +92,10 @@ export default {
       options: FLOOR_STYLES,
       description: 'Base name of the DawnLike floor sprite family.',
     },
-    scale: {
-      table: { category: 'View' },
-      control: { type: 'range', min: 1, max: 6, step: 0.5 },
-      description: 'Sprite zoom multiplier.',
-    },
     showConfigInitially: {
       table: { category: 'View' },
       control: 'boolean',
-      description: 'Open the in-canvas floating config card on first render.',
+      description: 'Open the in-canvas overrides panel on first render.',
     },
   },
   args: {
@@ -112,7 +107,6 @@ export default {
     cellularSmooth: 4,
     wallStyle: 'bright mine wall',
     floorStyle: 'day brick floor',
-    scale: 2,
     showConfigInitially: false,
   },
 };
