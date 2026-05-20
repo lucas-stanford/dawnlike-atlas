@@ -83,7 +83,7 @@ export default function TownExample({
   const [atlas, setAtlas] = useState(null);
   const [error, setError] = useState(null);
   const [wallStyle, setWallStyle] = useState(wallStyleProp || '');
-  const [floorStyle, setFloorStyle] = useState(floorStyleProp || 'day brick floor');
+  const [floorStyle, setFloorStyle] = useState(floorStyleProp || 'day tile floor');
   const [streetStyle, setStreetStyle] = useState(streetStyleProp || 'day stone floor');
   const [mainStreetStyle, setMainStreetStyle] = useState(mainStreetStyleProp || 'day brick floor');
   const [grassStyle, setGrassStyle] = useState(grassStyleProp || 'day grass floor');

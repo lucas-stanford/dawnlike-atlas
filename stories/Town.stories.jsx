@@ -135,7 +135,7 @@ export default {
     treeChance: 8,
     flowerChance: 6,
     wallStyle: 'bright brick wall',
-    floorStyle: 'day brick floor',
+    floorStyle: 'day tile floor',
     streetStyle: 'day stone floor',
     mainStreetStyle: 'day brick floor',
     grassStyle: 'day grass floor',

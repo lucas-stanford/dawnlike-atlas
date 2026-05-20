@@ -14,7 +14,7 @@ const TOWN_STYLES = {
   grass:      'day grass floor',
   street:     'day stone floor',
   mainStreet: 'day brick floor',
-  floor:      'day brick floor',
+  floor:      'day tile floor',
   wall:       'bright brick wall',
   tree:       'light oak',
 };
