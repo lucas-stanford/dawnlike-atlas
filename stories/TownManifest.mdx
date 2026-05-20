@@ -64,6 +64,7 @@ for the rendering contract.
     <tr><td><code>buildingCount</code></td><td><code>{'{min,max}'}</code></td><td><code>{'{4,6}'}</code></td><td>Range for the number of buildings to attempt.</td></tr>
     <tr><td><code>buildingSize</code></td><td><code>{'{wMin,wMax,hMin,hMax}'}</code></td><td><code>{'{5,7,4,5}'}</code></td><td>Per-building footprint range (inclusive).</td></tr>
     <tr><td><code>buildingPlacementAttempts</code></td><td><code>number</code></td><td><code>80</code></td><td>Reject-sampling tries per building before giving up.</td></tr>
+    <tr><td><code>buildingSpacing</code></td><td><code>number</code></td><td><code>2</code></td><td>Minimum number of grass tiles between buildings (and between buildings and the plaza). Higher values spread the town out.</td></tr>
     <tr><td><code>buildingTypeWeights</code></td><td><code>object</code></td><td>see below</td><td>Weighted choice for <code>home</code>/<code>inn</code>/<code>smithy</code>/<code>shop</code>/<code>church</code>.</td></tr>
     <tr><td><code>signs</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Drop a <code>&lt;type&gt; sign</code> sprite on the street tile in front of each non-residential door (inn/smithy/shop/church). Regular homes are left unmarked.</td></tr>
     <tr><td><code>furniture</code></td><td><code>FurnitureConfig</code></td><td><code>{'{enabled:true}'}</code></td><td>Furniture options (see below).</td></tr>

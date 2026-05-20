@@ -78,6 +78,12 @@ export default {
       control: { type: 'range', min: 1, max: 12, step: 1 },
       description: 'Maximum number of buildings to attempt.',
     },
+    townBuildingSpacing: {
+      name: 'town.buildingSpacing',
+      table: { category: 'Town' },
+      control: { type: 'range', min: 2, max: 6, step: 1 },
+      description: 'Minimum number of grass tiles between buildings (and between buildings and the plaza). Higher values spread the town out.',
+    },
     townTreeDensity: {
       name: 'town.treeDensity',
       table: { category: 'Town' },
@@ -177,6 +183,7 @@ export default {
     townPlazaSize: 6,
     townBuildingsMin: 4,
     townBuildingsMax: 6,
+    townBuildingSpacing: 2,
     townTreeDensity: 0.08,
     townFountain: true,
     townSigns: true,
@@ -212,6 +219,7 @@ function buildManifests(args) {
     town: {
       plazaSize: args.townPlazaSize,
       buildingCount: { min: args.townBuildingsMin, max: Math.max(args.townBuildingsMin, args.townBuildingsMax) },
+      buildingSpacing: args.townBuildingSpacing,
       treeDensity: args.townTreeDensity,
       fountain: args.townFountain,
       signs: args.townSigns,

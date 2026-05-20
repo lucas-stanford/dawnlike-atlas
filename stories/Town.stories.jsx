@@ -65,6 +65,11 @@ export default {
       control: { type: 'range', min: 1, max: 14, step: 1 },
       description: 'Target number of buildings to drop into the town.',
     },
+    buildingSpacing: {
+      table: { category: 'Generator' },
+      control: { type: 'range', min: 2, max: 6, step: 1 },
+      description: 'Minimum number of grass tiles between buildings (and between buildings and the plaza). Higher values spread the town out.',
+    },
     graveyardChance: {
       table: { category: 'Generator' },
       control: { type: 'range', min: 0, max: 100, step: 5 },
@@ -125,6 +130,7 @@ export default {
   args: {
     seed: Math.floor(Math.random() * 1_000_000),
     buildingCount: 6,
+    buildingSpacing: 2,
     graveyardChance: 30,
     treeChance: 8,
     flowerChance: 6,

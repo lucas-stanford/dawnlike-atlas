@@ -43,6 +43,7 @@
  * @property {{wMin:number,wMax:number,hMin:number,hMax:number}} [buildingSize]
  *                                                        Per-building footprint range (inclusive).
  * @property {number} [buildingPlacementAttempts=80]      Reject sampling tries per building.
+ * @property {number} [buildingSpacing=2]                 Minimum number of grass tiles between buildings (and between buildings and the plaza). Higher values spread the town out.
  * @property {Object<string,number>} [buildingTypeWeights]
  *                                                        Weighted choice for building type. Keys: 'home'|'inn'|'smithy'|'shop'|'church'.
  * @property {boolean} [signs=true]                       Drop a `<type> sign` sprite on the street tile in front of each door.
@@ -96,6 +97,7 @@ export const DEFAULT_TOWN_MANIFEST = Object.freeze({
   buildingCount: { min: 4, max: 6 },
   buildingSize: { wMin: 5, wMax: 7, hMin: 4, hMax: 5 },
   buildingPlacementAttempts: 80,
+  buildingSpacing: 2,
   buildingTypeWeights: DEFAULT_BUILDING_TYPE_WEIGHTS,
   signs: true,
   furniture: { enabled: true },
@@ -139,6 +141,7 @@ export function generateTown(manifest) {
     buildingCount,
     buildingSize,
     buildingPlacementAttempts,
+    buildingSpacing,
     buildingTypeWeights,
     signs: placeSigns,
     furniture: furnitureCfg,
@@ -184,8 +187,8 @@ export function generateTown(manifest) {
     ROT.RNG.getUniformInt(0, Math.max(0, buildingCount.max - buildingCount.min));
   const placed = [];
   const overlaps = (bx, by, bw, bh) => {
-    for (let y = by - 1; y < by + bh + 1; y++) {
-      for (let x = bx - 1; x < bx + bw + 1; x++) {
+    for (let y = by - buildingSpacing; y < by + bh + buildingSpacing; y++) {
+      for (let x = bx - buildingSpacing; x < bx + bw + buildingSpacing; x++) {
         if (!inBounds(x, y)) return true;
         const t = get(x, y);
         if (t.wall || t.floor || t.street || t.fountain) return true;
@@ -201,10 +204,10 @@ export function generateTown(manifest) {
       const bh = buildingSize.hMin + ROT.RNG.getUniformInt(0, Math.max(0, buildingSize.hMax - buildingSize.hMin));
       const side = ROT.RNG.getItem(['n', 's', 'e', 'w']);
       let bx, by;
-      if (side === 'n')      { bx = px0 + ROT.RNG.getUniformInt(-Math.floor(bw/2), PLAZA - Math.floor(bw/2)); by = py0 - bh - 2; }
-      else if (side === 's') { bx = px0 + ROT.RNG.getUniformInt(-Math.floor(bw/2), PLAZA - Math.floor(bw/2)); by = py0 + PLAZA + 2; }
-      else if (side === 'e') { bx = px0 + PLAZA + 2; by = py0 + ROT.RNG.getUniformInt(-Math.floor(bh/2), PLAZA - Math.floor(bh/2)); }
-      else                   { bx = px0 - bw - 2;    by = py0 + ROT.RNG.getUniformInt(-Math.floor(bh/2), PLAZA - Math.floor(bh/2)); }
+      if (side === 'n')      { bx = px0 + ROT.RNG.getUniformInt(-Math.floor(bw/2), PLAZA - Math.floor(bw/2)); by = py0 - bh - buildingSpacing; }
+      else if (side === 's') { bx = px0 + ROT.RNG.getUniformInt(-Math.floor(bw/2), PLAZA - Math.floor(bw/2)); by = py0 + PLAZA + buildingSpacing; }
+      else if (side === 'e') { bx = px0 + PLAZA + buildingSpacing; by = py0 + ROT.RNG.getUniformInt(-Math.floor(bh/2), PLAZA - Math.floor(bh/2)); }
+      else                   { bx = px0 - bw - buildingSpacing;    by = py0 + ROT.RNG.getUniformInt(-Math.floor(bh/2), PLAZA - Math.floor(bh/2)); }
       if (bx < 1 || by < 1 || bx + bw > W - 1 || by + bh > H - 1) continue;
       if (overlaps(bx, by, bw, bh)) continue;
 

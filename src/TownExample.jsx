@@ -74,6 +74,7 @@ export default function TownExample({
   flowerChance: flowerChanceProp,
   graveyardChance: graveyardChanceProp,
   buildingCount: buildingCountProp,
+  buildingSpacing: buildingSpacingProp,
   seed: seedProp,
   showConfigInitially = false,
 } = {}) {
@@ -91,6 +92,7 @@ export default function TownExample({
   const [flowerChance, setFlowerChance] = useState(flowerChanceProp ?? 6);
   const [graveyardChance, setGraveyardChance] = useState(graveyardChanceProp ?? 30);
   const [buildingCount, setBuildingCount] = useState(buildingCountProp ?? 6);
+  const [buildingSpacing, setBuildingSpacing] = useState(buildingSpacingProp ?? 2);
   const [seed, setSeed] = useState(seedProp ?? Math.floor(Math.random() * 1000000));
   const [loading, setLoading] = useState(true);
   const [hoverInfo, setHoverInfo] = useState(null);
@@ -199,7 +201,7 @@ export default function TownExample({
     //    another building. Buildings have a perimeter of `building.wall`
     //    tiles and an interior of `building.floor` tiles.
     const placedBuildings = [];
-    const overlaps = (bx, by, w, h, pad = 2) => {
+    const overlaps = (bx, by, w, h, pad = buildingSpacing) => {
       for (let yy = by - pad; yy < by + h + pad; yy++) {
         for (let xx = bx - pad; xx < bx + w + pad; xx++) {
           if (!inBounds(xx, yy)) return true;
@@ -245,15 +247,15 @@ export default function TownExample({
         let bx, by;
         if (side === 'n') {
           bx = anchorX + ROT.RNG.getUniformInt(-Math.floor(w/2), anchorW - Math.floor(w/2));
-          by = anchorY - h - 2;
+          by = anchorY - h - buildingSpacing;
         } else if (side === 's') {
           bx = anchorX + ROT.RNG.getUniformInt(-Math.floor(w/2), anchorW - Math.floor(w/2));
-          by = anchorY + anchorH + 2;
+          by = anchorY + anchorH + buildingSpacing;
         } else if (side === 'e') {
-          bx = anchorX + anchorW + 2;
+          bx = anchorX + anchorW + buildingSpacing;
           by = anchorY + ROT.RNG.getUniformInt(-Math.floor(h/2), anchorH - Math.floor(h/2));
         } else {
-          bx = anchorX - w - 2;
+          bx = anchorX - w - buildingSpacing;
           by = anchorY + ROT.RNG.getUniformInt(-Math.floor(h/2), anchorH - Math.floor(h/2));
         }
         // Keep buildings clear of the map edge by 1 tile.
@@ -940,7 +942,7 @@ export default function TownExample({
 
     setRawMapData(data);
     setBuildings(placedBuildings);
-  }, [seed, atlas, buildingCount, graveyardChance, floorStyle, treeChance, flowerChance]);
+  }, [seed, atlas, buildingCount, buildingSpacing, graveyardChance, floorStyle, treeChance, flowerChance]);
 
   // Clone for derived rendering (mirrors OutdoorExample's pattern).
   const mapData = useMemo(() => {
