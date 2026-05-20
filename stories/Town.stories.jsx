@@ -56,7 +56,9 @@ export default {
     seed: {
       table: { category: 'Generator' },
       control: { type: 'number' },
-      description: 'Random seed. Same seed → identical town every time.',
+      description:
+        'Random seed. Same seed → identical town every time. ' +
+        'Default is rolled fresh on every page load; set explicitly to pin a map.',
     },
     buildingCount: {
       table: { category: 'Generator' },
@@ -121,7 +123,7 @@ export default {
     },
   },
   args: {
-    seed: 1,
+    seed: Math.floor(Math.random() * 1_000_000),
     buildingCount: 6,
     graveyardChance: 30,
     treeChance: 8,
