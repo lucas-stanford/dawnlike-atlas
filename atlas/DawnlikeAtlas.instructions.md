@@ -84,12 +84,23 @@ import atlas from './DawnlikeAtlas.json';
 />
 ```
 
-## Lookup by category / group
+## Lookup by name
 
 ```javascript
 const atlas = await fetch('DawnlikeAtlas.json').then(r => r.json());
-// All Player character names:
-atlas.byCategory.Characters.Player;          // → ['ordinary human', 'fighter', ...]
 // Where is the wizard sprite?
-atlas.byName.wizard;                         // → { x, y, category, group, globalFrame, isAnimated }
+atlas.byName.wizard;                         // → { x, y, w, h, tags }
+// What frame index does it occupy in the legacy 64-col grid?
+const indexToName = atlas.legacyFrames;      // → { '0': 'fighting fish', '1': 'red snapper', … }
+```
+
+## JSON shape (slim)
+
+```
+{
+  meta:    { size, tile, columns, rows, spriteCount, … },
+  frames:  { '<name>': { frame: {x,y,w,h} } },   // Phaser-compatible texture atlas
+  byName:  { '<name>': { x, y, w, h, tags } },   // flat lookup used by React examples
+  legacyFrames: { '<index>': '<name>' }          // index → name reverse map (Mega Atlas tooltip)
+}
 ```
