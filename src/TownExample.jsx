@@ -420,6 +420,33 @@ export default function TownExample({
       dij.compute(startX, startY, (px, py) => { upgradeToMain(px, py); });
     }
 
+    // 5c. Every other (non-important) building also gets a path from the
+    //     plaza to its door, but paved with the regular 'side' street
+    //     style. Already-paved tiles (the brick spine + per-building
+    //     rings) are reused, so houses just get a short stone spur where
+    //     the existing network doesn't already reach.
+    const upgradeToSide = (px, py) => {
+      if (!inBounds(px, py)) return false;
+      const t = get(px, py);
+      if (!t || t.wall || t.floor || t.door || t.fence) return false;
+      // Don't downgrade a brick (main) tile to stone.
+      if (t.street && t.streetKind === 'main') return true;
+      t.street = true;
+      t.type = 'street';
+      t.streetKind = 'side';
+      t.tree = false;
+      t.decor = undefined;
+      return true;
+    };
+    for (const b of placedBuildings) {
+      if (IMPORTANT_TYPES.has(b.type)) continue;
+      const out = { n: [0,-1], s: [0,1], e: [1,0], w: [-1,0] }[b.doorSide];
+      const startX = b.doorX + out[0], startY = b.doorY + out[1];
+      if (!inBounds(startX, startY)) continue;
+      const dij = new ROT.Path.Dijkstra(plazaCenterX, plazaCenterY, mainPassable, { topology: 4 });
+      dij.compute(startX, startY, (px, py) => { upgradeToSide(px, py); });
+    }
+
     // 6. Building interior decoration: rug, furniture, sign.
     //    (Lanterns were removed — they sat awkwardly on wall-corner sprites.)
     const SHOP_STOCK = ['closed chest', 'closed big chest', 'closed barrel', 'food shelves', 'empty shelves'];
