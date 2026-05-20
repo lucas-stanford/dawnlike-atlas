@@ -561,6 +561,13 @@ export const SpriteSheet = ({
               {hoveredFrameInfo.class && <div className="tooltip-class">{hoveredFrameInfo.class}</div>}
               {hoveredFrameInfo.race && <div className="tooltip-race">{hoveredFrameInfo.race}</div>}
               {hoveredFrameInfo.type && <div className="tooltip-type">{hoveredFrameInfo.type}</div>}
+              {hoveredFrameInfo.tags?.length > 0 && (
+                <div className="tooltip-tags">
+                  {hoveredFrameInfo.tags.map(tag => (
+                    <span key={tag} className="tooltip-tag">{tag}</span>
+                  ))}
+                </div>
+              )}
               {!hoveredFrameInfo.name && hoveredFrameInfo.description && <div className="tooltip-desc">{hoveredFrameInfo.description}</div>}
             </div>
           )}

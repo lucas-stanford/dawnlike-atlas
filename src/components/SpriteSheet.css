@@ -443,6 +443,27 @@
   padding-top: 6px;
 }
 
+.sprite-tooltip .tooltip-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+  border-top: 1px solid #444;
+  padding-top: 6px;
+  max-width: 240px;
+}
+
+.sprite-tooltip .tooltip-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #3a3a3a;
+  color: #cfcfcf;
+  border-radius: 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
 /* JSON Panel Tab */
 .json-panel {
   border: 2px solid #ddd;
