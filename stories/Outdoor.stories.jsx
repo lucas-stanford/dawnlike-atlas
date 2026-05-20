@@ -42,9 +42,10 @@ export default {
       description: {
         component:
           'Procedurally generated overworld with biomes (grass / dirt / forest / mountain), ' +
-          'a meandering road, a river with bridges, and scattered decorations. Every knob ' +
-          'below is also editable in-canvas via the ⚙️ gear button; click any tile to pin ' +
-          'the autotile-debug popup, and use the swatch picker to override any sprite.',
+          'a meandering road, a river with bridges, and scattered decorations. ' +
+          'Edit generator settings here in the Controls panel; the in-canvas ⚙️ ' +
+          'gear button shows the tile-override log. Click any tile to pin the ' +
+          'autotile-debug popup and use the swatch picker to override any sprite.',
       },
     },
   },
@@ -52,7 +53,9 @@ export default {
     seed: {
       table: { category: 'Generator' },
       control: { type: 'number' },
-      description: 'Random seed. Same seed → identical overworld every time.',
+      description:
+        'Random seed. Same seed → identical overworld every time. ' +
+        'Default is rolled fresh on every page load; set explicitly to pin a map.',
     },
     terrainStyle: {
       table: { category: 'Tiles' },
@@ -90,26 +93,20 @@ export default {
       options: MOUNTAIN_STYLES,
       description: 'Base name of the mountain blob autotile family used inside mountain biomes.',
     },
-    scale: {
-      table: { category: 'View' },
-      control: { type: 'range', min: 1, max: 6, step: 0.5 },
-      description: 'Sprite zoom multiplier.',
-    },
     showConfigInitially: {
       table: { category: 'View' },
       control: 'boolean',
-      description: 'Open the in-canvas floating config card on first render.',
+      description: 'Open the in-canvas overrides panel on first render.',
     },
   },
   args: {
-    seed: 1,
+    seed: Math.floor(Math.random() * 1_000_000),
     terrainStyle: 'day grass floor',
     dirtStyle: 'day dirt floor',
     roadStyle: 'dirt trail',
     riverStyle: 'clear river',
     treeStyle: 'light oak',
     mountainStyle: 'brown peak',
-    scale: 2.5,
     showConfigInitially: false,
   },
 };

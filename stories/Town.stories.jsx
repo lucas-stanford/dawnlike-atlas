@@ -46,8 +46,9 @@ export default {
         component:
           'Procedurally generated town with buildings (house / inn / pub / smithy / church / shop), ' +
           'NPCs, furniture, signs, paved streets, trees, flowers, and an optional graveyard. ' +
-          'Every knob below is also editable in-canvas via the ⚙️ gear button; click any tile to ' +
-          'pin the autotile-debug popup and use the swatch picker to override any sprite.',
+          'Edit generator settings here in the Controls panel; the in-canvas ⚙️ gear button ' +
+          'shows the tile-override log. Click any tile to pin the autotile-debug popup and ' +
+          'use the swatch picker to override any sprite.',
       },
     },
   },
@@ -55,7 +56,9 @@ export default {
     seed: {
       table: { category: 'Generator' },
       control: { type: 'number' },
-      description: 'Random seed. Same seed → identical town every time.',
+      description:
+        'Random seed. Same seed → identical town every time. ' +
+        'Default is rolled fresh on every page load; set explicitly to pin a map.',
     },
     buildingCount: {
       table: { category: 'Generator' },
@@ -113,19 +116,14 @@ export default {
       options: TREE_STYLES,
       description: 'Base name of the tree autotile family scattered on grass.',
     },
-    scale: {
-      table: { category: 'View' },
-      control: { type: 'range', min: 1, max: 6, step: 0.5 },
-      description: 'Sprite zoom multiplier.',
-    },
     showConfigInitially: {
       table: { category: 'View' },
       control: 'boolean',
-      description: 'Open the in-canvas floating config card on first render.',
+      description: 'Open the in-canvas overrides panel on first render.',
     },
   },
   args: {
-    seed: 1,
+    seed: Math.floor(Math.random() * 1_000_000),
     buildingCount: 6,
     graveyardChance: 30,
     treeChance: 8,
@@ -136,7 +134,6 @@ export default {
     mainStreetStyle: 'day brick floor',
     grassStyle: 'day grass floor',
     treeStyle: 'light oak',
-    scale: 2.5,
     showConfigInitially: false,
   },
 };

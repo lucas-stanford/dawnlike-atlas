@@ -1,17 +1,15 @@
 /**
- * DungeonExample — rot.js dungeon generator demo with the same gear-button
- * floating-config overlay that Wilderness and Town use.
+ * DungeonExample — rot.js dungeon generator demo.
  *
- * Every knob is exposed two ways:
- *   1. As a prop, so Storybook can drive it from the Controls panel (the
- *      story re-mounts via key= when args change so prop updates always win).
- *   2. As an in-canvas widget in the floating config card, so visitors who
- *      open the story in isolation can tweak without the Controls panel.
+ * Generator settings (map type, dimensions, seed, styles, …) are exposed
+ * as props so Storybook drives them via the Controls panel (the story
+ * re-mounts via key= when args change, so prop updates always win).
  *
- * Hover any tile to see a popup with its coordinates, sprite name, and the
- * autotile reason (which neighbours triggered the chosen sprite). Click a
- * tile to pin the popup so the picker / autotile reason stays put while you
- * compare with other tiles. Click outside the popup to unpin.
+ * The in-canvas ⚙️ gear button shows ONLY the tile-override log: a list
+ * of sprites you've manually swapped via the click-to-pin swatch picker.
+ * Click any tile to pin the autotile-debug popup; click outside it to
+ * unpin. The picker is how an LLM gets a paste-back-ready report of the
+ * autotile picks you didn't agree with.
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -39,7 +37,6 @@ export default function DungeonExample({
   wallStyle:          initialWallStyle       = '',
   floorStyle:         initialFloorStyle      = '',
   seed:               initialSeed            = null,
-  scale:              initialScale           = 1,
   cellularDensity:    initialCellularDensity = 50,
   cellularSmooth:     initialCellularSmooth  = 4,
   width:              initialWidth           = 40,
@@ -55,7 +52,6 @@ export default function DungeonExample({
   const [floorStyle,     setFloorStyle]     = useState(initialFloorStyle);
   const [seed,           setSeed]           = useState(() =>
     initialSeed ?? Math.floor(Math.random() * 1000000));
-  const [scale,          setScale]          = useState(initialScale);
   const [cellularDensity, setCellularDensity] = useState(initialCellularDensity);
   const [cellularSmooth,  setCellularSmooth]  = useState(initialCellularSmooth);
   const [width,  setWidth]  = useState(initialWidth);
@@ -262,13 +258,6 @@ export default function DungeonExample({
     if (navigator.clipboard) navigator.clipboard.writeText(text);
   };
 
-  const stats = useMemo(() => {
-    if (!mapData) return { walls: 0, floors: 0 };
-    let walls = 0, floors = 0;
-    Object.values(mapData).forEach(v => { if (v === 1) walls++; else floors++; });
-    return { walls, floors };
-  }, [mapData]);
-
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
@@ -278,7 +267,6 @@ export default function DungeonExample({
   if (loading) return <div className="autotile-layout full-viewport"><div className="control-card">Loading Atlas Metadata...</div></div>;
 
   const atlasImage = resolveAssetPath('/DawnlikeAtlas0.png');
-  const isCellular = mapType === 'cellular';
   const activeTile = pinnedTile || hoverInfo;
   const activeInfo = activeTile ? describeTile(activeTile.x, activeTile.y) : null;
   const popupX = pinnedTile ? pinnedTile.screenX : mousePos.x;
@@ -290,71 +278,17 @@ export default function DungeonExample({
       {showConfig && (
         <div className="floating-config">
           <div className="control-card">
-            <h3>Dungeon Config</h3>
-            <div className="field-group">
-              <label>Generator Type</label>
-              <select value={mapType} onChange={e => setMapType(e.target.value)}>
-                {MAP_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
-              </select>
-            </div>
-            <div className="field-group">
-              <label>Wall Style</label>
-              <select value={wallStyle} onChange={e => setWallStyle(e.target.value)}>
-                {discoveredWalls.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className="field-group">
-              <label>Floor Style</label>
-              <select value={floorStyle} onChange={e => setFloorStyle(e.target.value)}>
-                {discoveredFloors.map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            {isCellular && (
-              <>
-                <div className="field-group">
-                  <label>Cell density: {cellularDensity}%</label>
-                  <input type="range" min="30" max="70" step="1" value={cellularDensity}
-                         onChange={e => setCellularDensity(parseInt(e.target.value))} />
-                </div>
-                <div className="field-group">
-                  <label>Smoothing passes: {cellularSmooth}</label>
-                  <input type="range" min="0" max="8" step="1" value={cellularSmooth}
-                         onChange={e => setCellularSmooth(parseInt(e.target.value))} />
-                </div>
-              </>
-            )}
-            <div className="field-group">
-              <label>Width: {width}</label>
-              <input type="range" min="20" max="80" step="1" value={width}
-                     onChange={e => setWidth(parseInt(e.target.value))} />
-            </div>
-            <div className="field-group">
-              <label>Height: {height}</label>
-              <input type="range" min="15" max="60" step="1" value={height}
-                     onChange={e => setHeight(parseInt(e.target.value))} />
-            </div>
-            <div className="field-group">
-              <label>Seed</label>
-              <input type="number" value={seed} onChange={e => setSeed(Number(e.target.value))} />
-            </div>
-            <div className="field-group">
-              <label>Zoom: {scale.toFixed(1)}x</label>
-              <input type="range" min="0.5" max="3" step="0.25" value={scale}
-                     onChange={e => setScale(parseFloat(e.target.value))} />
-            </div>
-            <button className="primary-button"
-                    onClick={() => { setSpriteOverrides({}); setSeed(Math.floor(Math.random() * 1000000)); }}>
-              🏰 Re-generate
-            </button>
-            <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}>
-              <div className="stats-grid">
-                <div className="stat-item"><span className="stat-label">Wall Tiles</span><span className="stat-value">{stats.walls}</span></div>
-                <div className="stat-item"><span className="stat-label">Floor Tiles</span><span className="stat-value">{stats.floors}</span></div>
+            <h3>Tile Overrides</h3>
+            {overrideLog.length === 0 ? (
+              <div style={{ color: '#bbb', fontSize: 13 }}>
+                No overrides yet. Click any tile to pin its inspector, then
+                pick an alternate sprite from the swatch picker to override
+                the autotile choice. Use the Storybook Controls panel for
+                generator settings (seed, map type, styles, etc.).
               </div>
-            </div>
-            {overrideLog.length > 0 && (
-              <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.15)', color: '#fff' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, color: '#fff' }}>
                   <strong>Overrides ({overrideLog.length})</strong>
                   <span>
                     <button onClick={copyLog} title="Copy log JSON to clipboard">📋 Copy</button>
@@ -364,7 +298,7 @@ export default function DungeonExample({
                 <pre data-testid="dungeon-override-log" style={{ maxHeight: 240, overflow: 'auto', fontSize: 11, margin: 0, background: 'rgba(0,0,0,0.35)', padding: 6, borderRadius: 4, color: '#fff' }}>
 {JSON.stringify(overrideLog, null, 2)}
                 </pre>
-              </div>
+              </>
             )}
           </div>
         </div>
@@ -373,8 +307,8 @@ export default function DungeonExample({
         <div
           className="map-grid"
           style={{
-            width: width * TILE_SIZE * scale,
-            height: height * TILE_SIZE * scale,
+            width: width * TILE_SIZE,
+            height: height * TILE_SIZE,
           }}
           onMouseMove={handleMouseMove}
           onMouseLeave={() => setHoverInfo(null)}
@@ -395,10 +329,10 @@ export default function DungeonExample({
                   }}
                   style={{
                     position: 'absolute',
-                    left: x * TILE_SIZE * scale,
-                    top: y * TILE_SIZE * scale,
-                    width: TILE_SIZE * scale,
-                    height: TILE_SIZE * scale,
+                    left: x * TILE_SIZE,
+                    top: y * TILE_SIZE,
+                    width: TILE_SIZE,
+                    height: TILE_SIZE,
                     cursor: 'pointer',
                   }}
                 >
@@ -408,8 +342,8 @@ export default function DungeonExample({
                         position: 'absolute',
                         inset: 0,
                         backgroundImage: `url(${atlasImage})`,
-                        backgroundPosition: `-${sprite.x * scale}px -${sprite.y * scale}px`,
-                        backgroundSize: `${atlas.meta.size.w * scale}px ${atlas.meta.size.h * scale}px`,
+                        backgroundPosition: `-${sprite.x}px -${sprite.y}px`,
+                        backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`,
                       }}
                     />
                   )}
@@ -555,7 +489,6 @@ DungeonExample.propTypes = {
   wallStyle:           PropTypes.string,
   floorStyle:          PropTypes.string,
   seed:                PropTypes.number,
-  scale:               PropTypes.number,
   cellularDensity:     PropTypes.number,
   cellularSmooth:      PropTypes.number,
   width:               PropTypes.number,
