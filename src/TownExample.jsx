@@ -199,7 +199,7 @@ export default function TownExample({
     //    another building. Buildings have a perimeter of `building.wall`
     //    tiles and an interior of `building.floor` tiles.
     const placedBuildings = [];
-    const overlaps = (bx, by, w, h, pad = 1) => {
+    const overlaps = (bx, by, w, h, pad = 2) => {
       for (let yy = by - pad; yy < by + h + pad; yy++) {
         for (let xx = bx - pad; xx < bx + w + pad; xx++) {
           if (!inBounds(xx, yy)) return true;
@@ -423,33 +423,78 @@ export default function TownExample({
       // separated from the banker hall by an interior wall with a single
       // locked iron-portcullis door. The vault interior is filled with gems,
       // coin piles, chests, and safes — one item per tile.
+      //
+      // Critical: the partition wall must NEVER intersect the inner tile of
+      // the building's front door, or the bank becomes inaccessible. We pick
+      // the vault corner so the partition lies on the OPPOSITE side of the
+      // door tile from the rest of the interior, and the front door always
+      // opens into the banker hall (not into the vault or onto a wall).
       const innerL = b.x + 1, innerR = b.x + b.w - 2;
       const innerT = b.y + 1, innerB = b.y + b.h - 2;
+      const innerW = innerR - innerL + 1;
+      const innerH = innerB - innerT + 1;
       const door = b.doorSide;
 
       // Vault size: ~half the interior, minimum 2x2.
-      const vaultW = Math.max(2, Math.floor((innerR - innerL + 1) / 2));
-      const vaultH = Math.max(2, Math.floor((innerB - innerT + 1) / 2));
-
-      // Place vault in the corner OPPOSITE the door so customers walk through
-      // the banker hall first.
-      let vx, vy;
-      if (door === 's') vy = innerT;
-      else if (door === 'n') vy = innerB - vaultH + 1;
-      else vy = innerT + Math.floor(((innerB - innerT + 1) - vaultH) / 2);
-      if (door === 'e') vx = innerL;
-      else if (door === 'w') vx = innerR - vaultW + 1;
-      else vx = innerL + Math.floor(((innerR - innerL + 1) - vaultW) / 2);
+      const vaultW = Math.max(2, Math.floor(innerW / 2));
+      const vaultH = Math.max(2, Math.floor(innerH / 2));
 
       // Partition orientation: vertical when door is N/S (split left/right),
       // horizontal when door is E/W (split top/bottom).
       const orientation = (door === 'n' || door === 's') ? 'vertical' : 'horizontal';
+
+      // Pick the partition column (or row) by scoring every valid line:
+      //   - strictly between innerL/innerR (or innerT/innerB) so both sides
+      //     have at least one inner column/row of space
+      //   - MUST NOT equal b.doorX (or b.doorY), otherwise the perimeter
+      //     door's inner tile becomes a wall and the bank is inaccessible
+      //   - prefer the line that maximises distance from the door axis so
+      //     the vault sits on the far side from the front door
+      let col = null, row = null, vx, vy;
+      if (orientation === 'vertical') {
+        let best = -1;
+        for (let c = innerL + 1; c <= innerR - 1; c++) {
+          if (c === b.doorX) continue;
+          const dist = Math.abs(c - b.doorX);
+          if (dist > best) { best = dist; col = c; }
+        }
+        if (col == null) {
+          // Degenerate: building too narrow. Fall back to placing the
+          // partition anywhere valid even if it coincides with doorX (the
+          // door cut on that column will keep the building accessible).
+          col = Math.max(innerL + 1, Math.min(innerR - 1, b.doorX === innerL + 1 ? innerR - 1 : innerL + 1));
+        }
+        // Vault sits on the far side of the partition from the door column.
+        if (b.doorX < col) { vx = col + 1; }
+        else                { vx = innerL; }
+        const availW = (vx === innerL) ? col - innerL : innerR - col;
+        const vw = Math.max(2, Math.min(vaultW, availW));
+        if (vx !== innerL) vx = innerR - vw + 1;
+        vy = (door === 's') ? innerT : innerB - vaultH + 1;
+        // Recompute final vault width.
+        // (We re-use vaultW below but clamp it via vw inside the loot loop.)
+      } else {
+        let best = -1;
+        for (let r = innerT + 1; r <= innerB - 1; r++) {
+          if (r === b.doorY) continue;
+          const dist = Math.abs(r - b.doorY);
+          if (dist > best) { best = dist; row = r; }
+        }
+        if (row == null) {
+          row = Math.max(innerT + 1, Math.min(innerB - 1, b.doorY === innerT + 1 ? innerB - 1 : innerT + 1));
+        }
+        if (b.doorY < row) { vy = row + 1; }
+        else                { vy = innerT; }
+        const availH = (vy === innerT) ? row - innerT : innerB - row;
+        const vh = Math.max(2, Math.min(vaultH, availH));
+        if (vy !== innerT) vy = innerB - vh + 1;
+        vx = (door === 'e') ? innerL : innerR - vaultW + 1;
+      }
+
       const partition = [];
       if (orientation === 'vertical') {
-        const col = (vx === innerL) ? (vx + vaultW) : (vx - 1);
         for (let yy = innerT; yy <= innerB; yy++) partition.push({ x: col, y: yy });
       } else {
-        const row = (vy === innerT) ? (vy + vaultH) : (vy - 1);
         for (let xx = innerL; xx <= innerR; xx++) partition.push({ x: xx, y: row });
       }
 
