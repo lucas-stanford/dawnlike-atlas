@@ -256,9 +256,8 @@ export default function TownExample({
           bx = anchorX - w - 2;
           by = anchorY + ROT.RNG.getUniformInt(-Math.floor(h/2), anchorH - Math.floor(h/2));
         }
-        // Keep buildings clear of the map edge by 2 tiles so a 2-tile-thick
-        // street ring fits on every side.
-        if (bx < 2 || by < 2 || bx + w > DISPLAY_WIDTH - 2 || by + h > DISPLAY_HEIGHT - 2) continue;
+        // Keep buildings clear of the map edge by 1 tile.
+        if (bx < 1 || by < 1 || bx + w > DISPLAY_WIDTH - 1 || by + h > DISPLAY_HEIGHT - 1) continue;
         if (overlaps(bx, by, w, h)) continue;
 
         const type = wantBank ? 'bank' : ROT.RNG.getItem(BUILDING_TYPES);
@@ -292,18 +291,13 @@ export default function TownExample({
       streetMask.add(`${x},${y}`);
     };
     for (const b of placedBuildings) {
-      // Two-tile-thick street ring around every building.
-      for (let xx = b.x - 2; xx <= b.x + b.w + 1; xx++) {
+      for (let xx = b.x - 1; xx <= b.x + b.w; xx++) {
         markStreet(xx, b.y - 1);
-        markStreet(xx, b.y - 2);
         markStreet(xx, b.y + b.h);
-        markStreet(xx, b.y + b.h + 1);
       }
-      for (let yy = b.y - 2; yy <= b.y + b.h + 1; yy++) {
+      for (let yy = b.y - 1; yy <= b.y + b.h; yy++) {
         markStreet(b.x - 1, yy);
-        markStreet(b.x - 2, yy);
         markStreet(b.x + b.w, yy);
-        markStreet(b.x + b.w + 1, yy);
       }
     }
     // Also widen the plaza-to-buildings connection by paving anything
@@ -397,8 +391,7 @@ export default function TownExample({
     // 5b. Important buildings (bank, inn, church, smithy) get a 'main' brick
     //     road from the plaza centre to their door's exit tile, paving over
     //     the side streets so the town's spine reads as a continuous brick
-    //     network connecting every key destination. Path is widened to two
-    //     tiles by paving one perpendicular neighbour of every path tile.
+    //     network connecting every key destination.
     const IMPORTANT_TYPES = new Set(['bank', 'inn', 'church', 'smithy']);
     const upgradeToMain = (px, py) => {
       if (!inBounds(px, py)) return false;
@@ -422,29 +415,7 @@ export default function TownExample({
       const startX = b.doorX + out[0], startY = b.doorY + out[1];
       if (!inBounds(startX, startY)) continue;
       const dij = new ROT.Path.Dijkstra(plazaCenterX, plazaCenterY, mainPassable, { topology: 4 });
-      const mainPath = [];
-      dij.compute(startX, startY, (px, py) => {
-        if (upgradeToMain(px, py)) mainPath.push([px, py]);
-      });
-      // Widen to 2 tiles by paving one perpendicular neighbour (right of
-      // motion, falling back to left).
-      for (let i = 0; i < mainPath.length; i++) {
-        const [px, py] = mainPath[i];
-        let dx = 0, dy = 0;
-        if (i + 1 < mainPath.length) {
-          dx = mainPath[i + 1][0] - px;
-          dy = mainPath[i + 1][1] - py;
-        } else if (i > 0) {
-          dx = px - mainPath[i - 1][0];
-          dy = py - mainPath[i - 1][1];
-        } else {
-          dx = -out[0]; dy = -out[1];
-        }
-        if (Math.abs(dx) > 1) dx = Math.sign(dx);
-        if (Math.abs(dy) > 1) dy = Math.sign(dy);
-        const rXcw = -dy, rYcw = dx;
-        if (!upgradeToMain(px + rXcw, py + rYcw)) upgradeToMain(px - rXcw, py - rYcw);
-      }
+      dij.compute(startX, startY, (px, py) => { upgradeToMain(px, py); });
     }
 
     // 6. Building interior decoration: rug, furniture, sign.
