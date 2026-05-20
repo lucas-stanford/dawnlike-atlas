@@ -148,11 +148,14 @@ export const SpriteSheet = ({
   const hoveredFrameInfo = useMemo(() => {
     if (hoveredFrame === null) return null;
     const info = getFrameDescription(frameData, hoveredFrame);
-    // Add mega-atlas metadata if available
+    // Add mega-atlas metadata if available. The mega atlas stores the frame
+    // index → sprite name map under `legacyFrames`, and per-sprite metadata
+    // under `byName`. Explicitly clear `isEmpty` and inject the name+desc so
+    // the tooltip + preview panel render the enriched entry.
     if (frameData?.byName) {
       const name = frameData.legacyFrames?.[String(hoveredFrame)];
       if (name && frameData.byName[name]) {
-        return { ...info, ...frameData.byName[name] };
+        return { ...info, ...frameData.byName[name], name, description: name, isEmpty: false };
       }
     }
     return info;
@@ -162,11 +165,10 @@ export const SpriteSheet = ({
   const selectedFrameInfo = useMemo(() => {
     if (selectedFrame === null) return null;
     const info = getFrameDescription(frameData, selectedFrame);
-    // Add mega-atlas metadata if available
     if (frameData?.byName) {
       const name = frameData.legacyFrames?.[String(selectedFrame)];
       if (name && frameData.byName[name]) {
-        return { ...info, ...frameData.byName[name] };
+        return { ...info, ...frameData.byName[name], name, description: name, isEmpty: false };
       }
     }
     return info;
@@ -174,7 +176,7 @@ export const SpriteSheet = ({
 
   const { allTags, allSources, filteredSprites } = useMemo(() => {
     if (!frameDataJson?.byName) return { allTags: [], allSources: [], filteredSprites: [] };
-    
+
     const tags = new Set();
     const sources = new Set();
     const sprites = [];
@@ -182,14 +184,18 @@ export const SpriteSheet = ({
     Object.entries(frameDataJson.byName).forEach(([name, data]) => {
       if (data.tags) data.tags.forEach(t => tags.add(t));
       if (data.sourceFile) sources.add(data.sourceFile);
-      
+
       const matchesSearch = name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                            (data.tags && data.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase())));
       const matchesTag = filterTag === 'All' || (data.tags && data.tags.includes(filterTag));
       const matchesSource = filterSource === 'All' || data.sourceFile === filterSource;
 
       if (matchesSearch && matchesTag && matchesSource) {
-        sprites.push({ name, ...data });
+        // byName entries don't carry their own frame index, so derive it from
+        // the pixel position and the grid geometry. Matches what BootScene /
+        // the autotile renderer use to look up sprites by name elsewhere.
+        const globalFrame = Math.floor(data.y / tileSize) * columns + Math.floor(data.x / tileSize);
+        sprites.push({ name, globalFrame, ...data });
       }
     });
 
@@ -198,7 +204,7 @@ export const SpriteSheet = ({
       allSources: ['All', ...Array.from(sources).sort()],
       filteredSprites: sprites
     };
-  }, [frameDataJson, searchQuery, filterTag, filterSource]);
+  }, [frameDataJson, searchQuery, filterTag, filterSource, tileSize, columns]);
 
   const activeInfo = selectedFrameInfo || hoveredFrameInfo;
   const activeFrame = selectedFrame !== null ? selectedFrame : hoveredFrame;
@@ -615,27 +621,33 @@ export const SpriteSheet = ({
           </div>
 
           <div className="library-grid">
-            {filteredSprites.slice(0, 500).map(sprite => (
-              <div 
-                key={sprite.name} 
-                className={`library-item ${selectedFrame === sprite.globalFrame ? 'selected' : ''}`}
-                onClick={() => {
-                  setSelectedFrame(sprite.globalFrame);
-                  setActiveTab('sprites');
-                }}
-                onMouseEnter={() => setHoveredFrame(sprite.globalFrame)}
-              >
-                <div 
-                  className="library-sprite-preview"
-                  style={{
-                    backgroundImage: `url(${resolvedImagePath})`,
-                    backgroundPosition: `-${sprite.x * 2}px -${sprite.y * 2}px`,
-                    backgroundSize: `${imageSize.width * 2}px ${imageSize.height * 2}px`,
+            {filteredSprites.slice(0, 500).map(sprite => {
+              // CSS preview cells are 32px square. Scale the background image
+              // so each sprite tile lands in exactly that 32px box, regardless
+              // of whether the atlas is 16px (legacy) or 32px (current).
+              const previewScale = 32 / tileSize;
+              return (
+                <div
+                  key={sprite.name}
+                  className={`library-item ${selectedFrame === sprite.globalFrame ? 'selected' : ''}`}
+                  onClick={() => {
+                    setSelectedFrame(sprite.globalFrame);
+                    setActiveTab('sprites');
                   }}
-                />
-                <span className="library-item-name">{sprite.name}</span>
-              </div>
-            ))}
+                  onMouseEnter={() => setHoveredFrame(sprite.globalFrame)}
+                >
+                  <div
+                    className="library-sprite-preview"
+                    style={{
+                      backgroundImage: `url(${resolvedImagePath})`,
+                      backgroundPosition: `-${sprite.x * previewScale}px -${sprite.y * previewScale}px`,
+                      backgroundSize: `${imageSize.width * previewScale}px ${imageSize.height * previewScale}px`,
+                    }}
+                  />
+                  <span className="library-item-name">{sprite.name}</span>
+                </div>
+              );
+            })}
             {filteredSprites.length > 500 && (
               <div className="library-more-hint">...and {filteredSprites.length - 500} more (refine search)</div>
             )}
