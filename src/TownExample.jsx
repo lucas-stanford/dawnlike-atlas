@@ -835,6 +835,10 @@ export default function TownExample({
       const t = get(xx, yy);
       // Never overwrite walls, building floors, or doors — keeps doorways clear.
       if (!t || t.wall || t.floor || t.door) return false;
+      // Respect every building's 1-tile yard (personal property): the
+      // external main road doesn't belong to any building, so it must
+      // not brush against any house wall.
+      if (yardOf.has(`${xx},${yy}`)) return false;
       t.street = true;
       t.type = 'street';
       t.streetKind = 'main';
@@ -853,7 +857,11 @@ export default function TownExample({
       const passable = (px, py) => {
         if (!inBounds(px, py)) return false;
         const t = get(px, py);
-        return !!t && !t.wall && !t.floor && !t.fence && !t.door;
+        if (!t || t.wall || t.floor || t.fence || t.door) return false;
+        // External road can't pass through any building's yard either —
+        // routing must skirt them, not just refuse to pave them.
+        if (yardOf.has(`${px},${py}`)) return false;
+        return true;
       };
       // Topology 4 keeps the road on cardinal steps so the openPath
       // street autotile resolves cleanly. Dijkstra walks the cheapest
