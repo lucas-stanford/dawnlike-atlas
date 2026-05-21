@@ -114,11 +114,17 @@ const SAMPLE_IDEAS = [
 ];
 
 // Replace the `<<<...>>>` placeholder block with the chosen idea so the
-// resulting prompt is paste-ready.
+// resulting prompt is paste-ready (markers and the placeholder hint
+// inside them are dropped — the LLM just sees the idea body). Also
+// drops the bolded "**Your game idea**" cross-reference in the intro
+// paragraph so the prose reads naturally with a concrete idea inlined.
 const PLACEHOLDER_RE = /<<<[\s\S]*?>>>/;
+const INTRO_REF_RE = /Build the game described below in \*\*Your game idea\*\* using the/;
 function withIdea(template, idea) {
   if (!idea) return template;
-  return template.replace(PLACEHOLDER_RE, `<<<\n${idea.trim()}\n>>>`);
+  return template
+    .replace(PLACEHOLDER_RE, idea.trim())
+    .replace(INTRO_REF_RE, 'Build the game described below using the');
 }
 
 function PromptPanel({ title, subtitle, body, header }) {
