@@ -11,7 +11,7 @@ import PhaserExample from '../src/PhaserExample';
  * to see the JSDoc-derived description from the manifest itself.
  */
 export default {
-  title: 'Examples/Phaser Roguelike',
+  title: 'Dawnlike/Examples/Phaser Roguelike',
   component: PhaserExample,
   parameters: {
     layout: 'centered',

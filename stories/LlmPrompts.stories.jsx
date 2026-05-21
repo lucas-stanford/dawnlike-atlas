@@ -13,7 +13,7 @@ import simpleRoguelikePrompt from '../Example_LLM_Prompts/simple-roguelike.md?ra
  * files.
  */
 export default {
-  title: 'Prompts',
+  title: 'Dawnlike/Prompts',
   parameters: {
     layout: 'fullscreen',
     docs: {

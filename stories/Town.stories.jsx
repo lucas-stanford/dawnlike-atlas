@@ -37,7 +37,7 @@ const TREE_STYLES = [
 ];
 
 export default {
-  title: 'Zone Examples/Town',
+  title: 'Dawnlike/Zone Examples/Town',
   component: TownExample,
   parameters: {
     layout: 'fullscreen',

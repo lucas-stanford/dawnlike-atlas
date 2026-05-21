@@ -12,7 +12,7 @@ import { SpriteSheet } from '../src/components/SpriteSheet';
  * "All Sprites" story.
  */
 export default {
-  title: 'DawnLike/Mega Atlas',
+  title: 'Dawnlike/Mega Atlas',
   parameters: {
     layout: 'fullscreen',
   },

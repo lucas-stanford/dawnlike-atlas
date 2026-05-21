@@ -34,7 +34,7 @@ const MOUNTAIN_STYLES = [
 ];
 
 export default {
-  title: 'Zone Examples/Wilderness',
+  title: 'Dawnlike/Zone Examples/Wilderness',
   component: OutdoorExample,
   parameters: {
     layout: 'fullscreen',

@@ -32,7 +32,7 @@ const FLOOR_STYLES = [
 ];
 
 export default {
-  title: 'Zone Examples/Dungeon',
+  title: 'Dawnlike/Zone Examples/Dungeon',
   component: DungeonExample,
   parameters: {
     layout: 'fullscreen',

@@ -2,7 +2,7 @@ import React from 'react';
 import MenuExample, { FRAME_FAMILIES } from '../src/MenuExample';
 
 export default {
-  title: 'Examples/Menu HUD',
+  title: 'Dawnlike/Examples/Menu HUD',
   component: MenuExample,
   parameters: { layout: 'centered' },
   argTypes: {
