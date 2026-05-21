@@ -282,30 +282,44 @@ export default function TownExample({
       if (!placed) break;
     }
 
-    // 4. Carve streets — pave every non-building tile that lies within a
-    //    1-tile margin of any building wall, plus the plaza ring expanded
-    //    by one ring so the town reads as a connected paved network.
+    // 4. Carve streets — leave a 1-tile "yard" ring of grass around every
+    //    building (its private property). The plaza is widened by one
+    //    ring so it reads as a paved square, but tiles inside any
+    //    building's yard are not paved here. Only the per-building
+    //    door-to-plaza paths in step 5b/5c may enter a yard, and only
+    //    the yard belonging to that building's owner.
+    const yardOf = new Map();
+    for (const b of placedBuildings) {
+      for (let xx = b.x - 1; xx <= b.x + b.w; xx++) {
+        for (const yy of [b.y - 1, b.y + b.h]) {
+          if (!inBounds(xx, yy)) continue;
+          const t = get(xx, yy);
+          if (t.wall || t.floor) continue;
+          if (!yardOf.has(`${xx},${yy}`)) yardOf.set(`${xx},${yy}`, b.id);
+        }
+      }
+      for (let yy = b.y - 1; yy <= b.y + b.h; yy++) {
+        for (const xx of [b.x - 1, b.x + b.w]) {
+          if (!inBounds(xx, yy)) continue;
+          const t = get(xx, yy);
+          if (t.wall || t.floor) continue;
+          if (!yardOf.has(`${xx},${yy}`)) yardOf.set(`${xx},${yy}`, b.id);
+        }
+      }
+    }
     const streetMask = new Set();
     const markStreet = (x, y) => {
       if (!inBounds(x, y)) return;
       const t = get(x, y);
       if (t.wall || t.floor) return;
+      // Don't pave a building's yard — those are reached only via the
+      // owner's path.
+      if (yardOf.has(`${x},${y}`)) return;
       streetMask.add(`${x},${y}`);
     };
-    for (const b of placedBuildings) {
-      for (let xx = b.x - 1; xx <= b.x + b.w; xx++) {
-        markStreet(xx, b.y - 1);
-        markStreet(xx, b.y + b.h);
-      }
-      for (let yy = b.y - 1; yy <= b.y + b.h; yy++) {
-        markStreet(b.x - 1, yy);
-        markStreet(b.x + b.w, yy);
-      }
-    }
-    // Also widen the plaza-to-buildings connection by paving anything
-    // within 2 tiles of the plaza perimeter.
-    for (let yy = plazaY - 2; yy < plazaY + PLAZA_SIZE + 2; yy++) {
-      for (let xx = plazaX - 2; xx < plazaX + PLAZA_SIZE + 2; xx++) {
+    // Widen the plaza by one ring so the paved square reads cleanly.
+    for (let yy = plazaY - 1; yy < plazaY + PLAZA_SIZE + 1; yy++) {
+      for (let xx = plazaX - 1; xx < plazaX + PLAZA_SIZE + 1; xx++) {
         markStreet(xx, yy);
       }
     }
@@ -411,12 +425,20 @@ export default function TownExample({
       const t = get(px, py);
       return !!t && !t.wall && !t.floor && !t.fence && !t.door;
     };
+    // Per-building passability: like mainPassable but reject any tile
+    // that belongs to a *different* building's yard (their personal
+    // property).
+    const passableForBuilding = (ownerId) => (px, py) => {
+      if (!mainPassable(px, py)) return false;
+      const owner = yardOf.get(`${px},${py}`);
+      return owner === undefined || owner === ownerId;
+    };
     for (const b of placedBuildings) {
       if (!IMPORTANT_TYPES.has(b.type)) continue;
       const out = { n: [0,-1], s: [0,1], e: [1,0], w: [-1,0] }[b.doorSide];
       const startX = b.doorX + out[0], startY = b.doorY + out[1];
       if (!inBounds(startX, startY)) continue;
-      const dij = new ROT.Path.Dijkstra(plazaCenterX, plazaCenterY, mainPassable, { topology: 4 });
+      const dij = new ROT.Path.Dijkstra(plazaCenterX, plazaCenterY, passableForBuilding(b.id), { topology: 4 });
       dij.compute(startX, startY, (px, py) => { upgradeToMain(px, py); });
     }
 
@@ -443,7 +465,7 @@ export default function TownExample({
       const out = { n: [0,-1], s: [0,1], e: [1,0], w: [-1,0] }[b.doorSide];
       const startX = b.doorX + out[0], startY = b.doorY + out[1];
       if (!inBounds(startX, startY)) continue;
-      const dij = new ROT.Path.Dijkstra(plazaCenterX, plazaCenterY, mainPassable, { topology: 4 });
+      const dij = new ROT.Path.Dijkstra(plazaCenterX, plazaCenterY, passableForBuilding(b.id), { topology: 4 });
       dij.compute(startX, startY, (px, py) => { upgradeToSide(px, py); });
     }
 
