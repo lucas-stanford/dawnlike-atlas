@@ -49,7 +49,9 @@ distinctive.
 
 ### Engine + flow
 
-- `npm install phaser@^4 rot-js` (drop `phaser` if you go pure React; drop `rot-js` if you don't need its RNG/maps/path-finding).
+- **Phaser 4 is required** for any canvas-rendered build. Install with `npm install phaser@^4 rot-js` (the `^4` is non-negotiable — do not pin, downgrade to, or import Phaser 3 / 3.x packages, `phaser-ce`, `phaser3-rex-plugins`, or any other v3-era plugin). The reference `src/phaser/` wiring targets the v4 API (scenes, `this.add.sprite`, `this.anims.create`, `this.physics.add`, `Phaser.Scale.NONE`, etc.); use those APIs verbatim. The only acceptable way to skip Phaser entirely is to go pure React/DOM — in which case `phaser` is not installed at all.
+- Verify the installed version (`require('phaser').VERSION` should start with `4.`) and import from the `phaser` package directly; never copy-paste Phaser 3 tutorials, CDN snippets, or `Phaser.Game` boilerplate that predates v4.
+- Drop `rot-js` only if you don't need its RNG / maps / path-finding.
 - Pixel art on: `Phaser.AUTO` + `Phaser.Scale.NONE` + `pixelArt: true`.
 - Each generator returns `walkable(x, y)` — use it as-is.
 - Exit tiles are tagged via `tile.marker`; on contact, transition and spawn the player **adjacent** to the destination marker (never on it).
