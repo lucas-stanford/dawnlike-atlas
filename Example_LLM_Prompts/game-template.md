@@ -32,6 +32,7 @@ distinctive.
   - **Combat arena / ambush map** → [`src/ArenaExample.jsx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/ArenaExample.jsx) (noisy obstacle ring, four obstacle kinds, themed presets, hazards)
   - **HUD / menus / dialog / inventory** → [`src/MenuExample.jsx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/MenuExample.jsx) (9-slice frame, segmented gauges, hearts, typewriter, inventory grid)
   - **Full Phaser game wiring** → [`src/phaser/`](https://github.com/lucas-stanford/dawnlike-atlas/tree/master/src/phaser) + [`src/PhaserExample.jsx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/PhaserExample.jsx) (overworld + town + 3-level dungeon, bidirectional exits, localStorage save/resume, HUD)
+  - **Mobile / touch controls** → virtual joystick + action button via [nipplejs](https://www.npmjs.com/package/nipplejs) (see the *Mobile / touch support* section below — adds touch input without touching the desktop input layer)
 
 ## Rules
 
@@ -376,3 +377,99 @@ npm install phaser@^4 rot-js
 - "New Game" button clears `localStorage` and reloads.
 - HUD never overlaps the playable map.
 <!-- END:phaser-wiring -->
+
+<!-- BEGIN:mobile -->
+### Mobile / touch support (nipplejs virtual joystick)
+
+Add a virtual on-screen joystick so the game plays on phones and
+tablets without keyboard input. Uses
+[nipplejs](https://www.npmjs.com/package/nipplejs) — a small (~12 KB),
+zero-dependency vanilla-JS joystick library — and feeds its direction
+events into the same `tryMove(dx, dy)` API the keyboard handler in
+`MapScene.js` already uses, so no game logic has to change.
+
+**Highlights**
+
+- Virtual joystick (left-hand thumb) drives 4-direction movement at
+  the same ~70ms-per-tile cadence as hold-to-walk on desktop.
+- Joystick only mounts on touch-capable devices (`'ontouchstart' in window || navigator.maxTouchPoints > 0`), so desktop users never see a stray overlay.
+- Optional right-hand action button (tap = "interact / confirm") for
+  triggering markers, opening menus, etc. without a keyboard.
+- Sits in its own absolutely-positioned overlay `<div>` above the
+  Phaser canvas — no Phaser-specific plumbing, works for the pure
+  React examples too.
+- Joystick dead-zone (~20% of radius) prevents jitter; reading
+  `Math.abs(force.x) > Math.abs(force.y)` picks the dominant axis so
+  diagonals snap to one cardinal step at a time (matches keyboard
+  behavior).
+
+**Prerequisites**
+
+```bash
+npm install nipplejs
+```
+
+**Files to read first**
+
+| File | What it does |
+| --- | --- |
+| [`src/phaser/scenes/MapScene.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/scenes/MapScene.js) | The desktop input layer (cursors + WASD + hold-to-walk via `update()` polling) you'll mirror for touch. Note the `this.moving` rate-limit and `tryMove(dx, dy)` signature — feed the joystick into the same method. |
+| [`src/PhaserExample.jsx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/PhaserExample.jsx) | The React mount point. Add the joystick `<div>` siblings to the Phaser canvas container here so they share the same parent and stacking context. |
+| [nipplejs README](https://github.com/yoannmoinet/nipplejs#options) | Official options reference — `mode`, `position`, `color`, `size`, `threshold`. |
+
+**Recreation steps**
+
+1. `npm install nipplejs`.
+2. Detect touch: `const isTouch = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);`. Skip the rest on desktop.
+3. In `PhaserExample.jsx` (or your equivalent mount point), render two absolutely-positioned overlay `<div>`s above the canvas: `<div id="dawnlike-joystick">` (bottom-left, ~120×120) and `<div id="dawnlike-action">` (bottom-right, ~80×80, a plain `<button>`). Use `pointer-events: auto` on each, `pointer-events: none` on a wrapping container so the rest of the page stays clickable.
+4. After `createGame(parent)` resolves, create the joystick:
+   ```js
+   import nipplejs from 'nipplejs';
+   const joystick = nipplejs.create({
+     zone: document.getElementById('dawnlike-joystick'),
+     mode: 'static',
+     position: { left: '60px', bottom: '60px' },
+     color: 'white',
+     size: 120,
+     threshold: 0.2, // dead-zone
+   });
+   ```
+5. Translate joystick events into a `{ dx, dy }` intent that the scenes can poll. Store it on `window.__dawnlikeTouchIntent = { dx: 0, dy: 0 }` (or `game.registry.set('touchIntent', …)`).
+   ```js
+   joystick.on('move', (_evt, data) => {
+     if (!data.direction) return; // inside dead-zone
+     const a = data.angle.radian;
+     // Snap to cardinals: dominant axis wins.
+     const dx = Math.abs(Math.cos(a)) > Math.abs(Math.sin(a)) ? Math.sign(Math.cos(a)) : 0;
+     const dy = dx === 0 ? -Math.sign(Math.sin(a)) : 0; // screen Y is inverted
+     window.__dawnlikeTouchIntent = { dx, dy };
+   });
+   joystick.on('end', () => { window.__dawnlikeTouchIntent = { dx: 0, dy: 0 }; });
+   ```
+6. In `MapScene.update()`, after the existing keyboard polling, also poll the touch intent and call `tryMove` exactly like the keyboard does:
+   ```js
+   const touch = window.__dawnlikeTouchIntent;
+   if (touch && (touch.dx || touch.dy) && !this.moving) {
+     this.tryMove(touch.dx, touch.dy);
+   }
+   ```
+7. Wire the action button to whatever the keyboard's Enter/Space already triggers (`handleMarker` on the current tile, menu confirm, etc.):
+   ```js
+   document.getElementById('dawnlike-action').addEventListener('click', () => {
+     window.dispatchEvent(new CustomEvent('dawnlike:action'));
+   });
+   ```
+   Then `this.input.keyboard.on('keydown-ENTER', ...)` and a `window.addEventListener('dawnlike:action', ...)` call the same handler in the scene.
+8. On scene shutdown / `useEffect` cleanup, `joystick.destroy()` and remove the action-button listener so a React re-mount doesn't stack joysticks.
+9. Add a CSS `@media (hover: hover) and (pointer: fine) { #dawnlike-joystick, #dawnlike-action { display: none; } }` as a belt-and-braces hide on desktop browsers.
+
+**Verification**
+
+- On a desktop browser the joystick and action button are not rendered (touch detection skips the mount, and the CSS media query hides them if they slip through).
+- On a touch device (or with Chrome devtools "Toggle device toolbar"), a white joystick appears bottom-left and an action button appears bottom-right.
+- Dragging the joystick steps the player one tile per ~70ms in the dominant cardinal direction (no diagonal stutter).
+- Releasing the joystick stops movement immediately.
+- The action button fires the same handler as Enter/Space (opens a sign, triggers a marker, confirms a menu).
+- The joystick does not block the rest of the page from receiving clicks/scrolls outside its overlay.
+- React re-mount (Storybook story switch, HMR) does not leave a stale joystick on the page.
+<!-- END:mobile -->

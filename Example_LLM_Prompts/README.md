@@ -48,6 +48,9 @@ The prompt is organised as:
    - `phaser-wiring` — recreate the full Phaser game (overworld + town
      + 3-level dungeon + HUD + save) from `src/phaser/` and
      `src/PhaserExample.jsx`.
+   - `mobile` — add touch / mobile support to any of the above via a
+     [nipplejs](https://www.npmjs.com/package/nipplejs) virtual
+     joystick + action button.
 
 The Storybook story uses the same `BEGIN:` / `END:` markers to
 include/exclude each section from the copied output.

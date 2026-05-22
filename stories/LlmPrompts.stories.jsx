@@ -127,6 +127,7 @@ const SECTIONS = [
   { id: 'arena', label: 'Combat arena / ambush map' },
   { id: 'hud-menu', label: 'Chrome HUD + menu toolkit' },
   { id: 'phaser-wiring', label: 'Full Phaser game wiring' },
+  { id: 'mobile', label: 'Mobile / touch (nipplejs)' },
 ];
 const ALL_SECTION_IDS = SECTIONS.map((s) => s.id);
 
