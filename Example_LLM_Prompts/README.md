@@ -10,15 +10,37 @@ no back-and-forth required.
 
 ## Available prompts
 
+**Whole-game template**
+
 - [`game-template.md`](./game-template.md) — **Paste-and-go template.**
   Drop your game idea into the `<<<INSERT YOUR GAME IDEA HERE>>>`
   slot and hand the result to an LLM to build any 2D browser game on
-  top of this toolkit. Best starting point for a new game.
+  top of this toolkit. Lists every example component as a reusable
+  building block so the model picks the right one. Best starting point
+  for a new game.
+
+**Recreate a specific example** (one prompt per `src/*Example.jsx`)
+
 - [`simple-roguelike.md`](./simple-roguelike.md) — Recreate the
   Phaser-based roguelike from `src/PhaserExample.jsx`: overworld + town
   + 3-level dungeon, with working bidirectional exits, sprite
   animations, a chrome-framed HUD, and `localStorage` save/resume.
   Live demo: the **Examples › Phaser Roguelike** story in Storybook.
+- [`outdoor-overworld.md`](./outdoor-overworld.md) — Recreate the React
+  wilderness overworld from `src/OutdoorExample.jsx` (50×40, simplex
+  biomes, autotiled roads / rivers / bridges, forests, mountains).
+- [`town.md`](./town.md) — Recreate the React town from
+  `src/TownExample.jsx` (45×30, perimeter wall, building archetypes,
+  guaranteed bank with vault loot, signs, flowers).
+- [`dungeon.md`](./dungeon.md) — Recreate the rot.js dungeon-generator
+  playground from `src/DungeonExample.jsx` (six map algorithms, atlas-
+  driven style picker, click-to-pin sprite picker).
+- [`arena.md`](./arena.md) — Recreate the combat arena from
+  `src/ArenaExample.jsx` (noisy obstacle ring, four obstacle kinds,
+  themed presets, hazard scatter).
+- [`hud-menu.md`](./hud-menu.md) — Recreate the chrome HUD + menu
+  toolkit from `src/MenuExample.jsx` (9-slice frame, segmented gauges,
+  heart icons, typewriter dialog, inventory grid).
 
 ## Authoring conventions
 

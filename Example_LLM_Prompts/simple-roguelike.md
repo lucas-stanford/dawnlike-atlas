@@ -55,7 +55,22 @@ master and resolves to the exact source you should mirror.
 | File | What it does |
 | --- | --- |
 | [`src/utils/autotile.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/utils/autotile.js) | Cardinal-neighbor resolvers for walls, floors, rivers, forests, dungeon walls. The generators emit `kind: 'wall' \| 'floor' \| 'river' \| 'forest' \| 'dungeonWall'` tiles and the renderer calls these resolvers to pick the right atlas frame. |
-| [`src/MenuExample.jsx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/MenuExample.jsx) | Reference for the HUD chrome (9-slice `<Frame>`, `<Gauge>`, `heartSprite` helper). The Phaser HUD ports these to a Phaser scene. |
+| [`src/MenuExample.jsx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/MenuExample.jsx) | Reference for the HUD chrome (9-slice `<Frame>`, `<Gauge>`, `heartSprite` helper, typewriter dialog, inventory grid). The Phaser HUD ports these to a Phaser scene. |
+
+### Optional inspiration — the other React examples
+
+These aren't strictly required to recreate the Phaser roguelike, but
+they show how each map type is built in pure React with the same atlas
++ autotile stack. Read them if you want richer biome / town / dungeon
+content than the Phaser generators ship by default — the layout logic
+maps directly across:
+
+| File | What it adds |
+| --- | --- |
+| [`src/OutdoorExample.jsx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/OutdoorExample.jsx) | A larger 50×40 overworld with more biomes, scattered mountain ranges, and a richer style-picker. Useful as a reference if you want to expand the Phaser overworld beyond 40×30 or add mountain regions. |
+| [`src/TownExample.jsx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/TownExample.jsx) | A more elaborate town: building archetypes (house / inn / pub / smithy / church / shop / bank with vault loot), hanging signs, doorway plants, and graveyards. Mine it for the building furniture and sign sprite tables. |
+| [`src/DungeonExample.jsx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/DungeonExample.jsx) | A switcher across all six rot.js map types (Digger / Uniform / Cellular / DividedMaze / IceyMaze / EllerMaze). Borrow from here if you want cave or maze levels instead of just diggered dungeons. |
+| [`src/ArenaExample.jsx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/ArenaExample.jsx) | A small ambush arena with a noisy obstacle ring and themed presets. Drop this in as a "combat encounter" sub-scene that the World or Dungeon scenes launch on contact with a marker. |
 
 ### Core game files (recreate these)
 
