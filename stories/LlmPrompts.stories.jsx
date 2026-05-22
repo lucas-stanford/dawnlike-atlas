@@ -1,21 +1,19 @@
 import React, { useState, useCallback, useMemo } from 'react';
-// Vite's `?raw` suffix gives us the file contents as a string at build time
-// so the prompt is bundled with Storybook and works on the static site.
+// Vite's `?raw` suffix gives us the file contents as a string at build
+// time so the prompt is bundled with Storybook and works on the static
+// site. We ship a SINGLE consolidated prompt file with optional
+// component sections delimited by `<!-- BEGIN:id -->` / `<!-- END:id -->`
+// markers; the dropdowns below pick a starter pitch and toggle which
+// sections are included before the textarea renders.
 import gameTemplatePrompt from '../Example_LLM_Prompts/game-template.md?raw';
-import simpleRoguelikePrompt from '../Example_LLM_Prompts/simple-roguelike.md?raw';
-import outdoorOverworldPrompt from '../Example_LLM_Prompts/outdoor-overworld.md?raw';
-import townPrompt from '../Example_LLM_Prompts/town.md?raw';
-import dungeonPrompt from '../Example_LLM_Prompts/dungeon.md?raw';
-import arenaPrompt from '../Example_LLM_Prompts/arena.md?raw';
-import hudMenuPrompt from '../Example_LLM_Prompts/hud-menu.md?raw';
 
 /**
- * Stories for the bundled LLM prompts.
+ * Story for the single bundled LLM prompt.
  *
- * Each story renders a prompt verbatim inside a textarea with a Copy
- * button so you can paste the whole thing into Claude / GPT / Copilot
- * Chat and have the model rebuild the example from the linked source
- * files.
+ * One textarea, two dropdowns. Pick a starter pitch to drop into the
+ * `<<<…>>>` slot, optionally exclude component deep-dive sections you
+ * don't need, then hit Copy and paste the whole thing into Claude /
+ * GPT / Copilot Chat.
  */
 export default {
   title: 'Dawnlike/Prompts',
@@ -24,9 +22,9 @@ export default {
     docs: {
       description: {
         component:
-          'Self-contained prompts you can hand to an LLM to recreate examples from this repo. ' +
-          'Every prompt links its required source files by raw-content URL so the model can ' +
-          'fetch them itself.',
+          'A single extensive prompt you can hand to an LLM to build a 2D browser game on this toolkit. ' +
+          'Pick a starter pitch and toggle component deep-dive sections; every link in the prompt resolves ' +
+          'to raw GitHub content so the model can fetch the source itself.',
       },
     },
   },
@@ -118,6 +116,20 @@ const SAMPLE_IDEAS = [
   },
 ];
 
+// Component deep-dive sections in the prompt, each delimited by
+// `<!-- BEGIN:id -->` / `<!-- END:id -->`. The dropdown lets the user
+// pick a preset (default: everything, or "just the parts that match my
+// pitch"); the checkboxes underneath let them override the picks.
+const SECTIONS = [
+  { id: 'overworld', label: 'Overworld / wilderness map' },
+  { id: 'town', label: 'Town / settlement' },
+  { id: 'dungeon', label: 'Dungeon / cave / maze' },
+  { id: 'arena', label: 'Combat arena / ambush map' },
+  { id: 'hud-menu', label: 'Chrome HUD + menu toolkit' },
+  { id: 'phaser-wiring', label: 'Full Phaser game wiring' },
+];
+const ALL_SECTION_IDS = SECTIONS.map((s) => s.id);
+
 // Replace the `<<<...>>>` placeholder block with the chosen idea so the
 // resulting prompt is paste-ready (markers and the placeholder hint
 // inside them are dropped — the LLM just sees the idea body). Also
@@ -130,6 +142,41 @@ function withIdea(template, idea) {
   return template
     .replace(PLACEHOLDER_RE, idea.trim())
     .replace(INTRO_REF_RE, 'Build the game described below using the');
+}
+
+// Strip any `<!-- BEGIN:id -->...<!-- END:id -->` block whose id is not
+// in `enabledIds`. Sections we keep just have their marker comments
+// stripped so the output reads as clean Markdown.
+function applySections(template, enabledIds) {
+  const enabled = new Set(enabledIds);
+  let out = template;
+  for (const { id } of SECTIONS) {
+    const re = new RegExp(
+      `\\n?<!-- BEGIN:${id} -->[\\s\\S]*?<!-- END:${id} -->\\n?`,
+      'g',
+    );
+    if (enabled.has(id)) {
+      // Keep section content, strip marker comments only.
+      out = out.replace(
+        new RegExp(`<!-- (?:BEGIN|END):${id} -->\\n?`, 'g'),
+        '',
+      );
+    } else {
+      out = out.replace(re, '\n');
+    }
+  }
+  // If every component deep-dive was disabled, also drop the now-empty
+  // "## Component deep-dives" header + lead paragraph so the prompt
+  // doesn't trail off into a dead section title.
+  if (enabledIds.length === 0) {
+    out = out.replace(
+      /\n## Component deep-dives\n[\s\S]*?(?=\n## |\s*$)/,
+      '\n',
+    );
+  }
+  // Collapse 3+ blank lines (introduced by stripped sections) down to 2.
+  out = out.replace(/\n{3,}/g, '\n\n').trimEnd() + '\n';
+  return out;
 }
 
 function PromptPanel({ title, subtitle, body, header }) {
@@ -240,48 +287,110 @@ function PromptPanel({ title, subtitle, body, header }) {
 
 function GameTemplateStory() {
   const [sampleIdx, setSampleIdx] = useState(-1);
+  const [enabledSections, setEnabledSections] = useState(ALL_SECTION_IDS);
+
   const idea = sampleIdx >= 0 ? SAMPLE_IDEAS[sampleIdx].idea : '';
-  const body = useMemo(() => withIdea(gameTemplatePrompt, idea), [idea]);
+  const body = useMemo(
+    () => applySections(withIdea(gameTemplatePrompt, idea), enabledSections),
+    [idea, enabledSections],
+  );
+
+  const toggleSection = useCallback((id) => {
+    setEnabledSections((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }, []);
+
+  const controlRowStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    padding: '10px 12px',
+    background: '#f1f4f8',
+    border: '1px solid #d6dde6',
+    borderRadius: 6,
+    fontSize: 13,
+    color: '#333',
+  };
+
   const header = (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 10,
-      margin: '0 0 10px',
-      padding: '10px 12px',
-      background: '#f1f4f8',
-      border: '1px solid #d6dde6',
-      borderRadius: 6,
-      fontSize: 13,
-      color: '#333',
-    }}>
-      <label htmlFor="dawnlike-sample-idea" style={{ fontWeight: 600 }}>
-        Starter pitch:
-      </label>
-      <select
-        id="dawnlike-sample-idea"
-        value={sampleIdx}
-        onChange={(e) => setSampleIdx(Number(e.target.value))}
-        style={{
-          flex: 1,
-          padding: '6px 8px',
-          fontSize: 13,
-          border: '1px solid #b8c1cd',
-          borderRadius: 4,
-          background: '#fff',
-        }}
-      >
-        <option value={-1}>— blank template (write your own) —</option>
-        {SAMPLE_IDEAS.map((s, i) => (
-          <option key={s.label} value={i}>{s.label}</option>
-        ))}
-      </select>
-      {sampleIdx >= 0 && (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, margin: '0 0 10px' }}>
+      <div style={controlRowStyle}>
+        <label htmlFor="dawnlike-sample-idea" style={{ fontWeight: 600 }}>
+          Starter pitch:
+        </label>
+        <select
+          id="dawnlike-sample-idea"
+          value={sampleIdx}
+          onChange={(e) => setSampleIdx(Number(e.target.value))}
+          style={{
+            flex: 1,
+            padding: '6px 8px',
+            fontSize: 13,
+            border: '1px solid #b8c1cd',
+            borderRadius: 4,
+            background: '#fff',
+          }}
+        >
+          <option value={-1}>— blank template (write your own) —</option>
+          {SAMPLE_IDEAS.map((s, i) => (
+            <option key={s.label} value={i}>{s.label}</option>
+          ))}
+        </select>
+        {sampleIdx >= 0 && (
+          <button
+            type="button"
+            onClick={() => setSampleIdx(-1)}
+            style={{
+              padding: '6px 10px',
+              border: '1px solid #b8c1cd',
+              borderRadius: 4,
+              background: '#fff',
+              cursor: 'pointer',
+              fontSize: 12,
+            }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      <div style={{ ...controlRowStyle, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <span style={{ fontWeight: 600, marginRight: 4, lineHeight: '24px' }}>
+          Include sections:
+        </span>
+        {SECTIONS.map((s) => {
+          const checked = enabledSections.includes(s.id);
+          return (
+            <label
+              key={s.id}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 10px',
+                background: checked ? '#dfe9f5' : '#fff',
+                border: '1px solid #b8c1cd',
+                borderRadius: 14,
+                fontSize: 12,
+                cursor: 'pointer',
+                userSelect: 'none',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => toggleSection(s.id)}
+                style={{ margin: 0 }}
+              />
+              {s.label}
+            </label>
+          );
+        })}
         <button
           type="button"
-          onClick={() => setSampleIdx(-1)}
+          onClick={() => setEnabledSections(ALL_SECTION_IDS)}
           style={{
-            padding: '6px 10px',
+            padding: '4px 10px',
             border: '1px solid #b8c1cd',
             borderRadius: 4,
             background: '#fff',
@@ -289,15 +398,29 @@ function GameTemplateStory() {
             fontSize: 12,
           }}
         >
-          Clear
+          All
         </button>
-      )}
+        <button
+          type="button"
+          onClick={() => setEnabledSections([])}
+          style={{
+            padding: '4px 10px',
+            border: '1px solid #b8c1cd',
+            borderRadius: 4,
+            background: '#fff',
+            cursor: 'pointer',
+            fontSize: 12,
+          }}
+        >
+          None
+        </button>
+      </div>
     </div>
   );
   return (
     <PromptPanel
       title="Game template prompt"
-      subtitle="Paste-and-go template: pick a starter pitch from the dropdown (or write your own in the <<<…>>> slot), then hand the whole textarea to Claude / GPT / Copilot to build it on top of dawnlike-atlas."
+      subtitle="Single extensive prompt for building any 2D browser game on dawnlike-atlas. Pick a starter pitch, toggle component deep-dives, then hand the whole textarea to Claude / GPT / Copilot."
       body={body}
       header={header}
     />
@@ -307,70 +430,4 @@ function GameTemplateStory() {
 export const GameTemplate = {
   name: 'Game Template',
   render: () => <GameTemplateStory />,
-};
-
-export const SimpleRoguelike = {
-  name: 'Simple Roguelike',
-  render: () => (
-    <PromptPanel
-      title="Simple Roguelike prompt"
-      subtitle="Recreate the Phaser overworld + town + 3-level dungeon example. Paste into Claude / GPT / Copilot Chat."
-      body={simpleRoguelikePrompt}
-    />
-  ),
-};
-
-export const OutdoorOverworld = {
-  name: 'Outdoor Overworld',
-  render: () => (
-    <PromptPanel
-      title="Outdoor Overworld prompt"
-      subtitle="Recreate the 50×40 React wilderness map: simplex biomes, autotiled roads/rivers/bridges, forests, mountains."
-      body={outdoorOverworldPrompt}
-    />
-  ),
-};
-
-export const Town = {
-  name: 'Town',
-  render: () => (
-    <PromptPanel
-      title="Town prompt"
-      subtitle="Recreate the React town: perimeter wall, building archetypes, mandatory bank with vault loot, signs, flowers."
-      body={townPrompt}
-    />
-  ),
-};
-
-export const Dungeon = {
-  name: 'Dungeon',
-  render: () => (
-    <PromptPanel
-      title="Dungeon prompt"
-      subtitle="Recreate the rot.js dungeon playground: six map algorithms, atlas-driven style picker, click-to-pin sprite picker."
-      body={dungeonPrompt}
-    />
-  ),
-};
-
-export const Arena = {
-  name: 'Arena',
-  render: () => (
-    <PromptPanel
-      title="Arena prompt"
-      subtitle="Recreate the combat arena: noisy obstacle ring, four obstacle kinds, themed presets, hazard scatter."
-      body={arenaPrompt}
-    />
-  ),
-};
-
-export const HudMenu = {
-  name: 'HUD & Menu',
-  render: () => (
-    <PromptPanel
-      title="HUD &amp; Menu prompt"
-      subtitle="Recreate the chrome HUD toolkit: 9-slice frame, segmented gauges, hearts, typewriter dialog, inventory grid."
-      body={hudMenuPrompt}
-    />
-  ),
 };

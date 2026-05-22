@@ -75,19 +75,11 @@ A small explorable roguelike built on [Phaser 4](https://phaser.io/): an overwor
 
 ## LLM Prompts
 
-The [`Example_LLM_Prompts/`](./Example_LLM_Prompts/) directory contains self-contained prompts you can hand to an LLM (Claude, GPT-4, Copilot, …) to **recreate working examples** from this repo in your own project. Each prompt links every file it needs by raw/blob GitHub URL so the model can pull the source itself.
+A single self-contained prompt — [`Example_LLM_Prompts/game-template.md`](./Example_LLM_Prompts/game-template.md) — that you can hand to an LLM (Claude, GPT-4, Copilot, …) to **build any 2D browser game** on top of this repo. Drop your game idea into the `<<<…>>>` slot and the model has everything it needs (atlas, generators, autotile helpers, reference examples) linked by raw/blob GitHub URL.
 
-The same prompts are also available inside Storybook under **Examples › LLM Prompts** with a one-click copy button.
+The prompt is also available inside Storybook under **Dawnlike › Prompts** with a starter-pitch dropdown, an "Include sections" toggle row (overworld / town / dungeon / arena / HUD / full Phaser wiring), and a one-click copy button.
 
-Currently available:
-
-- [`game-template.md`](./Example_LLM_Prompts/game-template.md) — paste-and-go template for building any 2D browser game on the toolkit.
-- [`simple-roguelike.md`](./Example_LLM_Prompts/simple-roguelike.md) — recreate the Phaser Roguelike described above.
-- [`outdoor-overworld.md`](./Example_LLM_Prompts/outdoor-overworld.md) — recreate the React wilderness overworld (`OutdoorExample`).
-- [`town.md`](./Example_LLM_Prompts/town.md) — recreate the React town with shops, bank vault, signs, and flora (`TownExample`).
-- [`dungeon.md`](./Example_LLM_Prompts/dungeon.md) — recreate the rot.js dungeon-generator playground across all six map algorithms (`DungeonExample`).
-- [`arena.md`](./Example_LLM_Prompts/arena.md) — recreate the combat arena with themed presets (`ArenaExample`).
-- [`hud-menu.md`](./Example_LLM_Prompts/hud-menu.md) — recreate the chrome HUD + menu toolkit (`MenuExample`).
+See [`Example_LLM_Prompts/README.md`](./Example_LLM_Prompts/README.md) for the section layout and authoring conventions.
 
 ## Semantic Autotiling
 
