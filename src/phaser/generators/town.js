@@ -25,7 +25,7 @@
  * @typedef {Object} TownNpcConfig
  * @property {number} [chance=0.8]                        Per-building probability of placing any NPCs.
  * @property {{min:number,max:number}} [perBuilding]      NPC count range per building (capped at free floor tiles).
- * @property {Object<string,string[]>} [palettes]         Per-buildingType NPC sprite name palette. `default` is the catch-all.
+ * @property {Object<string,string[]>} [palettes]         Per-buildingType NPC sprite name palette. `default` is the catch-all. When provided, overrides the race-derived palette.
  *
  * @typedef {Object} TownFurnitureConfig
  * @property {boolean} [enabled=true]                     Place type-specific furniture inside each building.
@@ -52,6 +52,9 @@
  * @property {TownFlowerConfig} [flowers]                 Flower scatter options.
  * @property {number} [treeDensity=0.08]                  Chance per grass tile (away from streets) to spawn a tree.
  * @property {boolean} [fountain=true]                    Place a fountain in the centre of the plaza.
+ * @property {'human'|'elf'|'dwarf'|'gnome'|'halfling'} [race='human']
+ *                                                        Dominant race for the town. Drives the NPC sprite palette per building type. Override sprites via `npc.palettes` if needed.
+ * @property {number} [friendlyRaceChance=0.12]           Per-NPC probability that the sprite is swapped for one from a friendly race (so a 'human' town occasionally has an elf in the inn, a dwarf at the smithy, etc.). Set to 0 to keep the town mono-racial.
  */
 
 import * as ROT from 'rot-js';
@@ -63,14 +66,84 @@ const DEFAULT_BUILDING_TYPE_WEIGHTS = Object.freeze({
   home: 3, inn: 1, smithy: 1, shop: 1, church: 1,
 });
 
-const DEFAULT_NPC_PALETTES = Object.freeze({
-  home:    ['peasant man', 'peasant woman'],
-  inn:     ['peasant man', 'peasant woman', 'farmer man', 'farmer woman'],
-  smithy:  ['miner', 'peasant man'],
-  shop:    ['gnome wizard', 'peasant woman', 'peasant man'],
-  church:  ['priest', 'monk', 'aligned priest'],
-  default: ['peasant man', 'peasant woman'],
+// Town races. The town's dominant race drives the NPC sprite mix —
+// most NPCs are drawn from RACE_NPC_PALETTES[race][buildingType] (with
+// fallbacks). A small per-NPC roll (manifest.friendlyRaceChance) swaps
+// the sprite for one from a friendly race so a "human" town occasionally
+// has an elf in the inn, a dwarf at the smithy, etc.
+export const TOWN_RACES = Object.freeze([
+  'human', 'elf', 'dwarf', 'gnome', 'halfling',
+]);
+
+// Friendly-race graph: which races plausibly mingle with which. A miss
+// from FRIENDLY_RACES[race] falls back to 'human' (everyone tolerates
+// humans well enough).
+const FRIENDLY_RACES = Object.freeze({
+  human:    ['elf', 'dwarf', 'gnome', 'halfling'],
+  elf:      ['human', 'gnome', 'halfling'],
+  dwarf:    ['human', 'gnome'],
+  gnome:    ['human', 'elf', 'dwarf', 'halfling'],
+  halfling: ['human', 'elf', 'gnome'],
 });
+
+// Per-race NPC palettes. The 'default' palette is used when a specific
+// building type has no override (and as the fallback if a race omits a
+// type). Sprite names exist in the atlas verbatim — see byName.
+const RACE_NPC_PALETTES = Object.freeze({
+  human: {
+    home:    ['peasant man', 'peasant woman'],
+    inn:     ['peasant man', 'peasant woman', 'farmer man', 'farmer woman'],
+    smithy:  ['miner', 'peasant man'],
+    shop:    ['peasant woman', 'peasant man'],
+    pub:     ['peasant man', 'peasant woman', 'farmer man'],
+    bank:    ['peasant man', 'peasant woman'],
+    church:  ['priest', 'monk', 'aligned priest'],
+    default: ['peasant man', 'peasant woman'],
+  },
+  elf: {
+    home:    ['elf', 'elf lord'],
+    inn:     ['elf', 'elf lord'],
+    smithy:  ['elf', 'elf lord'],
+    shop:    ['elf', 'elf lord'],
+    pub:     ['elf', 'elf lord'],
+    bank:    ['elf lord', 'elf king'],
+    church:  ['elf', 'elf lord'],
+    default: ['elf'],
+  },
+  dwarf: {
+    home:    ['dwarf', 'dwarf lord'],
+    inn:     ['dwarf', 'dwarf nomad', 'dwarf ranger'],
+    smithy:  ['dwarf', 'dwarf expert', 'dwarf barbarian'],
+    shop:    ['dwarf', 'dwarf expert'],
+    pub:     ['dwarf', 'dwarf nomad', 'dwarf barbarian'],
+    bank:    ['dwarf lord', 'dwarf king'],
+    church:  ['dwarf healer', 'dwarf lord'],
+    default: ['dwarf'],
+  },
+  gnome: {
+    home:    ['gnome', 'gnome lord'],
+    inn:     ['gnome', 'gnome wizard'],
+    smithy:  ['gnome', 'gnome wizard'],
+    shop:    ['gnome wizard', 'gnome'],
+    pub:     ['gnome', 'gnome wizard'],
+    bank:    ['gnome lord', 'gnome king'],
+    church:  ['gnome wizard', 'gnome lord'],
+    default: ['gnome'],
+  },
+  halfling: {
+    home:    ['hobbit', 'peasant man', 'peasant woman'],
+    inn:     ['hobbit', 'farmer man', 'farmer woman'],
+    smithy:  ['hobbit', 'miner'],
+    shop:    ['hobbit', 'peasant woman'],
+    pub:     ['hobbit', 'farmer man'],
+    bank:    ['hobbit', 'peasant man'],
+    church:  ['hobbit', 'priest'],
+    default: ['hobbit'],
+  },
+});
+
+// Back-compat: legacy DEFAULT_NPC_PALETTES is the human race's palette.
+const DEFAULT_NPC_PALETTES = RACE_NPC_PALETTES.human;
 
 const DEFAULT_FLOWER_VARIANTS = Object.freeze([
   'white flowers', 'sparse white flowers',
@@ -104,7 +177,7 @@ export const DEFAULT_TOWN_MANIFEST = Object.freeze({
   npc: {
     chance: 0.8,
     perBuilding: { min: 1, max: 2 },
-    palettes: DEFAULT_NPC_PALETTES,
+    palettes: null,
   },
   flowers: {
     density: 0.05,
@@ -112,6 +185,8 @@ export const DEFAULT_TOWN_MANIFEST = Object.freeze({
   },
   treeDensity: 0.08,
   fountain: true,
+  race: 'human',
+  friendlyRaceChance: 0.12,
 });
 
 function weightedPick(weights) {
@@ -149,6 +224,8 @@ export function generateTown(manifest) {
     flowers: flowerCfg,
     treeDensity,
     fountain: placeFountain,
+    race,
+    friendlyRaceChance,
   } = m;
 
   ROT.RNG.setSeed(seed);
@@ -428,17 +505,28 @@ export function generateTown(manifest) {
     }
   }
 
-  // 4.7 NPCs — pick from the per-type palette (falling back to `default`)
-  //     and place on remaining free interior floor tiles. Capped by the
-  //     manifest's npc.perBuilding range. Tiles with furniture, doors,
-  //     or the don't-block-the-doorway tile are excluded.
+  // 4.7 NPCs — pick from the per-type palette derived from the town's
+  //     race (or the caller's npc.palettes override if supplied). Each
+  //     individual NPC has a friendlyRaceChance roll: if it hits, the
+  //     sprite is re-rolled from a *different* friendly race's palette
+  //     so the town reads as racially mixed rather than mono-racial.
   if (npcCfg) {
+    // Resolve the palette source. Caller override wins; otherwise pull
+    // the per-type palette for the configured race.
+    const racePalettes = RACE_NPC_PALETTES[race] || RACE_NPC_PALETTES.human;
+    const paletteFor = (type, fromRace = race) => {
+      const r = RACE_NPC_PALETTES[fromRace] || RACE_NPC_PALETTES.human;
+      // Caller-provided override always wins for the dominant race.
+      if (fromRace === race && npcCfg.palettes && npcCfg.palettes[type]) {
+        return npcCfg.palettes[type];
+      }
+      if (r[type] && r[type].length) return r[type];
+      if (r.default && r.default.length) return r.default;
+      return racePalettes.default || RACE_NPC_PALETTES.human.default;
+    };
+    const friendlies = FRIENDLY_RACES[race] || FRIENDLY_RACES.human;
     for (const b of placed) {
       if (ROT.RNG.getUniform() > (npcCfg.chance ?? 1)) continue;
-      const palette = (npcCfg.palettes && npcCfg.palettes[b.type])
-        || (npcCfg.palettes && npcCfg.palettes.default)
-        || DEFAULT_NPC_PALETTES.default;
-      if (!palette.length) continue;
       const free = [];
       let blocked = null;
       if (b.door) {
@@ -462,7 +550,16 @@ export function generateTown(manifest) {
         const idx = ROT.RNG.getUniformInt(0, free.length - 1);
         const cell = free.splice(idx, 1)[0];
         const t = get(cell.x, cell.y);
-        if (t) t.npc = palette[ROT.RNG.getUniformInt(0, palette.length - 1)];
+        if (!t) continue;
+        // Friendly-race re-roll: pick a random friendly race and use its
+        // palette for this single NPC. Only roll when friendlies exist.
+        let chosenRace = race;
+        if (friendlies.length && ROT.RNG.getUniform() < (friendlyRaceChance ?? 0)) {
+          chosenRace = friendlies[ROT.RNG.getUniformInt(0, friendlies.length - 1)];
+        }
+        const palette = paletteFor(b.type, chosenRace);
+        if (!palette.length) continue;
+        t.npc = palette[ROT.RNG.getUniformInt(0, palette.length - 1)];
       }
     }
   }
@@ -581,10 +678,10 @@ export function normalizeTownManifest(input) {
         ...DEFAULT_TOWN_MANIFEST.npc.perBuilding,
         ...((m.npc && m.npc.perBuilding) || {}),
       },
-      palettes: {
-        ...DEFAULT_TOWN_MANIFEST.npc.palettes,
-        ...((m.npc && m.npc.palettes) || {}),
-      },
+      // palettes is null by default — caller may pass a partial override
+      // map; preserve it as-is. The generator merges per-key at lookup
+      // time against the race-derived palette.
+      palettes: (m.npc && m.npc.palettes) ? { ...(m.npc.palettes) } : null,
     },
     flowers: {
       ...DEFAULT_TOWN_MANIFEST.flowers,

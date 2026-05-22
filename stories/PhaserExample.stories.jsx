@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import PhaserExample from '../src/PhaserExample';
 
 /**
@@ -132,6 +132,19 @@ export default {
       control: { type: 'range', min: 0, max: 0.3, step: 0.01 },
       description: 'Per grass tile, chance of placing a flower variant.',
     },
+    townRace: {
+      name: 'town.race',
+      table: { category: 'Town · Race' },
+      control: { type: 'select' },
+      options: ['human', 'elf', 'dwarf', 'gnome', 'halfling'],
+      description: 'Dominant race for the town. Drives the NPC sprite mix per building type.',
+    },
+    townFriendlyRaceChance: {
+      name: 'town.friendlyRaceChance',
+      table: { category: 'Town · Race' },
+      control: { type: 'range', min: 0, max: 0.6, step: 0.02 },
+      description: 'Per-NPC probability that the sprite is swapped for one from a friendly race (mixes the population). 0 keeps the town mono-racial.',
+    },
     townWeightHome: {
       name: 'town.buildingTypeWeights.home',
       table: { category: 'Town · Building mix' },
@@ -192,6 +205,8 @@ export default {
     townNpcMin: 1,
     townNpcMax: 2,
     townFlowerDensity: 0.05,
+    townRace: 'human',
+    townFriendlyRaceChance: 0.12,
     townWeightHome: 3,
     townWeightInn: 1,
     townWeightSmithy: 1,
@@ -229,6 +244,8 @@ function buildManifests(args) {
         perBuilding: { min: args.townNpcMin, max: Math.max(args.townNpcMin, args.townNpcMax) },
       },
       flowers: { density: args.townFlowerDensity },
+      race: args.townRace,
+      friendlyRaceChance: args.townFriendlyRaceChance,
       buildingTypeWeights: {
         home:   args.townWeightHome,
         inn:    args.townWeightInn,
@@ -246,6 +263,120 @@ function buildManifests(args) {
 
 // Single-story hoisting: export name == last segment of title makes
 // the sidebar leaf disappear so the title doubles as the entry point.
+function ManifestPanel({ manifests }) {
+  const [open, setOpen] = useState(false);
+  const json = useMemo(() => JSON.stringify(manifests, null, 2), [manifests]);
+  const [copied, setCopied] = useState(false);
+  const onCopy = useCallback(async () => {
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = json;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      ta.setAttribute('readonly', '');
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    };
+    let ok = false;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(json);
+        ok = true;
+      } else {
+        ok = fallback();
+      }
+    } catch {
+      ok = fallback();
+    }
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+  }, [json]);
+  return (
+    <div style={{
+      marginTop: 12,
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      fontSize: 13,
+      border: '1px solid #d6dde6',
+      borderRadius: 6,
+      background: '#fafbfc',
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        padding: '8px 10px',
+        borderBottom: open ? '1px solid #d6dde6' : 'none',
+      }}>
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          style={{
+            padding: '4px 10px',
+            border: '1px solid #b8c1cd',
+            borderRadius: 4,
+            background: '#fff',
+            cursor: 'pointer',
+            fontSize: 12,
+            fontWeight: 600,
+          }}
+        >
+          {open ? 'Hide' : 'View'} manifest
+        </button>
+        <span style={{ color: '#666', fontSize: 12 }}>
+          Live JSON for the {`{ world, town, dungeon }`} manifests passed to the game.
+        </span>
+        <button
+          type="button"
+          onClick={onCopy}
+          style={{
+            marginLeft: 'auto',
+            padding: '4px 10px',
+            border: '1px solid #888',
+            borderRadius: 4,
+            background: copied ? '#1f7a32' : '#222',
+            color: '#fff',
+            cursor: 'pointer',
+            fontSize: 12,
+            fontWeight: 600,
+            minWidth: 110,
+            transition: 'background 0.15s ease',
+          }}
+        >
+          {copied ? 'Copied!' : 'Copy JSON'}
+        </button>
+      </div>
+      {open && (
+        <pre style={{
+          margin: 0,
+          padding: 10,
+          maxHeight: 360,
+          overflow: 'auto',
+          fontFamily:
+            'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+          fontSize: 12,
+          lineHeight: 1.45,
+          background: '#fff',
+          borderBottomLeftRadius: 6,
+          borderBottomRightRadius: 6,
+        }}>{json}</pre>
+      )}
+    </div>
+  );
+}
+
 export const PhaserRoguelike = {
-  render: (args) => <PhaserExample manifests={buildManifests(args)} />,
+  render: (args) => {
+    const manifests = buildManifests(args);
+    return (
+      <div>
+        <PhaserExample manifests={manifests} />
+        <ManifestPanel manifests={manifests} />
+      </div>
+    );
+  },
 };
