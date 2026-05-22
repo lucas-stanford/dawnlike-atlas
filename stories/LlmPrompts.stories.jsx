@@ -3,6 +3,11 @@ import React, { useState, useCallback, useMemo } from 'react';
 // so the prompt is bundled with Storybook and works on the static site.
 import gameTemplatePrompt from '../Example_LLM_Prompts/game-template.md?raw';
 import simpleRoguelikePrompt from '../Example_LLM_Prompts/simple-roguelike.md?raw';
+import outdoorOverworldPrompt from '../Example_LLM_Prompts/outdoor-overworld.md?raw';
+import townPrompt from '../Example_LLM_Prompts/town.md?raw';
+import dungeonPrompt from '../Example_LLM_Prompts/dungeon.md?raw';
+import arenaPrompt from '../Example_LLM_Prompts/arena.md?raw';
+import hudMenuPrompt from '../Example_LLM_Prompts/hud-menu.md?raw';
 
 /**
  * Stories for the bundled LLM prompts.
@@ -311,6 +316,61 @@ export const SimpleRoguelike = {
       title="Simple Roguelike prompt"
       subtitle="Recreate the Phaser overworld + town + 3-level dungeon example. Paste into Claude / GPT / Copilot Chat."
       body={simpleRoguelikePrompt}
+    />
+  ),
+};
+
+export const OutdoorOverworld = {
+  name: 'Outdoor Overworld',
+  render: () => (
+    <PromptPanel
+      title="Outdoor Overworld prompt"
+      subtitle="Recreate the 50×40 React wilderness map: simplex biomes, autotiled roads/rivers/bridges, forests, mountains."
+      body={outdoorOverworldPrompt}
+    />
+  ),
+};
+
+export const Town = {
+  name: 'Town',
+  render: () => (
+    <PromptPanel
+      title="Town prompt"
+      subtitle="Recreate the React town: perimeter wall, building archetypes, mandatory bank with vault loot, signs, flowers."
+      body={townPrompt}
+    />
+  ),
+};
+
+export const Dungeon = {
+  name: 'Dungeon',
+  render: () => (
+    <PromptPanel
+      title="Dungeon prompt"
+      subtitle="Recreate the rot.js dungeon playground: six map algorithms, atlas-driven style picker, click-to-pin sprite picker."
+      body={dungeonPrompt}
+    />
+  ),
+};
+
+export const Arena = {
+  name: 'Arena',
+  render: () => (
+    <PromptPanel
+      title="Arena prompt"
+      subtitle="Recreate the combat arena: noisy obstacle ring, four obstacle kinds, themed presets, hazard scatter."
+      body={arenaPrompt}
+    />
+  ),
+};
+
+export const HudMenu = {
+  name: 'HUD & Menu',
+  render: () => (
+    <PromptPanel
+      title="HUD &amp; Menu prompt"
+      subtitle="Recreate the chrome HUD toolkit: 9-slice frame, segmented gauges, hearts, typewriter dialog, inventory grid."
+      body={hudMenuPrompt}
     />
   ),
 };
