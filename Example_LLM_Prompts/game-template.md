@@ -41,7 +41,7 @@ distinctive.
 **Every visible pixel of gameplay art must come from `DawnlikeAtlas.json` + `DawnlikeAtlas0.png` / `DawnlikeAtlas1.png`.** No exceptions for terrain, characters, items, HUD icons, doors, props, effects, projectiles, particles, cursors, or decorations.
 
 - Load `DawnlikeAtlas.json` once at boot and resolve every sprite through `atlas.byName[<name>]` (or filter `byName` entries by their `tags`). Never reference frames by numeric index, never hand-author `{x, y, w, h}` rectangles, never assume the atlas grid is uniform.
-- Honour `w` / `h` from each lookup (most are 32×32; the 9 HUD icons — health, stamina, fire, ice, lightning, save, enter, inventory, surrounded — are 96×96). Render at integer pixel positions; do not stretch or rotate sprites away from their native size unless the design explicitly calls for it.
+- Honour `w` / `h` from each lookup; every current frame is 32×32 (`meta.tile`), but treat `sprite.w`/`sprite.h` as the source of truth with `TILE` (32) as the fallback so future oversized sprites still render correctly. Render at integer pixel positions; do not stretch or rotate sprites away from their native size unless the design explicitly calls for it.
 - Sprites with `isAnimated: true` have a second frame in atlas 1 — register a 2-frame animation keyed `anim:<name>` at ~3 fps in boot and use it for rivers, torches, water, lava, etc.
 - Before adding anything new to the scene, **search the atlas first**: scan `byName` keys and `tags` for something that fits (`grep`-style filter on tags like `weapon`, `potion`, `door`, `tree`, `chest`, `floor`, `wall`, `monster`, `npc`, `gui`, `effect`). The atlas ships ~4,157 sprites across characters, items, objects, and GUI — assume the sprite you want is already there.
 - If you genuinely cannot find a fit, pick the closest atlas sprite and reuse it; **do not** substitute placeholder art. Specifically: no `Graphics.fillRect` / `Graphics.fillCircle` for game objects, no inline SVG, no emoji or unicode glyphs as sprites, no procedurally generated textures, no externally fetched images, no tinted recolours beyond what already exists in the atlas, no AI-generated assets, no "TODO sprite" rectangles.
@@ -287,7 +287,7 @@ atlas sprites.
 - Heart sprite helper that renders full / half / empty hearts.
 - Typewriter dialog (`useTypewriter`) for NPC speech.
 - Inventory grid using the framed cells.
-- Some HUD icons (health / stamina / save / inventory) are 96×96 — honour `sprite.w` / `sprite.h` from the lookup.
+- HUD icons live under names like `health icon`, `stamina icon`, `save icon`, `inventory icon` — honour `sprite.w` / `sprite.h` from the lookup so any future oversized icons render correctly.
 
 **Files to read**
 
@@ -301,7 +301,7 @@ atlas sprites.
 **Recreation steps**
 
 1. Fetch the atlas; keep it in state.
-2. Write a `<Sprite>` primitive that renders any named atlas sprite as a positioned background-image on a `<div>`. Honour the sprite's `w` / `h` (most are 32×32; HUD icons are 96×96). Support `flipX` / `flipY` via CSS transform.
+2. Write a `<Sprite>` primitive that renders any named atlas sprite as a positioned background-image on a `<div>`. Honour the sprite's `w` / `h` (every current frame is 32×32, but read it from the lookup with `TILE` as fallback). Support `flipX` / `flipY` via CSS transform.
 3. Write `<Frame w h family>`: for every cell pick the right 9-slice part (`nw`, `n`, `ne`, `w`, `c`, `e`) and `flipY` for the bottom row. Sprite name = `` `${family} ${part}` ``.
 4. Write `<Gauge color value segments>`: two passes — colored fill (`gauge <color> full|most|half|low` per segment) under chrome frame (`gauge chrome left|center|right`). For each segment, compute `frac = (value − segStart) / segWidth` and pick the level by quartile.
 5. Write a `heartSprite(hp, maxHp)` helper that lays out full / half / empty heart sprites.
@@ -317,7 +317,7 @@ atlas sprites.
 - Typewriter dialog reveals text one character at a time.
 - Inventory grid shows 16 framed cells.
 - Switching the frame `family` prop swaps the chrome colour without breaking layout.
-- The 96×96 GUI icons render at native size rather than being squashed to 32×32.
+- Every sprite (including GUI icons) renders at its declared `sprite.w` × `sprite.h` rather than being squashed or stretched.
 <!-- END:hud-menu -->
 
 <!-- BEGIN:phaser-wiring -->
