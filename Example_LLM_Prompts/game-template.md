@@ -22,7 +22,7 @@ distinctive.
 
 ## What to fetch
 
-- **Atlas** (drop in `atlas/`): [`DawnlikeAtlas.json`](https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas.json), [`DawnlikeAtlas0.png`](https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas0.png), [`DawnlikeAtlas1.png`](https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas1.png) + the [sprite naming guide](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/atlas/DawnlikeAtlas.instructions.md). Atlas 0 holds primary frames; atlas 1 holds the alt frame for every `isAnimated` sprite (rivers, torches, water, lava, …).
+- **Atlas** (required — drop in `atlas/`): [`DawnlikeAtlas.json`](https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas.json), [`DawnlikeAtlas0.png`](https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas0.png), [`DawnlikeAtlas1.png`](https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas1.png) + the [sprite naming guide](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/atlas/DawnlikeAtlas.instructions.md). Atlas 0 holds primary frames; atlas 1 holds the alt frame for every `isAnimated` sprite (rivers, torches, water, lava, …).
 - **Generators** (optional, take what you need): [`world.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/generators/world.js) ([docs](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/stories/WorldManifest.mdx)), [`town.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/generators/town.js) ([docs](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/stories/TownManifest.mdx)), [`dungeon.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/generators/dungeon.js) ([docs](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/stories/DungeonManifest.mdx)).
 - **Helpers**: [`autotile.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/utils/autotile.js) (corner/edge sprite picker), [`autotileRender.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/autotileRender.js) (map → sprite layers), [`hud.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/ui/hud.js) (9-slice frame, gauges, hearts).
 - **Reference examples** — copy or mine the one(s) closest to your idea:
@@ -36,10 +36,23 @@ distinctive.
 
 ## Rules
 
-- `npm install phaser@^4 rot-js` (drop `phaser` if you go pure React; drop `rot-js` if you don't need its RNG/maps/path-finding).
+### Atlas usage (non-negotiable)
+
+**Every visible pixel of gameplay art must come from `DawnlikeAtlas.json` + `DawnlikeAtlas0.png` / `DawnlikeAtlas1.png`.** No exceptions for terrain, characters, items, HUD icons, doors, props, effects, projectiles, particles, cursors, or decorations.
+
+- Load `DawnlikeAtlas.json` once at boot and resolve every sprite through `atlas.byName[<name>]` (or filter `byName` entries by their `tags`). Never reference frames by numeric index, never hand-author `{x, y, w, h}` rectangles, never assume the atlas grid is uniform.
+- Honour `w` / `h` from each lookup; every current frame is 32×32 (`meta.tile`), but treat `sprite.w`/`sprite.h` as the source of truth with `TILE` (32) as the fallback so future oversized sprites still render correctly. Render at integer pixel positions; do not stretch or rotate sprites away from their native size unless the design explicitly calls for it.
+- Sprites with `isAnimated: true` have a second frame in atlas 1 — register a 2-frame animation keyed `anim:<name>` at ~3 fps in boot and use it for rivers, torches, water, lava, etc.
+- Before adding anything new to the scene, **search the atlas first**: scan `byName` keys and `tags` for something that fits (`grep`-style filter on tags like `weapon`, `potion`, `door`, `tree`, `chest`, `floor`, `wall`, `monster`, `npc`, `gui`, `effect`). The atlas ships ~4,157 sprites across characters, items, objects, and GUI — assume the sprite you want is already there.
+- If you genuinely cannot find a fit, pick the closest atlas sprite and reuse it; **do not** substitute placeholder art. Specifically: no `Graphics.fillRect` / `Graphics.fillCircle` for game objects, no inline SVG for sprites/world art, no emoji or unicode glyphs as sprites, no procedurally generated textures, no externally fetched images, no tinted recolours beyond what already exists in the atlas, no AI-generated assets, no "TODO sprite" rectangles.
+- The only acceptable non-atlas pixels are: solid background fills behind the camera, the 9-slice HUD frame built from `hud.js`, text rendered through Phaser's bitmap / web fonts for labels, numbers, and dialog copy, and **[lucide](https://lucide.dev/) icons** for non-gameplay UI chrome only (toolbar buttons, menu affordances, settings toggles, close/back/help glyphs, debug overlays). Install via `npm install lucide-react` (React/DOM) or `lucide` (vanilla); render at 16 / 20 / 24 px next to text — never as in-world entities, never on the Phaser canvas in place of an atlas sprite, never for anything an atlas sprite already covers (e.g. don't reach for `lucide-react`'s `Heart` when `health icon` exists).
+
+### Engine + flow
+
+- **Phaser 4 is required** for any canvas-rendered build. Install with `npm install phaser@^4 rot-js` (the `^4` is non-negotiable — do not pin, downgrade to, or import Phaser 3 / 3.x packages, `phaser-ce`, `phaser3-rex-plugins`, or any other v3-era plugin). The reference `src/phaser/` wiring targets the v4 API (scenes, `this.add.sprite`, `this.anims.create`, `this.physics.add`, `Phaser.Scale.NONE`, etc.); use those APIs verbatim. The only acceptable way to skip Phaser entirely is to go pure React/DOM — in which case `phaser` is not installed at all.
+- Verify the installed version (`require('phaser').VERSION` should start with `4.`) and import from the `phaser` package directly; never copy-paste Phaser 3 tutorials, CDN snippets, or `Phaser.Game` boilerplate that predates v4.
+- Drop `rot-js` only if you don't need its RNG / maps / path-finding.
 - Pixel art on: `Phaser.AUTO` + `Phaser.Scale.NONE` + `pixelArt: true`.
-- Look up sprites by name (`byName['light oak dense']`), never by frame index. Honour `w`/`h` from the lookup (most are 32×32; some HUD icons are 96×96 — 2× the original DawnLike sizes).
-- Sprites with `isAnimated: true` have a second frame in atlas 1 — register a 2-frame anim `anim:<name>` at ~3 fps in boot.
 - Each generator returns `walkable(x, y)` — use it as-is.
 - Exit tiles are tagged via `tile.marker`; on contact, transition and spawn the player **adjacent** to the destination marker (never on it).
 - Persist a single root seed in `localStorage` so reloads are deterministic.
@@ -274,7 +287,7 @@ atlas sprites.
 - Heart sprite helper that renders full / half / empty hearts.
 - Typewriter dialog (`useTypewriter`) for NPC speech.
 - Inventory grid using the framed cells.
-- Some HUD icons (health / stamina / save / inventory) are 96×96 — honour `sprite.w` / `sprite.h` from the lookup.
+- HUD icons live under names like `health icon`, `stamina icon`, `save icon`, `inventory icon` — honour `sprite.w` / `sprite.h` from the lookup so any future oversized icons render correctly.
 
 **Files to read**
 
@@ -288,7 +301,7 @@ atlas sprites.
 **Recreation steps**
 
 1. Fetch the atlas; keep it in state.
-2. Write a `<Sprite>` primitive that renders any named atlas sprite as a positioned background-image on a `<div>`. Honour the sprite's `w` / `h` (most are 32×32; HUD icons are 96×96). Support `flipX` / `flipY` via CSS transform.
+2. Write a `<Sprite>` primitive that renders any named atlas sprite as a positioned background-image on a `<div>`. Honour the sprite's `w` / `h` (every current frame is 32×32, but read it from the lookup with `TILE` as fallback). Support `flipX` / `flipY` via CSS transform.
 3. Write `<Frame w h family>`: for every cell pick the right 9-slice part (`nw`, `n`, `ne`, `w`, `c`, `e`) and `flipY` for the bottom row. Sprite name = `` `${family} ${part}` ``.
 4. Write `<Gauge color value segments>`: two passes — colored fill (`gauge <color> full|most|half|low` per segment) under chrome frame (`gauge chrome left|center|right`). For each segment, compute `frac = (value − segStart) / segWidth` and pick the level by quartile.
 5. Write a `heartSprite(hp, maxHp)` helper that lays out full / half / empty heart sprites.
@@ -304,7 +317,7 @@ atlas sprites.
 - Typewriter dialog reveals text one character at a time.
 - Inventory grid shows 16 framed cells.
 - Switching the frame `family` prop swaps the chrome colour without breaking layout.
-- The 96×96 GUI icons render at native size rather than being squashed to 32×32.
+- Every sprite (including GUI icons) renders at its declared `sprite.w` × `sprite.h` rather than being squashed or stretched.
 <!-- END:hud-menu -->
 
 <!-- BEGIN:phaser-wiring -->
