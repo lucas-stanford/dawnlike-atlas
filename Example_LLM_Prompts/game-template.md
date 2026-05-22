@@ -22,7 +22,7 @@ distinctive.
 
 ## What to fetch
 
-- **Atlas** (drop in `atlas/`): [`DawnlikeAtlas.json`](https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas.json), [`DawnlikeAtlas0.png`](https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas0.png), [`DawnlikeAtlas1.png`](https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas1.png) + the [sprite naming guide](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/atlas/DawnlikeAtlas.instructions.md). Atlas 0 holds primary frames; atlas 1 holds the alt frame for every `isAnimated` sprite (rivers, torches, water, lava, …).
+- **Atlas** (required — drop in `atlas/`): [`DawnlikeAtlas.json`](https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas.json), [`DawnlikeAtlas0.png`](https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas0.png), [`DawnlikeAtlas1.png`](https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas1.png) + the [sprite naming guide](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/atlas/DawnlikeAtlas.instructions.md). Atlas 0 holds primary frames; atlas 1 holds the alt frame for every `isAnimated` sprite (rivers, torches, water, lava, …).
 - **Generators** (optional, take what you need): [`world.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/generators/world.js) ([docs](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/stories/WorldManifest.mdx)), [`town.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/generators/town.js) ([docs](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/stories/TownManifest.mdx)), [`dungeon.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/generators/dungeon.js) ([docs](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/stories/DungeonManifest.mdx)).
 - **Helpers**: [`autotile.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/utils/autotile.js) (corner/edge sprite picker), [`autotileRender.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/autotileRender.js) (map → sprite layers), [`hud.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/phaser/ui/hud.js) (9-slice frame, gauges, hearts).
 - **Reference examples** — copy or mine the one(s) closest to your idea:
@@ -36,10 +36,21 @@ distinctive.
 
 ## Rules
 
+### Atlas usage (non-negotiable)
+
+**Every visible pixel of gameplay art must come from `DawnlikeAtlas.json` + `DawnlikeAtlas0.png` / `DawnlikeAtlas1.png`.** No exceptions for terrain, characters, items, HUD icons, doors, props, effects, projectiles, particles, cursors, or decorations.
+
+- Load `DawnlikeAtlas.json` once at boot and resolve every sprite through `atlas.byName[<name>]` (or filter `byName` entries by their `tags`). Never reference frames by numeric index, never hand-author `{x, y, w, h}` rectangles, never assume the atlas grid is uniform.
+- Honour `w` / `h` from each lookup (most are 32×32; the 9 HUD icons — health, stamina, fire, ice, lightning, save, enter, inventory, surrounded — are 96×96). Render at integer pixel positions; do not stretch or rotate sprites away from their native size unless the design explicitly calls for it.
+- Sprites with `isAnimated: true` have a second frame in atlas 1 — register a 2-frame animation keyed `anim:<name>` at ~3 fps in boot and use it for rivers, torches, water, lava, etc.
+- Before adding anything new to the scene, **search the atlas first**: scan `byName` keys and `tags` for something that fits (`grep`-style filter on tags like `weapon`, `potion`, `door`, `tree`, `chest`, `floor`, `wall`, `monster`, `npc`, `gui`, `effect`). The atlas ships ~4,157 sprites across characters, items, objects, and GUI — assume the sprite you want is already there.
+- If you genuinely cannot find a fit, pick the closest atlas sprite and reuse it; **do not** substitute placeholder art. Specifically: no `Graphics.fillRect` / `Graphics.fillCircle` for game objects, no inline SVG, no emoji or unicode glyphs as sprites, no procedurally generated textures, no externally fetched images, no tinted recolours beyond what already exists in the atlas, no AI-generated assets, no "TODO sprite" rectangles.
+- The only acceptable non-atlas pixels are: solid background fills behind the camera, the 9-slice HUD frame built from `hud.js`, and text rendered through Phaser's bitmap / web fonts for labels, numbers, and dialog copy.
+
+### Engine + flow
+
 - `npm install phaser@^4 rot-js` (drop `phaser` if you go pure React; drop `rot-js` if you don't need its RNG/maps/path-finding).
 - Pixel art on: `Phaser.AUTO` + `Phaser.Scale.NONE` + `pixelArt: true`.
-- Look up sprites by name (`byName['light oak dense']`), never by frame index. Honour `w`/`h` from the lookup (most are 32×32; some HUD icons are 96×96 — 2× the original DawnLike sizes).
-- Sprites with `isAnimated: true` have a second frame in atlas 1 — register a 2-frame anim `anim:<name>` at ~3 fps in boot.
 - Each generator returns `walkable(x, y)` — use it as-is.
 - Exit tiles are tagged via `tile.marker`; on contact, transition and spawn the player **adjacent** to the destination marker (never on it).
 - Persist a single root seed in `localStorage` so reloads are deterministic.
