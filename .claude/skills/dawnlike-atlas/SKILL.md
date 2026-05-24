@@ -98,14 +98,18 @@ this.anims.create({
 ### React (built-in helpers)
 
 ```jsx
-import { HealthBar, ManaBar, DawnLikeIcon } from 'dawnlike-atlas';
+import { HealthBar, ManaBar, HeartIcon, ManaIcon, DawnLikeIcon } from 'dawnlike-atlas';
 
 <HealthBar current={7} max={10} />
 <ManaBar   current={3} max={10} />
-<DawnLikeIcon name="health icon" size={32} />
+<HeartIcon fill={4} />
+<ManaIcon  fill={2} />
+<DawnLikeIcon name="heartFull" scale={2} />
 ```
 
-For arbitrary sprites in React, render any `byName[name]` entry as a positioned `<div>` (same recipe as the HTML example).
+> Note: `DawnLikeIcon` / `HeartIcon` / `ManaIcon` / `HealthBar` / `ManaBar` render the separate **16×16 GUI spritesheet** (`GUI_FRAMES` keys like `heartFull`, `manaEmpty`, `sword` — not mega-atlas names). They default to `src="/atlas/GUIAtlas0.png"` and `glowSrc="/atlas/GUIAtlas1.png"`, which are **not** shipped by this package — pass your own `src` / `glowSrc` props pointing at GUI sheets you host yourself.
+>
+> For sprites from the mega atlas (`health icon`, `wizard`, `bright brick wall …`, etc.), look them up via `atlas.byName[name]` and render them as a positioned `<div>` using the same recipe as the HTML example above.
 
 ## Autotiling
 
@@ -125,13 +129,15 @@ import {
   AUTOTILE_MANIFESTS,
 } from 'dawnlike-atlas/autotile';
 
-const { name } = resolveDawnLikeWallName(
+const name = resolveDawnLikeWallName(
   'bright brick wall',
   { n: true, s: true, e: false, w: true },
   atlas.byName,
 );
 // → "bright brick wall left right down"
 ```
+
+All `resolveDawnLike*Name` helpers return a **plain string** (the resolved sprite name). Use `resolveAutotile(manifestId, baseName, neighbors, byName)` directly if you want the richer `{ name, suffix, fallback?, missing? }` object.
 
 ### Naming-convention gotchas
 
