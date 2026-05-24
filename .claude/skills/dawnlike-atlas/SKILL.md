@@ -22,17 +22,20 @@ This repo is **not published to npm** — consume it directly from the source tr
 git clone https://github.com/lucas-stanford/dawnlike-atlas.git
 ```
 
-Files you actually need at runtime:
+Files you actually need at runtime (raw URLs are from the `master` branch — pin to a commit SHA for reproducibility):
 
-| Path | What it is |
-|---|---|
-| `atlas/DawnlikeAtlas.json` | Metadata (`meta`, `frames`, `byName`, `legacyFrames`) |
-| `atlas/DawnlikeAtlas0.png` | Primary frame sheet (2048×2080, 4,157 sprites) |
-| `atlas/DawnlikeAtlas1.png` | Alt frame sheet (animation second frame for 2,226 sprites) |
-| `src/utils/autotile.js` | All `resolveDawnLike*` autotile resolvers + `AUTOTILE_MANIFESTS` |
-| `react/` | Optional React helpers (`DawnLikeIcon`, `HeartIcon`, `ManaIcon`, `HealthBar`, `ManaBar`, `GUI_FRAMES`) |
+| File | URL | Description |
+|---|---|---|
+| `atlas/DawnlikeAtlas.json` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas.json> | Atlas metadata. Top-level keys: `meta` (size `2048×2080`, `tile {w:32,h:32}`, `scale:2`, `columns:64`, `rows:65`), `frames` (Phaser-min texture atlas, `{ "<name>": { frame: {x,y,w,h} } }`), `byName` (flat lookup keyed by lowercase human-readable sprite name → `{x,y,w,h,tags[]}`), and `legacyFrames` (legacy numeric index → name, useful when iterating the sheet as a grid). |
+| `atlas/DawnlikeAtlas0.png` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas0.png> | Primary mega-atlas spritesheet. `2048×2080` PNG packing all **4,157 sprites** at 32×32 each (a strict 2× nearest-neighbour upscale of the original 16×16 DawnLike art — every source pixel is a clean 2×2 block). This is the sheet you draw from for static sprites. |
+| `atlas/DawnlikeAtlas1.png` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas1.png> | Alt-frame spritesheet for the **2,226 animated sprites** (creatures, torches, etc.). Same dimensions and per-sprite coordinates as `DawnlikeAtlas0.png`, so a 2-frame walk animation is just `[atlas0.frame(name), atlas1.frame(name)]` at ~2 fps. Sprites that aren't animated leave their cell blank here. |
+| `src/utils/autotile.js` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/src/utils/autotile.js> | Pure-JS autotile resolvers. Exports `resolveDawnLikeWallName`, `resolveDawnLikeBuildingWallName`, `resolveDawnLikeDungeonWallName`, `resolveDawnLikeFloorName`, `resolveDawnLikeRiverName`, `resolveDawnLikePoolName`, `resolveDawnLikeForestName` (8-way), `resolveDawnLikeMountainName` (blob), the generic manifest-driven `resolveAutotile`, and the `AUTOTILE_MANIFESTS` registry. Maps a `{n,s,e,w}` neighbour mask to the correct atlas sprite name. No runtime deps. |
+| `react/index.js` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/react/index.js> | React-helper barrel. Re-exports `DawnLikeIcon`, `HeartIcon`, `ManaIcon`, `HealthBar`, `ManaBar`, and the `GUI_FRAMES` map. Pure React 19+ components (no other runtime deps). Render the **separate 16×16 GUI spritesheet**, not the mega atlas. |
+| `react/icons.jsx` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/react/icons.jsx> | Source of the GUI React helpers. `DawnLikeIcon` is a positioned `<div>` backed by a `GUI_FRAMES[name]` lookup (`scale` prop for integer pixel zoom); `HeartIcon`/`ManaIcon` accept a `fill` count; `HealthBar`/`ManaBar` accept `current`/`max`. Defaults to `src="/atlas/GUIAtlas0.png"` + `glowSrc="/atlas/GUIAtlas1.png"` — **GUI sheets are not in this repo**, so you must pass your own `src`/`glowSrc` props. |
+| `react/frames.js` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/react/frames.js> | The `GUI_FRAMES` lookup table. Maps GUI sprite keys (`heartFull`, `heartEmpty`, `manaFull`, `manaEmpty`, `sword`, …) to their `{x,y,w,h}` rect on the 16×16 GUI sheet. Use it directly if you want to render GUI sprites without React. |
+| `react/index.d.ts` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/react/index.d.ts> | TypeScript declarations for the React barrel (component prop types + `GUI_FRAMES` keys). |
 
-Copy/serve the two PNGs + JSON as static assets in your app, and import the JS modules from wherever you placed the source tree.
+Copy/serve the two mega-atlas PNGs + JSON as static assets in your app, and import the JS modules from wherever you placed the source tree.
 
 ## Atlas JSON shape
 
