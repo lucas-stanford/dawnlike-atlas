@@ -1,6 +1,6 @@
 ---
 name: dawnlike-atlas
-description: Use the `dawnlike-atlas` npm package — a bin-packed 32×32 mega-atlas of the DawnLike roguelike tileset with semantic name lookup, AI-generated tags, and 16-way autotile resolvers. Invoke when building 2D pixel-art / roguelike games (HTML/Canvas, React, Phaser 3/4) that need DawnLike sprites, animated 2-frame walks, or autotiled walls / floors / rivers / pools / forests / mountains.
+description: Use the `dawnlike-atlas` repo — a bin-packed 32×32 mega-atlas of the DawnLike roguelike tileset with semantic name lookup, AI-generated tags, and 16-way autotile resolvers. Invoke when building 2D pixel-art / roguelike games (HTML/Canvas, React, Phaser 3/4) that need DawnLike sprites, animated 2-frame walks, or autotiled walls / floors / rivers / pools / forests / mountains.
 ---
 
 # dawnlike-atlas
@@ -14,21 +14,25 @@ A semantic mega-atlas for the [DawnLike](https://dragondeplatino.itch.io/dawnlik
 
 Live demo / browser: <https://lucas-stanford.github.io/dawnlike-atlas/>
 
-## Install
+## Get the assets
+
+This repo is **not published to npm** — consume it directly from the source tree (clone, git submodule, or copy the needed files into your project):
 
 ```bash
-npm install dawnlike-atlas      # or: bun add dawnlike-atlas
+git clone https://github.com/lucas-stanford/dawnlike-atlas.git
 ```
 
-Published subpath exports:
+Files you actually need at runtime:
 
-| Subpath | What it gives you |
+| Path | What it is |
 |---|---|
-| `dawnlike-atlas` | React: `DawnLikeIcon`, `HeartIcon`, `ManaIcon`, `HealthBar`, `ManaBar`, `GUI_FRAMES` |
-| `dawnlike-atlas/autotile` | All `resolveDawnLike*` autotile functions + `AUTOTILE_MANIFESTS` |
-| `dawnlike-atlas/atlas/DawnlikeAtlas.json` | Metadata (frames, byName, legacyFrames) |
-| `dawnlike-atlas/atlas/DawnlikeAtlas0.png` | Primary frame sheet |
-| `dawnlike-atlas/atlas/DawnlikeAtlas1.png` | Alt frame sheet (animation) |
+| `atlas/DawnlikeAtlas.json` | Metadata (`meta`, `frames`, `byName`, `legacyFrames`) |
+| `atlas/DawnlikeAtlas0.png` | Primary frame sheet (2048×2080, 4,157 sprites) |
+| `atlas/DawnlikeAtlas1.png` | Alt frame sheet (animation second frame for 2,226 sprites) |
+| `src/utils/autotile.js` | All `resolveDawnLike*` autotile resolvers + `AUTOTILE_MANIFESTS` |
+| `react/` | Optional React helpers (`DawnLikeIcon`, `HeartIcon`, `ManaIcon`, `HealthBar`, `ManaBar`, `GUI_FRAMES`) |
+
+Copy/serve the two PNGs + JSON as static assets in your app, and import the JS modules from wherever you placed the source tree.
 
 ## Atlas JSON shape
 
@@ -46,7 +50,7 @@ All entries are 32×32. `byName[name].x / .y` are pixel coordinates in `Dawnlike
 ## Lookup a sprite by name
 
 ```js
-import atlas from 'dawnlike-atlas/atlas/DawnlikeAtlas.json' assert { type: 'json' };
+import atlas from './atlas/DawnlikeAtlas.json' assert { type: 'json' };
 
 const { x, y, w, h, tags } = atlas.byName['wizard'];
 // → { x: …, y: …, w: 32, h: 32, tags: ['creature','humanoid','magic',...] }
@@ -98,7 +102,8 @@ this.anims.create({
 ### React (built-in helpers)
 
 ```jsx
-import { HealthBar, ManaBar, HeartIcon, ManaIcon, DawnLikeIcon } from 'dawnlike-atlas';
+// Adjust import path to where you placed the repo's `react/` directory.
+import { HealthBar, ManaBar, HeartIcon, ManaIcon, DawnLikeIcon } from './react';
 
 <HealthBar current={7} max={10} />
 <ManaBar   current={3} max={10} />
@@ -107,13 +112,13 @@ import { HealthBar, ManaBar, HeartIcon, ManaIcon, DawnLikeIcon } from 'dawnlike-
 <DawnLikeIcon name="heartFull" scale={2} />
 ```
 
-> Note: `DawnLikeIcon` / `HeartIcon` / `ManaIcon` / `HealthBar` / `ManaBar` render the separate **16×16 GUI spritesheet** (`GUI_FRAMES` keys like `heartFull`, `manaEmpty`, `sword` — not mega-atlas names). They default to `src="/atlas/GUIAtlas0.png"` and `glowSrc="/atlas/GUIAtlas1.png"`, which are **not** shipped by this package — pass your own `src` / `glowSrc` props pointing at GUI sheets you host yourself.
+> Note: `DawnLikeIcon` / `HeartIcon` / `ManaIcon` / `HealthBar` / `ManaBar` render the separate **16×16 GUI spritesheet** (`GUI_FRAMES` keys like `heartFull`, `manaEmpty`, `sword` — not mega-atlas names). They default to `src="/atlas/GUIAtlas0.png"` and `glowSrc="/atlas/GUIAtlas1.png"`, which are **not** included in this repo — pass your own `src` / `glowSrc` props pointing at GUI sheets you host yourself.
 >
 > For sprites from the mega atlas (`health icon`, `wizard`, `bright brick wall …`, etc.), look them up via `atlas.byName[name]` and render them as a positioned `<div>` using the same recipe as the HTML example above.
 
 ## Autotiling
 
-The repo ships **cardinal-neighbour resolvers** that turn an `{ n, s, e, w }` boolean neighbor mask into the correct atlas sprite name. Import from `dawnlike-atlas/autotile`:
+The repo ships **cardinal-neighbour resolvers** that turn an `{ n, s, e, w }` boolean neighbor mask into the correct atlas sprite name. Import from `src/utils/autotile.js`:
 
 ```js
 import {
@@ -127,7 +132,7 @@ import {
   resolveDawnLikeMountainName,       // blob set
   resolveAutotile,                   // generic, manifest-driven
   AUTOTILE_MANIFESTS,
-} from 'dawnlike-atlas/autotile';
+} from './src/utils/autotile.js';
 
 const name = resolveDawnLikeWallName(
   'bright brick wall',
@@ -152,7 +157,7 @@ These conventions are baked into the atlas; trust the resolvers over hand-rolled
 
 1. **You know the exact sprite name** → `atlas.byName[name]`.
 2. **You're tiling terrain / structures with neighbors** → `resolveDawnLike*Name(...)` from `dawnlike-atlas/autotile`.
-3. **You want to browse** → run Storybook locally (`bun run dev`) or open the [hosted demo](https://lucas-stanford.github.io/dawnlike-atlas/) and visit **DawnLike › Mega Atlas › All Sprites**.
+3. **You want to browse** → run Storybook locally (`bun install && bun run dev`) or open the [hosted demo](https://lucas-stanford.github.io/dawnlike-atlas/) and visit **DawnLike › Mega Atlas › All Sprites**.
 4. **You need the GUI icons** (`health icon`, `mana icon`, `fire icon`, …) → use the React `DawnLikeIcon` / `HealthBar` / `ManaBar` helpers, or look them up by name in `byName`.
 
 ## Reference examples in the repo
