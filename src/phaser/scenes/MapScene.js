@@ -58,7 +58,11 @@ export default class MapScene extends Phaser.Scene {
     const canvasW = this.scale.width;
     const canvasH = this.scale.height;
     this.cameras.main.setViewport(0, HUD_HEIGHT, canvasW, canvasH - HUD_HEIGHT);
-    this.cameras.main.setZoom(1);
+    // Start at the persisted zoom (so re-entering a scene keeps the
+    // user's preferred zoom across transitions and refreshes).
+    const savedZoom = this.registry.get('mapZoom') ?? 1;
+    this.cameras.main.setZoom(savedZoom);
+    this.targetZoom = savedZoom;
     this.cameras.main.setBackgroundColor('#000');
     this.cameras.main.setRoundPixels(true);
 
@@ -121,6 +125,8 @@ export default class MapScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-D',     () => this.tryMove( 1, 0));
     this.input.keyboard.on('keydown-W',     () => this.tryMove( 0,-1));
     this.input.keyboard.on('keydown-S',     () => this.tryMove( 0, 1));
+
+    this.initZoomInput();
 
     // --- HUD update ---
     this.game.events.emit('hud-update', { area: this.areaLabel() });
@@ -202,14 +208,109 @@ export default class MapScene extends Phaser.Scene {
    * mid-tween, attempt another step in that direction. This makes
    * holding a direction key walk continuously, rather than relying on
    * the OS's keyboard auto-repeat (which has a long initial delay).
+   * Also smoothly lerps camera zoom toward the user-set target zoom.
    */
   update() {
+    this.stepZoom();
     if (this.moving || this.transitioning || !this.cursors) return;
     const k = this.cursors, w = this.wasd;
     if (k.left.isDown  || w.left.isDown)  return this.tryMove(-1, 0);
     if (k.right.isDown || w.right.isDown) return this.tryMove( 1, 0);
     if (k.up.isDown    || w.up.isDown)    return this.tryMove( 0,-1);
     if (k.down.isDown  || w.down.isDown)  return this.tryMove( 0, 1);
+  }
+
+  /**
+   * Wire scroll-wheel and pinch (two-finger) gestures to the camera
+   * zoom. Both gestures target `this.targetZoom`; the actual camera
+   * zoom is lerped toward it each frame in stepZoom() for smoothness.
+   *
+   * Clamped to [ZOOM_MIN, ZOOM_MAX] (0.5x .. 3x) so the player can't
+   * zoom out past the camera bounds (Phaser handles that for us once
+   * the camera bounds are set) or zoom in past unreadable pixel mush.
+   * The target zoom is mirrored into the game registry so it survives
+   * scene transitions and is restored on the next create().
+   */
+  initZoomInput() {
+    const ZOOM_MIN = 0.5;
+    const ZOOM_MAX = 3;
+    const WHEEL_STEP = 0.0012;  // tuned for both trackpads and mousewheels
+
+    const setTargetZoom = (z) => {
+      this.targetZoom = Phaser.Math.Clamp(z, ZOOM_MIN, ZOOM_MAX);
+      this.game.registry.set('mapZoom', this.targetZoom);
+    };
+
+    // Mouse / trackpad wheel — uses a DOM listener with passive:false
+    // so we can call preventDefault and stop the host page from
+    // scrolling while the user zooms over the canvas. Phaser's own
+    // 'wheel' event is passive on canvas by default which makes
+    // preventDefault a no-op.
+    const onWheel = (event) => {
+      event.preventDefault();
+      // deltaY > 0 = scroll-down → zoom OUT. Trackpads send small
+      // continuous values, mousewheels send chunky ±100 ticks; the
+      // multiplicative form keeps both natural.
+      setTargetZoom(this.targetZoom * (1 - event.deltaY * WHEEL_STEP));
+    };
+    const canvas = this.game.canvas;
+    canvas.addEventListener('wheel', onWheel, { passive: false });
+
+    // Touch pinch — Phaser exposes pointer1 + pointer2 directly. We
+    // sample the distance between them and translate the delta into
+    // a multiplicative zoom factor. Sensitivity matches the wheel
+    // step so trackpad pinch and touch pinch feel similar.
+    this._pinchPrevDist = null;
+    const onPointerMove = () => {
+      const p1 = this.input.pointer1;
+      const p2 = this.input.pointer2;
+      if (!p1?.isDown || !p2?.isDown) {
+        this._pinchPrevDist = null;
+        return;
+      }
+      const dx = p1.position.x - p2.position.x;
+      const dy = p1.position.y - p2.position.y;
+      const dist = Math.hypot(dx, dy);
+      if (this._pinchPrevDist != null && this._pinchPrevDist > 0) {
+        const ratio = dist / this._pinchPrevDist;
+        setTargetZoom(this.targetZoom * ratio);
+      }
+      this._pinchPrevDist = dist;
+    };
+    const onPointerUp = () => { this._pinchPrevDist = null; };
+    this.input.on('pointermove', onPointerMove);
+    this.input.on('pointerup', onPointerUp);
+    this.input.on('pointerupoutside', onPointerUp);
+
+    // Make sure multi-touch is enabled so pointer2 fires.
+    this.input.addPointer(1);
+
+    // Detach listeners on scene shutdown so they don't double up when
+    // Phaser reuses the scene instance.
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      canvas.removeEventListener('wheel', onWheel);
+      this.input.off('pointermove', onPointerMove);
+      this.input.off('pointerup', onPointerUp);
+      this.input.off('pointerupoutside', onPointerUp);
+    });
+  }
+
+  /**
+   * Lerp the camera's zoom toward this.targetZoom each frame. The
+   * lerp factor is generous (0.2) so the zoom feels responsive but
+   * not jittery; tiny deltas snap so we don't waste frames at the
+   * fractional tail.
+   */
+  stepZoom() {
+    const cam = this.cameras.main;
+    if (!cam || this.targetZoom == null) return;
+    const cur = cam.zoom;
+    const tgt = this.targetZoom;
+    if (Math.abs(cur - tgt) < 0.001) {
+      if (cur !== tgt) cam.setZoom(tgt);
+      return;
+    }
+    cam.setZoom(cur + (tgt - cur) * 0.2);
   }
 
   persistPosition(overrideTile) {

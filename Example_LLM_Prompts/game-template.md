@@ -372,7 +372,7 @@ npm install phaser@^4 rot-js
 
 **Critical design notes**
 
-- **Camera viewport** is offset down by `HUD_HEIGHT` so the HUD has its own band. Atlas tiles are 32px native; no extra camera zoom is needed.
+- **Camera viewport** is offset down by `HUD_HEIGHT` so the HUD has its own band. Atlas tiles are 32px native; the camera follows the player and supports user zoom via mouse-wheel / trackpad-scroll on desktop and two-finger pinch on touch, clamped to [0.5×, 3×]; the chosen zoom is mirrored into `game.registry.get('mapZoom')` so it survives scene transitions.
 - **Hold-to-walk:** in `update()`, poll `cursors.X.isDown` / `wasd.X.isDown` and call `tryMove` if not already moving. A `this.moving` flag rate-limits to one step per ~70ms tween.
 - **Marker-tile crash fix (critical):** in `tryMove`'s `onComplete`, if the new tile has a marker, save `sourceTile` (the tile the player came from) as the scene's last position — **not** the marker tile. On scene re-entry, `resolveSpawn` rejects any saved position that lands on a marker. **Do not** auto-fire `handleMarker` in `create()` on the spawn tile. Together these stop the "re-entry → marker fires → infinite loop" crash.
 
