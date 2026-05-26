@@ -8,7 +8,7 @@ A bin-packed **mega-atlas** and rich metadata for the [DawnLike](https://dragond
 
 - `atlas/`
   - `DawnlikeAtlas0.png` — primary frames (4,157 sprites, 2048×2080)
-  - `DawnlikeAtlas1.png` — alt frames for the 1,281 animated sprites
+  - `DawnlikeAtlas1.png` — alt frames for the 1,258 animated sprites
   - `DawnlikeAtlas.json` — `byName` lookup (with `meta.tile = {w:32,h:32}`) + AI-generated tags + semantic connections
 - `src/` — autotile resolvers (`src/utils/autotile.js`) and the example components
 - `react/` — re-exports for consuming the atlas from a React project

@@ -32,6 +32,18 @@ function decode(file) {
   return PNG.sync.read(buf);
 }
 
+function isAllTransparent(png, x, y, w, h) {
+  const stride = png.width * 4;
+  for (let yy = 0; yy < h; yy++) {
+    const row = (y + yy) * stride;
+    for (let xx = 0; xx < w; xx++) {
+      const i = row + (x + xx) * 4;
+      if (png.data[i + 3] !== 0) return false;
+    }
+  }
+  return true;
+}
+
 function spritesDiffer(p0, p1, x, y, w, h) {
   const stride = p0.width * 4;
   for (let yy = 0; yy < h; yy++) {
@@ -65,25 +77,36 @@ console.log('Diffing every sprite…');
 let animated = 0;
 let already = 0;
 let removed = 0;
+let blankSecond = 0;
 const entries = Object.entries(atlas.byName);
 for (let i = 0; i < entries.length; i++) {
   const [, info] = entries[i];
   const x = info.x, y = info.y;
   const w = info.w || 32, h = info.h || 32;
   const hadFlag = info.isAnimated === true;
+  // A sprite is animated only if BOTH frames have real content AND
+  // their pixels differ. If Atlas1's slot is fully transparent the
+  // second "frame" is an empty placeholder, not animation — cycling
+  // it would just blink the sprite in and out at 3 fps. Same if
+  // Atlas0's slot is empty (defensive; shouldn't happen in practice).
+  const p1Blank = isAllTransparent(png1, x, y, w, h);
+  const p0Blank = isAllTransparent(png0, x, y, w, h);
   const differs = spritesDiffer(png0, png1, x, y, w, h);
-  if (differs) {
+  if (differs && !p1Blank && !p0Blank) {
     info.isAnimated = true;
     animated++;
     if (hadFlag) already++;
-  } else if (hadFlag) {
-    delete info.isAnimated;
-    removed++;
+  } else {
+    if (differs && (p1Blank || p0Blank)) blankSecond++;
+    if (hadFlag) {
+      delete info.isAnimated;
+      removed++;
+    }
   }
   if (i % 500 === 0) process.stdout.write(`\r  ${i + 1} / ${entries.length}`);
 }
 process.stdout.write('\r');
-console.log(`  done. ${animated} animated, ${already} already-flagged, ${removed} reset.`);
+console.log(`  done. ${animated} animated, ${already} already-flagged, ${removed} reset, ${blankSecond} skipped (blank second frame).`);
 
 atlas.meta = { ...atlas.meta, animatedCount: animated };
 
