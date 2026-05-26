@@ -26,6 +26,7 @@
         "@vitest/coverage-v8": "^4.1.6",
         "phaser": "4",
         "playwright": "^1.60.0",
+        "pngjs": "^7.0.0",
         "prop-types": "^15.8.1",
         "rot-js": "^2.2.1",
         "storybook": "8.6.14",

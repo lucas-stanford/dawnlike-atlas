@@ -28,7 +28,8 @@
   "scripts": {
     "dev": "bun run storybook",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "tag-animated": "node scripts/tag-animated.js"
   },
   "repository": {
     "type": "git",
@@ -75,6 +76,7 @@
     "@vitest/coverage-v8": "^4.1.6",
     "phaser": "4",
     "playwright": "^1.60.0",
+    "pngjs": "^7.0.0",
     "prop-types": "^15.8.1",
     "rot-js": "^2.2.1",
     "storybook": "8.6.14",
