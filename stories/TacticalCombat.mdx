@@ -1,0 +1,121 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Dawnlike/Docs/Tactical Combat" />
+
+# Tactical Combat — design notes
+
+The **Tactical Combat** story (`Dawnlike → Zone Examples → Tactical
+Combat`) is an XCOM-style turn-based combat demo built on top of the
+dawnlike-atlas terrain pipeline. It is the second-major-combat-flavour
+in the repo alongside the real-time **Arena Combat** story.
+
+This page documents the design + the underlying utility modules so
+you can lift the systems into your own game.
+
+## Squad
+
+Fixed four-class party. Each unit gets 2 action points per turn.
+
+| Class    | Sprite          | HP / Armor | Range  | Signature |
+|----------|-----------------|------------|--------|-----------|
+| Knight   | `knight`        | 16 / 3     | melee  | Shield bash: bonus melee dmg, pushes the target back |
+| Wizard   | `wizard`        | 8 / 0      | 6      | Fireball: 3×3 AOE, 2 AP, 3 uses |
+| Rogue    | `rogue s`       | 11 / 1     | 7      | Crossbow + dagger; flank crit bonus |
+| Cleric   | `priest`        | 12 / 1     | 4      | Heal: target adjacent ally +6 HP, 4 uses |
+
+## Action points (XCOM Classic model)
+
+| Action     | Cost          | Notes                                              |
+|------------|---------------|----------------------------------------------------|
+| Move       | 1 AP          | A* path within `moveRange` cardinal steps          |
+| Attack     | 1 AP          | Ends the turn                                      |
+| Cast       | 2 AP          | Ends the turn; spell-specific                      |
+| Overwatch  | remaining AP  | Reaction shot on the next enemy in LOS             |
+| End Turn   | free          | Skip remaining AP (auto-advances to next unit)     |
+
+A unit may move twice (dash), but moving then shooting ends the turn.
+
+## Combat math
+
+```
+hitChance = clamp(50 + aim − defense − cover − distancePenalty + flank, 5, 95)
+```
+
+- **Cover** is computed per-axis: an obstacle adjacent to the
+  defender on the attack's axis gives **half cover** (−25); a corner
+  gives **full cover** (−50). Flanking attackers (defender has cover
+  but not on the attack axis) bypass cover entirely AND get +25 crit.
+- **Damage** rolls in the weapon's range, then subtracts target
+  armor (min 1). Crits multiply by 1.5.
+
+## Fog of war
+
+Each unit computes its own `ROT.FOV.PreciseShadowcasting` view at
+`fovRadius` tiles. The **squad's combined visibility** drives the
+fog: visible (full bright), explored (dimmed), unseen (black). Enemies
+only render when they're in squad vision.
+
+## Enemy AI archetypes
+
+Enemies auto-pick an archetype from their sprite name:
+
+| Archetype | Sprites                                | Behavior                                              |
+|-----------|----------------------------------------|-------------------------------------------------------|
+| Chaser    | goblin, kobold, imp, human zombie      | Closest squad → A* in → melee                          |
+| Camper    | skeleton, fire skeleton, fire elemental| Stay put if has a shot; else reposition into LOS       |
+| Bruiser   | lava demon, hell hound                 | Straight-line charge; reckless                         |
+| Pack      | kobold barbarian, ghost                | Move to pack centroid; attack when locally outnumber  |
+| Boss      | (signature missions only)              | 1-turn telegraph → next-turn 3×3 AOE release           |
+
+## Missions
+
+| Mission                | Style       | Notes                                                                  |
+|------------------------|-------------|------------------------------------------------------------------------|
+| `procedural-forest`    | Procedural  | Light oak trees, grass ground                                          |
+| `procedural-desert`    | Procedural  | Brown peaks (mountains), dirt ground                                   |
+| `procedural-volcanic`  | Procedural  | Red volcanoes + lava puddles                                           |
+| `procedural-swamp`     | Procedural  | Dark mangrove trees, green puddles                                     |
+| `procedural-ruined`    | Procedural  | Brick walls, tile floor                                                |
+| `procedural-chaos`     | Procedural  | Burning oak + lava puddles                                             |
+| `the-bridge`           | Signature   | Hand-designed river crossing; hold the chokepoint                      |
+| `the-vault`            | Signature   | Hand-designed bandit hideout; clear + reach the chest                  |
+
+Procedural missions reuse the same 6 themes (and monster packs) as the
+**Arena Combat** story. Signature missions are JSON files under
+`src/utils/tactical/missions/` — a 24-letter grid where `#`=obstacle,
+`=`=trail, `B`=bridge, `~`=hazard, `C`=chest, `.`=open — plus an
+explicit `squadStarts` array and `enemySpawns` list.
+
+## Reusable modules
+
+All the game logic ships as plain-JS modules under
+`src/utils/tactical/`, importable via the package subpath:
+
+```js
+import {
+  resetAP, spendAP, endUnitTurn,
+  reachableTiles, previewPath, tileDistance,
+  squadVisibleSet, visibleSet, visibleEnemies, losBetween,
+  coverBetween, coverPenalty, isFlanking,
+  hitChance, resolveAttack, resolveHeal,
+  planTurn, archetypeFor,
+} from 'dawnlike-atlas/utils/tactical';
+```
+
+| Module | Purpose |
+|--------|---------|
+| `ap.js`     | XCOM-classic action-point bookkeeping                    |
+| `move.js`   | A* flood-fill reachable tiles + path preview             |
+| `cover.js`  | Per-axis cover detection + flanking                      |
+| `los.js`    | Wraps `ROT.FOV.PreciseShadowcasting` for LOS queries     |
+| `combat.js` | Hit chance, damage roll, crit, attack resolution         |
+| `ai.js`     | Per-archetype enemy turn planning                        |
+
+Each module is framework-agnostic — no React, no Phaser, no DOM. The
+story is the demo; the modules are the library.
+
+## Source
+
+- Story: [`stories/TacticalCombat.stories.jsx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/stories/TacticalCombat.stories.jsx)
+- Component: [`src/TacticalCombatExample.jsx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/TacticalCombatExample.jsx)
+- Utilities: [`src/utils/tactical/`](https://github.com/lucas-stanford/dawnlike-atlas/tree/master/src/utils/tactical)

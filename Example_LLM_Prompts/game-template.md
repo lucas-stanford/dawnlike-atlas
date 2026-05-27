@@ -59,6 +59,24 @@ distinctive.
 
 Reuse the toolkit aggressively; only build what your idea actually needs.
 
+### Reusable game-system modules
+
+Beyond the generators, the package exposes plug-and-play headless modules
+for common roguelike systems. Import via the package's subpath exports —
+no React or Phaser coupling.
+
+- `dawnlike-atlas/utils/tactical` — XCOM-style tactical combat toolkit:
+  - `ap` — action-point bookkeeping
+  - `move` — A* reachable-tiles flood-fill + path preview
+  - `cover` — per-axis cover detection + flanking
+  - `los` — `ROT.FOV.PreciseShadowcasting` line-of-sight queries
+  - `combat` — hit chance, damage roll, crit, attack resolution
+  - `ai` — per-archetype enemy turn planning (chaser/camper/bruiser/pack/boss)
+
+  See the *Dawnlike / Zone Examples / Tactical Combat* story + the
+  [`TacticalCombat.mdx`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/stories/TacticalCombat.mdx)
+  doc for the full recipe (squad classes, AP economy, cover math).
+
 ---
 
 ## Component deep-dives
