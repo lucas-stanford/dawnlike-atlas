@@ -1432,27 +1432,126 @@ function logLineStyle(line) {
   return { color: HUD.text, icon: ChevronRight };
 }
 
+const COMBAT_LOG_STORAGE_KEY = 'tac-combat-log-pos';
+const COMBAT_LOG_WIDTH = 224;
+
 function CombatLog({ lines }) {
   const recent = lines.slice(-8);
+  const panelRef = useRef(null);
+  const dragRef = useRef(null);
+  const [pos, setPos] = useState(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem(COMBAT_LOG_STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (parsed && Number.isFinite(parsed.left) && Number.isFinite(parsed.top)) return parsed;
+    } catch (_) {}
+    return null;
+  });
+  const [dragging, setDragging] = useState(false);
+
+  const clamp = (left, top, parentRect, panelRect) => {
+    const maxLeft = Math.max(0, parentRect.width - panelRect.width);
+    const maxTop = Math.max(0, parentRect.height - panelRect.height);
+    return {
+      left: Math.min(Math.max(0, left), maxLeft),
+      top: Math.min(Math.max(0, top), maxTop),
+    };
+  };
+
+  useEffect(() => {
+    if (!pos) return;
+    const el = panelRef.current;
+    if (!el || !el.offsetParent) return;
+    const parentRect = el.offsetParent.getBoundingClientRect();
+    const panelRect = el.getBoundingClientRect();
+    const next = clamp(pos.left, pos.top, parentRect, panelRect);
+    if (next.left !== pos.left || next.top !== pos.top) setPos(next);
+  }, []);
+
+  const onPointerDown = (e) => {
+    if (e.button !== 0) return;
+    const el = panelRef.current;
+    if (!el || !el.offsetParent) return;
+    const parentRect = el.offsetParent.getBoundingClientRect();
+    const panelRect = el.getBoundingClientRect();
+    dragRef.current = {
+      parentRect, panelRect,
+      grabOffsetX: e.clientX - panelRect.left,
+      grabOffsetY: e.clientY - panelRect.top,
+      pointerId: e.pointerId,
+    };
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+    setDragging(true);
+    e.preventDefault();
+  };
+
+  const onPointerMove = (e) => {
+    const d = dragRef.current;
+    if (!d) return;
+    const left = e.clientX - d.parentRect.left - d.grabOffsetX;
+    const top = e.clientY - d.parentRect.top - d.grabOffsetY;
+    setPos(clamp(left, top, d.parentRect, d.panelRect));
+  };
+
+  const finishDrag = (e) => {
+    const d = dragRef.current;
+    if (!d) return;
+    try { e.currentTarget.releasePointerCapture(d.pointerId); } catch (_) {}
+    dragRef.current = null;
+    setDragging(false);
+    setPos((p) => {
+      if (p && typeof window !== 'undefined') {
+        try { window.localStorage.setItem(COMBAT_LOG_STORAGE_KEY, JSON.stringify(p)); } catch (_) {}
+      }
+      return p;
+    });
+  };
+
+  const onDoubleClick = () => {
+    setPos(null);
+    if (typeof window !== 'undefined') {
+      try { window.localStorage.removeItem(COMBAT_LOG_STORAGE_KEY); } catch (_) {}
+    }
+  };
+
+  const positionStyle = pos
+    ? { left: pos.left, top: pos.top }
+    : { right: 10, bottom: 12 };
+
   return (
-    <div style={{
-      position: 'absolute', right: 10, bottom: 12, zIndex: 30,
-      width: 224,
+    <div ref={panelRef} style={{
+      position: 'absolute', zIndex: 30,
+      ...positionStyle,
+      width: COMBAT_LOG_WIDTH,
       background: HUD.panelBg,
-      border: HUD.border,
-      boxShadow: HUD.shadow,
+      border: dragging ? `1px solid ${HUD.cyan}aa` : HUD.border,
+      boxShadow: dragging ? `${HUD.shadow}, 0 0 22px ${HUD.cyan}55` : HUD.shadow,
       borderRadius: 8,
       padding: '8px 10px 8px',
       fontFamily: HUD.font,
       color: HUD.text,
+      userSelect: 'none',
+      transition: dragging ? 'none' : 'box-shadow 160ms ease, border-color 160ms ease',
+      touchAction: 'none',
     }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 6,
-        fontSize: 10, fontWeight: 700, letterSpacing: '2px', color: HUD.cyan,
-        marginBottom: 6, paddingBottom: 4, borderBottom: `1px solid ${HUD.cyan}22`,
-      }}>
+      <div
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={finishDrag}
+        onPointerCancel={finishDrag}
+        onDoubleClick={onDoubleClick}
+        title="Drag to move · double-click to reset"
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          fontSize: 10, fontWeight: 700, letterSpacing: '2px', color: HUD.cyan,
+          marginBottom: 6, paddingBottom: 4, borderBottom: `1px solid ${HUD.cyan}22`,
+          cursor: dragging ? 'grabbing' : 'grab',
+        }}>
         <Icon component={BookOpen} size={11} color={HUD.cyan} strokeWidth={2} />
-        COMBAT LOG
+        <span style={{ flex: 1 }}>COMBAT LOG</span>
+        <Icon component={MoveIcon} size={11} color={HUD.cyan} strokeWidth={2} style={{ opacity: 0.55 }} />
       </div>
       <div style={{
         fontFamily: HUD.fontMono, fontSize: 11, lineHeight: 1.45,
