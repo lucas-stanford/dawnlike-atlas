@@ -432,6 +432,60 @@ export default function TacticalCombatExample({
     return reachableTiles(selectedUnit, selectedUnit.moveRange, isBlockingForUnit);
   }, [state, selectedUnit, mode, isBlockingForUnit]);
 
+  // Compute attack / cast / heal range overlay (Manhattan range from selectedUnit).
+  // optimalSet = full-effect range; maxSet = full range incl. falloff zone.
+  const rangeOverlay = useMemo(() => {
+    if (!state || !selectedUnit) return null;
+    if (mode !== 'attack' && mode !== 'cast' && mode !== 'heal') return null;
+    const u = selectedUnit;
+    let maxR, optR, color;
+    if (mode === 'attack') {
+      maxR = u.weapon?.range ?? 1;
+      optR = u.weapon?.optimalRange ?? maxR;
+      color = 'rgba(255,90,90,0.42)';
+    } else if (mode === 'cast') {
+      const a = u.ability;
+      maxR = a?.range ?? u.weapon?.range ?? 1;
+      optR = maxR;
+      color = 'rgba(190,120,255,0.42)';
+    } else {
+      const a = u.ability;
+      maxR = a?.range ?? 1;
+      optR = maxR;
+      color = 'rgba(120,255,160,0.42)';
+    }
+    const optimalSet = new Set();
+    const maxSet = new Set();
+    for (let dy = -maxR; dy <= maxR; dy++) {
+      for (let dx = -maxR; dx <= maxR; dx++) {
+        const d = Math.abs(dx) + Math.abs(dy);
+        if (d === 0 || d > maxR) continue;
+        const x = u.x + dx, y = u.y + dy;
+        if (x < 0 || y < 0 || x >= state.W || y >= state.H) continue;
+        const k = `${x},${y}`;
+        maxSet.add(k);
+        if (d <= optR) optimalSet.add(k);
+      }
+    }
+    return { optimalSet, maxSet, color, maxR, optR };
+  }, [state, selectedUnit, mode]);
+
+  // 3x3 AOE preview tiles for fireball cast (hover dependent).
+  const aoePreviewSet = useMemo(() => {
+    if (!state || !selectedUnit || mode !== 'cast' || !hoverTile) return null;
+    if (selectedUnit.ability?.kind !== 'fireball') return null;
+    if (!rangeOverlay?.maxSet.has(`${hoverTile.x},${hoverTile.y}`)) return null;
+    const set = new Set();
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const x = hoverTile.x + dx, y = hoverTile.y + dy;
+        if (x < 0 || y < 0 || x >= state.W || y >= state.H) continue;
+        set.add(`${x},${y}`);
+      }
+    }
+    return set;
+  }, [state, selectedUnit, mode, hoverTile, rangeOverlay]);
+
   // Pick the next un-ended unit, if any.
   const pickNextUnit = useCallback(() => {
     if (!state) return null;
@@ -829,10 +883,22 @@ export default function TacticalCombatExample({
               if (dim === 0) {
                 return <div key={key} style={{ ...baseStyle, background: '#0a0a0c', cursor: 'default' }} />;
               }
-              // Move-range tint
+              // Mode-specific tinting
               const reachKey = moveReachable?.has(key);
               const isMoveTarget = mode === 'move' && reachKey;
-              const tintColor = isMoveTarget ? 'rgba(120,200,255,0.25)' : null;
+              const inOptRange = rangeOverlay?.optimalSet.has(key);
+              const inMaxRange = rangeOverlay?.maxSet.has(key);
+              const inAoe = aoePreviewSet?.has(key);
+              let tintColor = null;
+              if (isMoveTarget) {
+                tintColor = 'rgba(120,200,255,0.25)';
+              } else if (inAoe) {
+                tintColor = 'rgba(255,150,60,0.50)';
+              } else if (inOptRange) {
+                tintColor = rangeOverlay.color;
+              } else if (inMaxRange) {
+                tintColor = rangeOverlay.color.replace(/0\.42\)/, '0.22)');
+              }
               return (
                 <div
                   key={key}
@@ -921,6 +987,11 @@ export default function TacticalCombatExample({
         onOverwatch={setOverwatch}
         atlas={atlas}
       />
+
+      {/* Mode + range indicator (above action bar). */}
+      {selectedUnit && mode !== 'idle' && (
+        <ModeIndicator mode={mode} unit={selectedUnit} rangeOverlay={rangeOverlay} moveReachable={moveReachable} />
+      )}
 
       {/* Combat log (bottom-left). */}
       <div style={{
@@ -1037,6 +1108,51 @@ function SidePanel({ state, squad, selectedUnitId, setSelected, atlas }) {
   );
 }
 
+function ModeIndicator({ mode, unit, rangeOverlay, moveReachable }) {
+  let label = null;
+  let dot = null;
+  if (mode === 'move') {
+    label = `Move — up to ${unit.moveRange} tiles${moveReachable ? ` · ${moveReachable.size} reachable` : ''}`;
+    dot = 'rgba(120,200,255,0.9)';
+  } else if (mode === 'attack') {
+    const { range, optimalRange } = unit.weapon || {};
+    const r = range ?? 1;
+    const o = optimalRange ?? r;
+    label = o === r ? `Attack — range ${r}` : `Attack — optimal ${o}, max ${r}`;
+    dot = 'rgba(255,90,90,0.9)';
+  } else if (mode === 'cast') {
+    const a = unit.ability;
+    const r = a?.range ?? unit.weapon?.range ?? 1;
+    const extra = a?.kind === 'fireball' ? ' · 3×3 AOE' : '';
+    label = `${a?.name || 'Ability'} — range ${r}${extra}`;
+    dot = 'rgba(190,120,255,0.9)';
+  } else if (mode === 'heal') {
+    const r = unit.ability?.range ?? 1;
+    label = `Heal — range ${r}`;
+    dot = 'rgba(120,255,160,0.9)';
+  } else if (mode === 'overwatch') {
+    label = 'Overwatch — covers visible enemies that move';
+    dot = 'rgba(255,210,90,0.9)';
+  }
+  if (!label) return null;
+  return (
+    <div style={{
+      position: 'absolute', left: 8, bottom: 56, zIndex: 30,
+      background: 'rgba(0,0,0,0.85)',
+      color: '#fff',
+      padding: '4px 10px',
+      borderRadius: 4,
+      border: '1px solid #444',
+      fontFamily: 'system-ui, sans-serif', fontSize: 12, fontWeight: 600,
+      display: 'flex', alignItems: 'center', gap: 8,
+    }}>
+      <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: 5, background: dot }} />
+      {label}
+      <span style={{ fontWeight: 400, opacity: 0.7, fontSize: 11 }}>(esc to cancel)</span>
+    </div>
+  );
+}
+
 function ActionBar({ state, selectedUnit, mode, setMode, onMove, onAttack, onCast, onHeal, onOverwatch, atlas }) {
   if (!selectedUnit || selectedUnit.hp <= 0) return null;
   const cstats = CLASSES[selectedUnit.classKey];
@@ -1058,15 +1174,25 @@ function ActionBar({ state, selectedUnit, mode, setMode, onMove, onAttack, onCas
       }}
     >{label}</button>
   );
+  const wpn = selectedUnit.weapon;
+  const wpnRange = wpn?.range ?? 1;
+  const wpnOpt = wpn?.optimalRange ?? wpnRange;
+  const attackLabel = wpnRange === wpnOpt
+    ? `🎯 Attack (rng ${wpnRange})`
+    : `🎯 Attack (rng ${wpnOpt}/${wpnRange})`;
   let abilityBtn = null;
   if (selectedUnit.classKey === 'wizard') {
-    abilityBtn = btn(`🔥 Fireball (${selectedUnit.abilityUsesLeft})`, () => setMode('cast'), mode === 'cast', selectedUnit.abilityUsesLeft <= 0);
+    const r = selectedUnit.ability?.range ?? '?';
+    abilityBtn = btn(`🔥 Fireball (rng ${r}, ${selectedUnit.abilityUsesLeft})`, () => setMode('cast'), mode === 'cast', selectedUnit.abilityUsesLeft <= 0);
   } else if (selectedUnit.classKey === 'cleric') {
-    abilityBtn = btn(`✚ Heal (${selectedUnit.abilityUsesLeft})`, () => setMode('heal'), mode === 'heal');
+    const r = selectedUnit.ability?.range ?? 1;
+    abilityBtn = btn(`✚ Heal (rng ${r}, ${selectedUnit.abilityUsesLeft})`, () => setMode('heal'), mode === 'heal');
   } else if (selectedUnit.classKey === 'knight') {
-    abilityBtn = btn('🛡 Bash', () => setMode('cast'), mode === 'cast');
+    const r = selectedUnit.ability?.range ?? 1;
+    abilityBtn = btn(`🛡 Bash (rng ${r})`, () => setMode('cast'), mode === 'cast');
   } else if (selectedUnit.classKey === 'rogue') {
-    abilityBtn = btn('🗡 Dagger', () => setMode('cast'), mode === 'cast');
+    const r = selectedUnit.ability?.range ?? 1;
+    abilityBtn = btn(`🗡 Dagger (rng ${r})`, () => setMode('cast'), mode === 'cast');
   }
   return (
     <div style={{
@@ -1087,8 +1213,8 @@ function ActionBar({ state, selectedUnit, mode, setMode, onMove, onAttack, onCas
         <div style={{ fontSize: 11 }}>HP {Math.max(0, selectedUnit.hp)} / {selectedUnit.maxHp}</div>
         <div style={{ fontSize: 11 }}>AP {'•'.repeat(apLeft)} {apLeft === 0 ? '(ended)' : ''}</div>
       </div>
-      {btn('🚶 Move', onMove, mode === 'move')}
-      {btn('🎯 Attack', onAttack, mode === 'attack')}
+      {btn(`🚶 Move (rng ${selectedUnit.moveRange})`, onMove, mode === 'move')}
+      {btn(attackLabel, onAttack, mode === 'attack')}
       {abilityBtn}
       {btn('👁 Overwatch', onOverwatch, false)}
     </div>
