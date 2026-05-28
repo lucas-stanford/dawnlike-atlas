@@ -24,9 +24,27 @@ import { resolveAssetPath } from './paths';
 export const DAWNLIKE_ATLAS_0_URL = resolveAssetPath('/DawnlikeAtlas0.png');
 export const DAWNLIKE_ATLAS_1_URL = resolveAssetPath('/DawnlikeAtlas1.png');
 
+// `resolveAssetPath` may return a *relative* URL (e.g. `./DawnlikeAtlas0.png`
+// under a Storybook static build whose Vite `BASE_URL` is `./`). That works
+// for inline styles authored on a React element — the URL resolves relative
+// to the HTML document — but BREAKS when handed to a CSS var that is
+// consumed by a rule inside a bundled stylesheet in `/assets/`, because
+// CSS resolves URLs relative to the stylesheet's location, not the
+// element's. Resolve to an absolute URL once at module load so the
+// `.dawnlike-tile-anim` rule in spriteAnim.css fetches the right file
+// regardless of where the bundled CSS lives.
+function absolutizeForCss(url) {
+  if (typeof window === 'undefined') return url;
+  try {
+    return new URL(url, document.baseURI || window.location.href).href;
+  } catch {
+    return url;
+  }
+}
+
 export const dawnlikeAnimVars = {
-  '--dawnlike-atlas-0': `url("${DAWNLIKE_ATLAS_0_URL}")`,
-  '--dawnlike-atlas-1': `url("${DAWNLIKE_ATLAS_1_URL}")`,
+  '--dawnlike-atlas-0': `url("${absolutizeForCss(DAWNLIKE_ATLAS_0_URL)}")`,
+  '--dawnlike-atlas-1': `url("${absolutizeForCss(DAWNLIKE_ATLAS_1_URL)}")`,
 };
 
 export function isAnimatedSprite(atlas, name) {

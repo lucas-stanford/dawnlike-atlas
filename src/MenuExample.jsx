@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { resolveAssetPath } from './utils/paths';
-import { DAWNLIKE_ATLAS_0_URL } from './utils/spriteAnim';
+import { DAWNLIKE_ATLAS_0_URL, dawnlikeAnimVars } from './utils/spriteAnim';
 import './utils/spriteAnim.css';
 import './Menu.css';
 
@@ -21,12 +21,7 @@ function Sprite({ atlas, name, scale = SCALE, flipY = false, flipX = false, styl
   // For animated sprites we set the two atlas CSS vars locally and
   // attach `.dawnlike-tile-anim`; the keyframe swaps background-image
   // between them. For static sprites we keep the simple inline url.
-  const animVars = animated
-    ? {
-        '--dawnlike-atlas-0': `url("${resolveAssetPath('/DawnlikeAtlas0.png')}")`,
-        '--dawnlike-atlas-1': `url("${resolveAssetPath('/DawnlikeAtlas1.png')}")`,
-      }
-    : null;
+  const animVars = animated ? dawnlikeAnimVars : null;
   return (
     <div
       className={animated ? 'dawnlike-tile-anim' : undefined}
