@@ -26,6 +26,8 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import * as ROT from 'rot-js';
 import { resolveAssetPath } from './utils/paths';
+import { dawnlikeAnimVars, DAWNLIKE_ATLAS_0_URL } from './utils/spriteAnim';
+import './utils/spriteAnim.css';
 import {
   resolveDawnLikeFloorName,
   resolveDawnLikeForestName,
@@ -563,7 +565,7 @@ export default function ArenaCombatExample({
       tabIndex={0}
       onKeyDown={onKeyDown}
       className="autotile-layout full-viewport"
-      style={{ outline: 'none' }}
+      style={{ outline: 'none', ...dawnlikeAnimVars }}
     >
       <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 30, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         <button onClick={restart} style={{ padding: '6px 12px', cursor: 'pointer' }}>🔄 Restart</button>
@@ -626,12 +628,14 @@ export default function ArenaCombatExample({
                   {layers.map((layer, i) => {
                     const sprite = atlas.byName[layer.name];
                     if (!sprite) return null;
+                    const animated = !!sprite.isAnimated;
                     return (
                       <div
                         key={i}
+                        className={animated ? 'dawnlike-tile-anim' : undefined}
                         style={{
                           position: 'absolute', inset: 0,
-                          backgroundImage: `url(${resolveAssetPath('/DawnlikeAtlas0.png')})`,
+                          ...(animated ? null : { backgroundImage: `url(${DAWNLIKE_ATLAS_0_URL})` }),
                           backgroundPosition: `-${sprite.x}px -${sprite.y}px`,
                           backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`,
                           zIndex: Math.round(layer.z * 10),
@@ -706,6 +710,7 @@ export default function ArenaCombatExample({
 function ActorSprite({ atlas, sprite, x, y, z = 5 }) {
   const s = atlas?.byName?.[sprite];
   if (!s) return null;
+  const animated = !!s.isAnimated;
   return (
     <div
       style={{
@@ -717,9 +722,10 @@ function ActorSprite({ atlas, sprite, x, y, z = 5 }) {
       }}
     >
       <div
+        className={animated ? 'dawnlike-tile-anim' : undefined}
         style={{
           position: 'absolute', inset: 0,
-          backgroundImage: `url(${resolveAssetPath('/DawnlikeAtlas0.png')})`,
+          ...(animated ? null : { backgroundImage: `url(${DAWNLIKE_ATLAS_0_URL})` }),
           backgroundPosition: `-${s.x}px -${s.y}px`,
           backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`,
           imageRendering: 'pixelated',
@@ -754,11 +760,13 @@ function HudPanel({ atlas, player, gaugeName, cstats }) {
 function SpriteFrame({ atlas, sprite }) {
   const s = atlas?.byName?.[sprite];
   if (!s) return null;
+  const animated = !!s.isAnimated;
   return (
     <div
+      className={animated ? 'dawnlike-tile-anim' : undefined}
       style={{
         position: 'absolute', inset: 0,
-        backgroundImage: `url(${resolveAssetPath('/DawnlikeAtlas0.png')})`,
+        ...(animated ? null : { backgroundImage: `url(${DAWNLIKE_ATLAS_0_URL})` }),
         backgroundPosition: `-${s.x}px -${s.y}px`,
         backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`,
         imageRendering: 'pixelated',

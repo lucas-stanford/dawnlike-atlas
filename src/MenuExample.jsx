@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { resolveAssetPath } from './utils/paths';
+import { DAWNLIKE_ATLAS_0_URL } from './utils/spriteAnim';
+import './utils/spriteAnim.css';
 import './Menu.css';
 
 const TILE = 32;
@@ -15,12 +17,24 @@ function Sprite({ atlas, name, scale = SCALE, flipY = false, flipX = false, styl
   const h = (sprite?.h ?? TILE) * scale;
   if (!sprite) return <div style={{ width: w, height: h, ...style }} />;
   const transform = [flipX ? 'scaleX(-1)' : '', flipY ? 'scaleY(-1)' : ''].filter(Boolean).join(' ');
+  const animated = !!sprite.isAnimated;
+  // For animated sprites we set the two atlas CSS vars locally and
+  // attach `.dawnlike-tile-anim`; the keyframe swaps background-image
+  // between them. For static sprites we keep the simple inline url.
+  const animVars = animated
+    ? {
+        '--dawnlike-atlas-0': `url("${resolveAssetPath('/DawnlikeAtlas0.png')}")`,
+        '--dawnlike-atlas-1': `url("${resolveAssetPath('/DawnlikeAtlas1.png')}")`,
+      }
+    : null;
   return (
     <div
+      className={animated ? 'dawnlike-tile-anim' : undefined}
       style={{
         width: w,
         height: h,
-        backgroundImage: `url(${resolveAssetPath('/DawnlikeAtlas0.png')})`,
+        ...animVars,
+        ...(animated ? null : { backgroundImage: `url(${DAWNLIKE_ATLAS_0_URL})` }),
         backgroundPosition: `-${sprite.x * scale}px -${sprite.y * scale}px`,
         backgroundSize: `${atlas.meta.size.w * scale}px ${atlas.meta.size.h * scale}px`,
         transform: transform || undefined,

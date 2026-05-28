@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import * as ROT from 'rot-js';
 import { resolveAssetPath } from './utils/paths';
+import { dawnlikeAnimVars, DAWNLIKE_ATLAS_0_URL } from './utils/spriteAnim';
+import './utils/spriteAnim.css';
 import { resolveDawnLikeWallName, resolveDawnLikeFloorName, resolveAutotile, resolveDawnLikeDungeonWallName, resolveDawnLikeForestName } from './utils/autotile';
 import './Autotile.css';
 
@@ -1188,7 +1190,7 @@ export default function TownExample({
   const popupY = pinnedTile ? pinnedTile.screenY : mousePos.y;
 
   return (
-    <div className="autotile-layout full-viewport">
+    <div className="autotile-layout full-viewport" style={dawnlikeAnimVars}>
       <button className="gear-button" onClick={() => setShowConfig(!showConfig)}>⚙️</button>
       {showConfig && (
         <div className="floating-config">
@@ -1241,8 +1243,20 @@ export default function TownExample({
                     if (layer.flipX) trans.push('scaleX(-1)');
                     if (layer.flipY) trans.push('scaleY(-1)');
                     if (layer.rotate) trans.push(`rotate(${layer.rotate}deg)`);
+                    const animated = !!sprite.isAnimated;
                     return (
-                      <div key={idx} style={{ position: 'absolute', inset: 0, backgroundImage: `url(${resolveAssetPath('/DawnlikeAtlas0.png')})`, backgroundPosition: `-${sprite.x}px -${sprite.y}px`, backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`, zIndex: layer.z * 10, transform: trans.join(' ') }} />
+                      <div
+                        key={idx}
+                        className={animated ? 'dawnlike-tile-anim' : undefined}
+                        style={{
+                          position: 'absolute', inset: 0,
+                          ...(animated ? null : { backgroundImage: `url(${DAWNLIKE_ATLAS_0_URL})` }),
+                          backgroundPosition: `-${sprite.x}px -${sprite.y}px`,
+                          backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`,
+                          zIndex: layer.z * 10,
+                          transform: trans.join(' '),
+                        }}
+                      />
                     );
                   })}
                 </div>

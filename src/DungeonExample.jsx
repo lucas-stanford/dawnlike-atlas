@@ -16,6 +16,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import * as ROT from 'rot-js';
 import { resolveAssetPath } from './utils/paths';
+import { dawnlikeAnimVars, DAWNLIKE_ATLAS_0_URL } from './utils/spriteAnim';
+import './utils/spriteAnim.css';
 import { resolveDawnLikeFloorName, resolveDawnLikeDungeonWallName } from './utils/autotile';
 import './Autotile.css';
 
@@ -273,7 +275,7 @@ export default function DungeonExample({
   const popupY = pinnedTile ? pinnedTile.screenY : mousePos.y;
 
   return (
-    <div className="autotile-layout full-viewport">
+    <div className="autotile-layout full-viewport" style={dawnlikeAnimVars}>
       <button className="gear-button" onClick={() => setShowConfig(!showConfig)}>⚙️</button>
       {showConfig && (
         <div className="floating-config">
@@ -336,17 +338,21 @@ export default function DungeonExample({
                     cursor: 'pointer',
                   }}
                 >
-                  {sprite && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        inset: 0,
-                        backgroundImage: `url(${atlasImage})`,
-                        backgroundPosition: `-${sprite.x}px -${sprite.y}px`,
-                        backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`,
-                      }}
-                    />
-                  )}
+                  {sprite && (() => {
+                    const animated = !!sprite.isAnimated;
+                    return (
+                      <div
+                        className={animated ? 'dawnlike-tile-anim' : undefined}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          ...(animated ? null : { backgroundImage: `url(${atlasImage})` }),
+                          backgroundPosition: `-${sprite.x}px -${sprite.y}px`,
+                          backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`,
+                        }}
+                      />
+                    );
+                  })()}
                 </div>
               );
             })

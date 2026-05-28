@@ -16,6 +16,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import * as ROT from 'rot-js';
 import { resolveAssetPath } from './utils/paths';
+import { dawnlikeAnimVars, DAWNLIKE_ATLAS_0_URL } from './utils/spriteAnim';
+import './utils/spriteAnim.css';
 import {
   resolveDawnLikeFloorName,
   resolveDawnLikeForestName,
@@ -311,7 +313,7 @@ export default function ArenaExample({
   const px = W * TILE_SIZE, py = H * TILE_SIZE;
 
   return (
-    <div className="autotile-layout full-viewport">
+    <div className="autotile-layout full-viewport" style={dawnlikeAnimVars}>
       <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 10, display: 'flex', gap: 8 }}>
         <button onClick={reseed} style={{ padding: '6px 12px', cursor: 'pointer' }}>🔄 Reseed</button>
         <div style={{
@@ -349,13 +351,15 @@ export default function ArenaExample({
                   {layers.map((layer, i) => {
                     const sprite = atlas.byName[layer.name];
                     if (!sprite) return null;
+                    const animated = !!sprite.isAnimated;
                     return (
                       <div
                         key={i}
+                        className={animated ? 'dawnlike-tile-anim' : undefined}
                         style={{
                           position: 'absolute',
                           inset: 0,
-                          backgroundImage: `url(${resolveAssetPath('/DawnlikeAtlas0.png')})`,
+                          ...(animated ? null : { backgroundImage: `url(${DAWNLIKE_ATLAS_0_URL})` }),
                           backgroundPosition: `-${sprite.x}px -${sprite.y}px`,
                           backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`,
                           zIndex: Math.round(layer.z * 10),

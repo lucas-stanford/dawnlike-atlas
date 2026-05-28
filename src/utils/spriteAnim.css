@@ -1,0 +1,64 @@
+/* =================================================================
+ * DawnLike 2-frame tile animation
+ * -----------------------------------------------------------------
+ * DawnLike ships every "animated" sprite as a pair: frame 0 lives
+ * in DawnlikeAtlas0.png at (x,y) and frame 1 lives at the SAME
+ * (x,y) in DawnlikeAtlas1.png. The Phaser scenes register a 2-frame
+ * Phaser.Anim per sprite (see BootScene.js). For our DOM-rendered
+ * examples we get the same effect by stacking a second sprite layer
+ * (Atlas1) on top of Atlas0 via a `::after` pseudo-element and
+ * stepping its OPACITY 0 → 1 every half-cycle.
+ *
+ * Why opacity and not a background-image URL swap? Chrome reports a
+ * new URL in `getComputedStyle()` after a CSS keyframe step or a
+ * class toggle, but DOES NOT repaint the composited layer. Opacity
+ * is a compositor property and updates reliably across browsers.
+ *
+ * Contract:
+ *   - Set `--dawnlike-atlas-0` and `--dawnlike-atlas-1` to
+ *     `url("…")` somewhere on an ancestor (a viewport wrapper, the
+ *     sprite element itself, anywhere).
+ *   - Add the `dawnlike-tile-anim` class to any sprite div that
+ *     should cycle, and OMIT inline `background-image` so the
+ *     class can drive it. Keep your inline `background-position`
+ *     and `background-size`; the ::after layer inherits them.
+ *
+ * Timing: 2 frames × 333ms = 667ms loop ≈ 3 fps (matches Phaser's
+ *   `frameRate: 3` in src/phaser/scenes/BootScene.js).
+ * ================================================================= */
+
+.dawnlike-tile-anim {
+  background-image: var(--dawnlike-atlas-0);
+  /* Provide a positioning context for `::after`. Examples that set
+     `position: absolute` (or fixed/sticky) inline take precedence —
+     inline styles always win over class — so this fallback only
+     applies to elements that have no explicit position of their own
+     (e.g. MenuExample's `Sprite` primitive). */
+  position: relative;
+}
+
+.dawnlike-tile-anim::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--dawnlike-atlas-1);
+  background-position: inherit;
+  background-size: inherit;
+  image-rendering: pixelated;
+  pointer-events: none;
+  opacity: 0;
+  animation: dawnlike-tile-flicker 667ms steps(2, jump-none) infinite;
+}
+
+@keyframes dawnlike-tile-flicker {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Freeze on frame 0 — keep the Atlas1 overlay hidden. */
+  .dawnlike-tile-anim::after {
+    animation: none;
+    opacity: 0;
+  }
+}
