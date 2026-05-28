@@ -1673,37 +1673,37 @@ function CombatLog({ lines }) {
     : { right: 10, bottom: 12 };
 
   return (
-    <div ref={panelRef} style={{
-      position: 'absolute', zIndex: 30,
-      ...positionStyle,
-      width: COMBAT_LOG_WIDTH,
-      background: HUD.panelBg,
-      border: dragging ? `1px solid ${HUD.cyan}aa` : HUD.border,
-      boxShadow: dragging ? `${HUD.shadow}, 0 0 22px ${HUD.cyan}55` : HUD.shadow,
-      borderRadius: 8,
-      padding: '8px 10px 8px',
-      fontFamily: HUD.font,
-      color: HUD.text,
-      userSelect: 'none',
-      transition: dragging ? 'none' : 'box-shadow 160ms ease, border-color 160ms ease',
-      touchAction: 'none',
-    }}>
-      <div
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={finishDrag}
-        onPointerCancel={finishDrag}
-        onDoubleClick={onDoubleClick}
-        title="Drag to move · double-click to reset"
-        style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          fontSize: 10, fontWeight: 700, letterSpacing: '2px', color: HUD.cyan,
-          marginBottom: 6, paddingBottom: 4, borderBottom: `1px solid ${HUD.cyan}22`,
-          cursor: dragging ? 'grabbing' : 'grab',
-        }}>
+    <div ref={panelRef}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={finishDrag}
+      onPointerCancel={finishDrag}
+      onDoubleClick={onDoubleClick}
+      title="Drag anywhere to move · double-click to reset position"
+      style={{
+        position: 'absolute', zIndex: 30,
+        ...positionStyle,
+        width: COMBAT_LOG_WIDTH,
+        background: HUD.panelBg,
+        border: dragging ? `1px solid ${HUD.cyan}aa` : HUD.border,
+        boxShadow: dragging ? `${HUD.shadow}, 0 0 22px ${HUD.cyan}55` : HUD.shadow,
+        borderRadius: 8,
+        padding: '8px 10px 8px',
+        fontFamily: HUD.font,
+        color: HUD.text,
+        userSelect: 'none',
+        transition: dragging ? 'none' : 'box-shadow 160ms ease, border-color 160ms ease',
+        touchAction: 'none',
+        cursor: dragging ? 'grabbing' : 'grab',
+      }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        fontSize: 10, fontWeight: 700, letterSpacing: '2px', color: HUD.cyan,
+        marginBottom: 6, paddingBottom: 4, borderBottom: `1px solid ${HUD.cyan}22`,
+      }}>
         <Icon component={BookOpen} size={11} color={HUD.cyan} strokeWidth={2} />
         <span style={{ flex: 1 }}>COMBAT LOG</span>
-        <Icon component={MoveIcon} size={11} color={HUD.cyan} strokeWidth={2} style={{ opacity: 0.55 }} />
+        <Icon component={MoveIcon} size={11} color={HUD.cyan} strokeWidth={2} style={{ opacity: 0.7 }} />
       </div>
       <div style={{
         fontFamily: HUD.fontMono, fontSize: 11, lineHeight: 1.45,
