@@ -508,7 +508,9 @@ export default function TacticalCombatExample({
         victory: false, defeat: false,
       });
       setSelectedUnitId(squad[0].id);
-      setMode('idle');
+      // Newly-built level starts with squad[0] at full AP — open in MOVE
+      // mode so the reachable-tile overlay shows immediately.
+      setMode('move');
     }
   }, [atlas, mission, difficulty, width, height, fovRadius]);
 
@@ -598,14 +600,29 @@ export default function TacticalCombatExample({
     return state.squad.find(u => u.hp > 0 && !u.ended) || null;
   }, [state]);
 
+  // Selecting a squad member defaults to MOVE mode so the reachable-tile
+  // overlay appears immediately — that's the dominant action almost every
+  // turn. Dead or ended units fall back to idle (the move overlay would be
+  // empty/confusing otherwise).
+  const selectUnit = useCallback((unitId) => {
+    setSelectedUnitId(unitId);
+    if (!state || state.turn !== 'player') { setMode('idle'); return; }
+    const u = state.squad.find(s => s.id === unitId);
+    if (!u || u.hp <= 0 || u.ended || actionPoints(u) < 1) {
+      setMode('idle');
+    } else {
+      setMode('move');
+    }
+  }, [state]);
+
   // Auto-advance: if the currently-selected unit ended, jump to the next.
   useEffect(() => {
     if (!state || state.turn !== 'player') return;
     if (!selectedUnit || selectedUnit.ended) {
       const next = pickNextUnit();
-      if (next) setSelectedUnitId(next.id);
+      if (next) selectUnit(next.id);
     }
-  }, [state, selectedUnit, pickNextUnit]);
+  }, [state, selectedUnit, pickNextUnit, selectUnit]);
 
   // ===== Player actions =====
   const moveTo = (dest) => {
@@ -891,7 +908,7 @@ export default function TacticalCombatExample({
     state.turnNumber += 1;
     setState({ ...state, ...refreshFov() });
     const next = state.squad.find(u => u.hp > 0 && !u.ended);
-    if (next) setSelectedUnitId(next.id);
+    if (next) selectUnit(next.id);
   }
 
   const restart = () => {
@@ -994,7 +1011,7 @@ export default function TacticalCombatExample({
     }
     // Click a squad member → select.
     const ally = state.squad.find(u => u.hp > 0 && u.x === x && u.y === y);
-    if (ally) { setSelectedUnitId(ally.id); setMode('idle'); return; }
+    if (ally) { selectUnit(ally.id); return; }
   };
 
   if (loading || !atlas || !state) {
@@ -1164,7 +1181,7 @@ export default function TacticalCombatExample({
         </div>
       </div>
 
-      <SidePanel state={state} squad={squad} selectedUnitId={selectedUnitId} setSelected={setSelectedUnitId} atlas={atlas} onShowCharacter={setCharacterScreenUnitId} />
+      <SidePanel state={state} squad={squad} selectedUnitId={selectedUnitId} setSelected={selectUnit} atlas={atlas} onShowCharacter={setCharacterScreenUnitId} />
       <ActionBar
         state={state} selectedUnit={selectedUnit} mode={mode} setMode={setMode}
         onMove={() => setMode('move')}
