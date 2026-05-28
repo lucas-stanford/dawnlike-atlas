@@ -45,7 +45,10 @@ export default {
           'a meandering road, a river with bridges, and scattered decorations. ' +
           'Edit generator settings here in the Controls panel; the in-canvas ⚙️ ' +
           'gear button shows the tile-override log. Click any tile to pin the ' +
-          'autotile-debug popup and use the swatch picker to override any sprite.',
+          'autotile-debug popup and use the swatch picker to override any sprite. ' +
+          'The **Chaos Wastes** story underneath swaps in a burnt-out palette ' +
+          '(charred ground, lava flow, burning oaks, red volcanoes) using the ' +
+          'same generator and controls — flip any control to mix-and-match palettes.',
       },
     },
   },
@@ -111,11 +114,38 @@ export default {
   },
 };
 
-// Single-story hoisting: export name == last segment of title makes
-// the sidebar leaf disappear so the title doubles as the entry point.
 // `key` on the component forces a re-mount on every args change so
 // Storybook controls always take effect (the in-canvas gear panel uses
 // internal state that wouldn't otherwise sync to prop changes).
 export const Wilderness = {
+  name: 'Wilderness',
+  render: (args) => <OutdoorExample key={JSON.stringify(args)} {...args} />,
+};
+
+// Burnt-out variant of the same generator: charred dusk dirt for
+// ground, a lava flow instead of a river, blackened "burning oak"
+// forests, and red volcanoes. Same code path, only the tile defaults
+// differ — every control can still be flipped to remix palettes.
+export const ChaosWastes = {
+  name: 'Chaos Wastes',
+  args: {
+    terrainStyle: 'dusk dirt floor',
+    dirtStyle: 'night dirt floor',
+    roadStyle: 'rocky trail',
+    riverStyle: 'lava flow',
+    treeStyle: 'burning oak',
+    mountainStyle: 'red volcano',
+  },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Burnt-out variant of the overworld generator: charred dusk dirt for ground, ' +
+          'a lava flow instead of a river, blackened "burning oak" forests, and red ' +
+          'volcanoes for the mountain biome. Same generator, same controls — only the ' +
+          'tile defaults differ. Switch any control to mix-and-match palettes.',
+      },
+    },
+  },
   render: (args) => <OutdoorExample key={JSON.stringify(args)} {...args} />,
 };
