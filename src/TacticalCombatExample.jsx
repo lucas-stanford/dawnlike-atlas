@@ -29,6 +29,12 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import * as ROT from 'rot-js';
+import {
+  Footprints, Crosshair, Flame, Eye, Shield, Sword, Sparkles,
+  Heart, HeartPulse, SkipForward, RotateCcw, Skull, X,
+  Target, Activity, ShieldAlert, Wand2, Award, TrendingUp,
+  User as UserIcon, Move as MoveIcon, ChevronRight, Zap, BookOpen,
+} from 'lucide-react';
 import { resolveAssetPath } from './utils/paths';
 import {
   resolveDawnLikeFloorName,
@@ -85,6 +91,23 @@ const MODE_THEME = {
   heal:    { color: HUD.green,  label: 'HEAL'      },
   overwatch:{color: HUD.amber,  label: 'OVERWATCH' },
 };
+
+// Reusable Lucide icon wrapper — consistent stroke + glow.
+function Icon({ component: C, size = 16, color = 'currentColor', glow = false, strokeWidth = 1.75, style }) {
+  if (!C) return null;
+  return (
+    <C
+      size={size}
+      color={color}
+      strokeWidth={strokeWidth}
+      style={{
+        flexShrink: 0,
+        filter: glow ? `drop-shadow(0 0 4px ${color}aa)` : undefined,
+        ...style,
+      }}
+    />
+  );
+}
 
 const OBSTACLE_KIND_INFO = {
   tree:     { autotile: 'forest' },
@@ -210,6 +233,7 @@ export default function TacticalCombatExample({
   const [hoverTile, setHoverTile] = useState(null);
   const [selectedUnitId, setSelectedUnitId] = useState(null);
   const [mode, setMode] = useState('idle'); // 'idle' | 'move' | 'attack' | 'cast' | 'heal' | 'overwatch'
+  const [characterScreenUnitId, setCharacterScreenUnitId] = useState(null);
 
   // Atlas load
   useEffect(() => {
@@ -221,6 +245,23 @@ export default function TacticalCombatExample({
     })();
     return () => { cancelled = true; };
   }, []);
+
+  // ESC closes the character screen first, otherwise cancels mode.
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === 'Escape') {
+        if (characterScreenUnitId) {
+          setCharacterScreenUnitId(null);
+          e.preventDefault();
+        } else if (mode !== 'idle') {
+          setMode('idle');
+          e.preventDefault();
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [characterScreenUnitId, mode]);
 
   // Build the level on prop change.
   const buildLevel = useCallback(() => {
@@ -906,7 +947,7 @@ export default function TacticalCombatExample({
         }
       `}</style>
       <TopBar state={state} onEndTurn={endTurn} />
-      <div className="map-viewport maximized" style={{ paddingRight: 244, paddingTop: 64 }}>
+      <div className="map-viewport maximized" style={{ paddingRight: 244, paddingTop: 64, paddingBottom: 132 }}>
         <div
           className="map-grid"
           style={{ width: px, height: py }}
@@ -1037,7 +1078,7 @@ export default function TacticalCombatExample({
         </div>
       </div>
 
-      <SidePanel state={state} squad={squad} selectedUnitId={selectedUnitId} setSelected={setSelectedUnitId} atlas={atlas} />
+      <SidePanel state={state} squad={squad} selectedUnitId={selectedUnitId} setSelected={setSelectedUnitId} atlas={atlas} onShowCharacter={setCharacterScreenUnitId} />
       <ActionBar
         state={state} selectedUnit={selectedUnit} mode={mode} setMode={setMode}
         onMove={() => setMode('move')}
@@ -1055,6 +1096,14 @@ export default function TacticalCombatExample({
 
       {/* Combat log (top-right, below Squad). */}
       <CombatLog lines={state.log} />
+
+      {/* Character screen modal (triggered from SidePanel info button). */}
+      {characterScreenUnitId && (() => {
+        const u = squad.find(s => s.id === characterScreenUnitId);
+        return u ? (
+          <CharacterScreen unit={u} atlas={atlas} onClose={() => setCharacterScreenUnitId(null)} />
+        ) : null;
+      })()}
 
       {(state.victory || state.defeat) && (
         <div style={{
@@ -1100,6 +1149,7 @@ export default function TacticalCombatExample({
               onMouseEnter={(e) => { e.currentTarget.style.background = `linear-gradient(180deg, ${HUD.cyan}33 0%, ${HUD.cyan}14 100%)`; e.currentTarget.style.borderColor = HUD.cyan; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(20,28,42,0.85)'; e.currentTarget.style.borderColor = `${HUD.cyan}88`; }}
               style={{
+                display: 'inline-flex', alignItems: 'center', gap: 10,
                 padding: '12px 28px',
                 background: 'rgba(20,28,42,0.85)',
                 color: HUD.cyan,
@@ -1111,7 +1161,8 @@ export default function TacticalCombatExample({
                 fontSize: 12, fontWeight: 700, letterSpacing: '2px',
                 transition: 'all 0.15s ease',
               }}>
-              ↻ NEW MISSION
+              <Icon component={RotateCcw} size={14} color={HUD.cyan} strokeWidth={2.2} glow />
+              NEW MISSION
             </button>
           </div>
         </div>
@@ -1172,11 +1223,15 @@ function TopBar({ state, onEndTurn }) {
           pointerEvents: 'auto',
         }}>
           <div style={{
+            display: 'flex', alignItems: 'center', gap: 5,
             fontSize: 10, fontWeight: 700, letterSpacing: '1.5px',
-            color: HUD.amber, padding: '2px 6px',
+            color: HUD.amber, padding: '2px 7px',
             border: `1px solid ${HUD.amber}55`, borderRadius: 3,
             background: `${HUD.amber}14`,
-          }}>OBJECTIVE</div>
+          }}>
+            <Icon component={Target} size={11} color={HUD.amber} strokeWidth={2.2} glow />
+            OBJECTIVE
+          </div>
           <div style={{ fontSize: 12.5, color: HUD.text, lineHeight: 1.35 }}>{state.objective}</div>
         </div>
       )}
@@ -1200,14 +1255,14 @@ function TopBar({ state, onEndTurn }) {
             transition: 'all 0.15s ease',
             pointerEvents: 'auto',
           }}>
-          END TURN <span style={{ fontSize: 14 }}>⏭</span>
+          END TURN <Icon component={SkipForward} size={15} color={HUD.amber} glow />
         </button>
       )}
     </div>
   );
 }
 
-function SidePanel({ state, squad, selectedUnitId, setSelected, atlas }) {
+function SidePanel({ state, squad, selectedUnitId, setSelected, atlas, onShowCharacter }) {
   return (
     <div style={{
       position: 'absolute', right: 10, top: 78, zIndex: 30,
@@ -1225,7 +1280,10 @@ function SidePanel({ state, squad, selectedUnitId, setSelected, atlas }) {
         marginBottom: 8, paddingBottom: 6,
         borderBottom: `1px solid ${HUD.cyan}22`,
       }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '2px', color: HUD.cyan }}>SQUAD</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Icon component={Award} size={13} color={HUD.cyan} strokeWidth={2} />
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '2px', color: HUD.cyan }}>SQUAD</div>
+        </div>
         <div style={{ fontSize: 10, color: HUD.textMuted, letterSpacing: '1px' }}>
           {squad.filter(u => u.hp > 0).length}/{squad.length} ALIVE
         </div>
@@ -1274,15 +1332,40 @@ function SidePanel({ state, squad, selectedUnitId, setSelected, atlas }) {
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 marginBottom: 3,
               }}>
                 <span style={{ fontSize: 11.5, fontWeight: 700, color: HUD.text, letterSpacing: '0.3px' }}>
                   {u.name}
                 </span>
-                <span style={{ fontSize: 9, color: HUD.textMuted, letterSpacing: '0.5px' }}>
-                  {dead ? '✖ KIA' : ended ? 'ENDED' : ''}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  {dead && <Icon component={Skull} size={11} color={HUD.red} />}
+                  {ended && (
+                    <span style={{ fontSize: 9, color: HUD.textMuted, letterSpacing: '0.5px' }}>
+                      ENDED
+                    </span>
+                  )}
+                  {!dead && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onShowCharacter && onShowCharacter(u.id); }}
+                      title={`${u.name} — character sheet`}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = accent; e.currentTarget.style.borderColor = `${accent}88`; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = HUD.textMuted; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; }}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: 18, height: 18,
+                        padding: 0,
+                        background: 'rgba(8,12,20,0.55)',
+                        color: HUD.textMuted,
+                        border: '1px solid rgba(255,255,255,0.10)',
+                        borderRadius: 3,
+                        cursor: 'pointer',
+                        transition: 'all 0.12s ease',
+                      }}>
+                      <Icon component={UserIcon} size={11} strokeWidth={2} />
+                    </button>
+                  )}
+                </div>
               </div>
               {/* HP bar */}
               <div style={{
@@ -1337,23 +1420,24 @@ function Stat({ label, value }) {
 // Categorize a log line for color coding.
 function logLineStyle(line) {
   const l = line.toLowerCase();
-  if (l.includes('dies') || l.includes('crit')) return { color: HUD.red, icon: '✖' };
-  if (l.includes('hits') || l.includes('shoots') || l.includes('shoves')) return { color: HUD.amber, icon: '⚔' };
-  if (l.includes('heal')) return { color: HUD.green, icon: '✚' };
-  if (l.includes('misses')) return { color: HUD.textDim, icon: '·' };
-  if (l.includes('fireball') || l.includes('bash')) return { color: HUD.purple, icon: '✦' };
-  if (l.includes('move')) return { color: HUD.cyan, icon: '→' };
-  if (l.includes('mission')) return { color: HUD.amber, icon: '⚑' };
-  if (l.includes('overwatch')) return { color: HUD.amber, icon: '👁' };
-  return { color: HUD.text, icon: '·' };
+  if (l.includes('dies') || l.includes('crit')) return { color: HUD.red,    icon: Skull };
+  if (l.includes('hits') || l.includes('shoots') || l.includes('shoves')) return { color: HUD.amber, icon: Crosshair };
+  if (l.includes('heal')) return { color: HUD.green, icon: HeartPulse };
+  if (l.includes('misses')) return { color: HUD.textDim, icon: Activity };
+  if (l.includes('fireball')) return { color: HUD.purple, icon: Flame };
+  if (l.includes('bash')) return { color: HUD.amber, icon: Shield };
+  if (l.includes('move')) return { color: HUD.cyan, icon: Footprints };
+  if (l.includes('mission')) return { color: HUD.amber, icon: Award };
+  if (l.includes('overwatch')) return { color: HUD.amber, icon: Eye };
+  return { color: HUD.text, icon: ChevronRight };
 }
 
 function CombatLog({ lines }) {
   const recent = lines.slice(-8);
   return (
     <div style={{
-      position: 'absolute', left: 10, bottom: 12, zIndex: 30,
-      width: 340,
+      position: 'absolute', right: 10, bottom: 12, zIndex: 30,
+      width: 224,
       background: HUD.panelBg,
       border: HUD.border,
       boxShadow: HUD.shadow,
@@ -1363,25 +1447,27 @@ function CombatLog({ lines }) {
       color: HUD.text,
     }}>
       <div style={{
+        display: 'flex', alignItems: 'center', gap: 6,
         fontSize: 10, fontWeight: 700, letterSpacing: '2px', color: HUD.cyan,
         marginBottom: 6, paddingBottom: 4, borderBottom: `1px solid ${HUD.cyan}22`,
       }}>
+        <Icon component={BookOpen} size={11} color={HUD.cyan} strokeWidth={2} />
         COMBAT LOG
       </div>
       <div style={{
         fontFamily: HUD.fontMono, fontSize: 11, lineHeight: 1.45,
-        display: 'flex', flexDirection: 'column', gap: 2,
-        maxHeight: 140, overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', gap: 3,
+        maxHeight: 180, overflow: 'hidden',
       }}>
         {recent.map((line, i) => {
           const s = logLineStyle(line);
-          const recencyOpacity = 0.55 + (0.45 * ((i + 1) / recent.length));
+          const recencyOpacity = 0.5 + (0.5 * ((i + 1) / recent.length));
           return (
             <div key={`${i}-${line}`} style={{
-              display: 'flex', gap: 6, alignItems: 'baseline',
+              display: 'flex', gap: 6, alignItems: 'center',
               opacity: recencyOpacity,
             }}>
-              <span style={{ color: s.color, fontWeight: 700, width: 10, flexShrink: 0 }}>{s.icon}</span>
+              <Icon component={s.icon} size={11} color={s.color} strokeWidth={2} glow />
               <span style={{ color: s.color, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {line}
               </span>
@@ -1454,7 +1540,7 @@ function ActionBar({ state, selectedUnit, mode, setMode, onMove, onAttack, onCas
   const hpPct = Math.max(0, selectedUnit.hp) / selectedUnit.maxHp;
   const hpColor = hpPct > 0.66 ? HUD.green : hpPct > 0.33 ? HUD.amber : HUD.red;
 
-  const ActionBtn = ({ icon, label, sub, hotkey, onClick, active, accent: btnAccent = HUD.cyan, disabled }) => {
+  const ActionBtn = ({ iconComponent, label, sub, hotkey, onClick, active, accent: btnAccent = HUD.cyan, disabled }) => {
     const inactive = disabled || !can(1);
     return (
       <button onClick={onClick} disabled={inactive}
@@ -1477,7 +1563,9 @@ function ActionBar({ state, selectedUnit, mode, setMode, onMove, onAttack, onCas
           textAlign: 'center',
           transition: 'all 0.12s ease',
         }}>
-        <div style={{ fontSize: 16, lineHeight: 1, marginBottom: 4 }}>{icon}</div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 4 }}>
+          <Icon component={iconComponent} size={20} color={active ? btnAccent : HUD.text} strokeWidth={1.75} glow={active} />
+        </div>
         <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '1.2px' }}>{label}</div>
         {sub && (
           <div style={{ fontSize: 9, color: active ? btnAccent : HUD.textMuted, marginTop: 2, letterSpacing: '0.4px' }}>{sub}</div>
@@ -1502,26 +1590,26 @@ function ActionBar({ state, selectedUnit, mode, setMode, onMove, onAttack, onCas
   if (selectedUnit.classKey === 'wizard') {
     const r = selectedUnit.ability?.range ?? '?';
     abilityBtn = (
-      <ActionBtn icon="🔥" label="FIREBALL" sub={`rng ${r} · ${selectedUnit.abilityUsesLeft} left`} hotkey="3"
+      <ActionBtn iconComponent={Flame} label="FIREBALL" sub={`rng ${r} · ${selectedUnit.abilityUsesLeft} left`} hotkey="3"
         onClick={() => setMode('cast')} active={mode === 'cast'} accent={HUD.purple}
         disabled={selectedUnit.abilityUsesLeft <= 0} />
     );
   } else if (selectedUnit.classKey === 'cleric') {
     const r = selectedUnit.ability?.range ?? 1;
     abilityBtn = (
-      <ActionBtn icon="✚" label="HEAL" sub={`rng ${r} · ${selectedUnit.abilityUsesLeft} left`} hotkey="3"
+      <ActionBtn iconComponent={HeartPulse} label="HEAL" sub={`rng ${r} · ${selectedUnit.abilityUsesLeft} left`} hotkey="3"
         onClick={() => setMode('heal')} active={mode === 'heal'} accent={HUD.green} />
     );
   } else if (selectedUnit.classKey === 'knight') {
     const r = selectedUnit.ability?.range ?? 1;
     abilityBtn = (
-      <ActionBtn icon="🛡" label="BASH" sub={`rng ${r}`} hotkey="3"
+      <ActionBtn iconComponent={ShieldAlert} label="BASH" sub={`rng ${r}`} hotkey="3"
         onClick={() => setMode('cast')} active={mode === 'cast'} accent={HUD.amber} />
     );
   } else if (selectedUnit.classKey === 'rogue') {
     const r = selectedUnit.ability?.range ?? 1;
     abilityBtn = (
-      <ActionBtn icon="🗡" label="DAGGER" sub={`rng ${r}`} hotkey="3"
+      <ActionBtn iconComponent={Sword} label="DAGGER" sub={`rng ${r}`} hotkey="3"
         onClick={() => setMode('cast')} active={mode === 'cast'} accent={HUD.purple} />
     );
   }
@@ -1590,12 +1678,12 @@ function ActionBar({ state, selectedUnit, mode, setMode, onMove, onAttack, onCas
 
       {/* Action buttons */}
       <div style={{ display: 'flex', gap: 6, padding: '10px 12px', alignItems: 'center' }}>
-        <ActionBtn icon="🚶" label="MOVE" sub={`rng ${selectedUnit.moveRange}`} hotkey="1"
+        <ActionBtn iconComponent={Footprints} label="MOVE" sub={`rng ${selectedUnit.moveRange}`} hotkey="1"
           onClick={onMove} active={mode === 'move'} accent={HUD.cyan} />
-        <ActionBtn icon="🎯" label="ATTACK" sub={attackSub} hotkey="2"
+        <ActionBtn iconComponent={Crosshair} label="ATTACK" sub={attackSub} hotkey="2"
           onClick={onAttack} active={mode === 'attack'} accent={HUD.red} />
         {abilityBtn}
-        <ActionBtn icon="👁" label="OVERWATCH" sub="end turn" hotkey="4"
+        <ActionBtn iconComponent={Eye} label="OVERWATCH" sub="end turn" hotkey="4"
           onClick={onOverwatch} active={mode === 'overwatch'} accent={HUD.amber} />
       </div>
     </div>
@@ -1668,5 +1756,371 @@ function SpriteFrame({ atlas, sprite }) {
         imageRendering: 'pixelated',
       }}
     />
+  );
+}
+
+// Large pixel-art portrait that scales an atlas sprite cleanly.
+function PortraitLarge({ atlas, sprite, size = 128, accent = HUD.cyan }) {
+  const s = atlas?.byName?.[sprite];
+  if (!s) return null;
+  const tileW = s.w || atlas.meta.tile.w;
+  const tileH = s.h || atlas.meta.tile.h;
+  const scale = size / tileW;
+  return (
+    <div style={{
+      position: 'relative',
+      width: size, height: size,
+      background: `linear-gradient(180deg, ${accent}22 0%, ${accent}08 100%)`,
+      border: `1px solid ${accent}aa`,
+      borderRadius: 6,
+      boxShadow: `0 0 22px ${accent}55, inset 0 0 0 1px ${accent}33`,
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute', left: 0, top: 0,
+        width: tileW, height: tileH,
+        transform: `scale(${scale})`,
+        transformOrigin: 'top left',
+        backgroundImage: `url(${resolveAssetPath('/DawnlikeAtlas0.png')})`,
+        backgroundPosition: `-${s.x}px -${s.y}px`,
+        backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`,
+        imageRendering: 'pixelated',
+      }} />
+    </div>
+  );
+}
+
+// ====================================================================
+// Character screen
+// ====================================================================
+// A full-screen modal that shows the selected squad member's portrait,
+// vitals, attributes, weapon, and signature ability. Opened from the
+// little User-icon button on each SidePanel row.
+function CharacterScreen({ unit, atlas, onClose }) {
+  const accent = CLASS_COLORS[unit.classKey] || HUD.cyan;
+  const className = CLASSES[unit.classKey]?.name || unit.classKey;
+  const hpPct = Math.max(0, unit.hp) / unit.maxHp;
+  const hpColor = hpPct > 0.66 ? HUD.green : hpPct > 0.33 ? HUD.amber : HUD.red;
+  const maxAp = unit.maxAp || CLASSES[unit.classKey]?.maxAp || 2;
+  const wpn = unit.weapon || {};
+  const ab = unit.ability || {};
+
+  // Per-class flavor text & icons
+  const FLAVOR = {
+    knight: {
+      tagline: 'Frontline bulwark — heavy plate, sword-and-shield discipline.',
+      bio:     'Trained in the citadel guard, your knight specialises in soaking hits and bashing through enemy lines. Bring them within striking distance and let the steel do the talking.',
+      abilityIcon: ShieldAlert,
+      weaponIcon:  Sword,
+    },
+    wizard: {
+      tagline: 'Glass-cannon caster — devastating area control, fragile in melee.',
+      bio:     'A graduate of the Pyromancer\'s College, the wizard turns line-of-sight into kill zones. Save fireball charges for clustered enemies; never let them get adjacent.',
+      abilityIcon: Flame,
+      weaponIcon:  Wand2,
+    },
+    rogue: {
+      tagline: 'Precision flanker — crossbow at range, dagger in the dark.',
+      bio:     'Born in the city alleys, the rogue thrives by getting behind cover lines. Crit damage spikes when attacking from the flank — line them up before pulling the trigger.',
+      abilityIcon: Sword,
+      weaponIcon:  Crosshair,
+    },
+    cleric: {
+      tagline: 'Field medic — keeps the squad standing under fire.',
+      bio:     'A wandering priest of the Light. The cleric\'s heals are the only reason the rest of the squad reaches the extraction zone. Stay one move behind the line.',
+      abilityIcon: HeartPulse,
+      weaponIcon:  Sparkles,
+    },
+  };
+  const flavor = FLAVOR[unit.classKey] || FLAVOR.knight;
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'absolute', inset: 0, zIndex: 110,
+        background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.92) 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)',
+        animation: 'tac-fadeIn 0.18s ease',
+        fontFamily: HUD.font,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: 'relative',
+          width: 720, maxWidth: '92vw', maxHeight: '92vh',
+          padding: '24px 28px',
+          background: HUD.panelBg,
+          color: HUD.text,
+          borderRadius: 10,
+          border: `1px solid ${accent}88`,
+          boxShadow: `${HUD.shadow}, 0 0 48px ${accent}55`,
+          overflow: 'auto',
+        }}
+      >
+        {/* Top accent bar */}
+        <div style={{
+          position: 'absolute', left: 0, right: 0, top: 0, height: 3,
+          background: `linear-gradient(90deg, transparent 0%, ${accent} 50%, transparent 100%)`,
+          borderTopLeftRadius: 10, borderTopRightRadius: 10,
+        }} />
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          onMouseEnter={(e) => { e.currentTarget.style.color = HUD.text; e.currentTarget.style.borderColor = `${HUD.red}aa`; e.currentTarget.style.background = `${HUD.red}22`; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = HUD.textMuted; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; e.currentTarget.style.background = 'rgba(8,12,20,0.55)'; }}
+          style={{
+            position: 'absolute', top: 12, right: 12,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 28, height: 28,
+            background: 'rgba(8,12,20,0.55)',
+            color: HUD.textMuted,
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderRadius: 4,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <Icon component={X} size={16} strokeWidth={2.2} />
+        </button>
+
+        {/* Header row: portrait + name */}
+        <div style={{ display: 'flex', gap: 22, alignItems: 'flex-start' }}>
+          <PortraitLarge atlas={atlas} sprite={unit.sprite} size={132} accent={accent} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: '3px', color: HUD.textMuted,
+            }}>
+              SQUAD MEMBER · {unit.id?.toString().padStart(2, '0')}
+            </div>
+            <div style={{
+              fontSize: 28, fontWeight: 800, letterSpacing: '1px',
+              color: HUD.text, marginTop: 2,
+            }}>
+              {unit.name}
+            </div>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              fontSize: 12, fontWeight: 700, letterSpacing: '2px',
+              color: accent, marginTop: 4,
+            }}>
+              <Icon component={UserIcon} size={13} color={accent} strokeWidth={2.2} glow />
+              {className.toUpperCase()}
+            </div>
+            <div style={{
+              marginTop: 12,
+              fontSize: 12.5, color: HUD.textDim,
+              fontStyle: 'italic', lineHeight: 1.5,
+            }}>
+              {flavor.tagline}
+            </div>
+
+            {/* HP + AP bars */}
+            <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <BarRow icon={Heart} color={hpColor} label="HEALTH" value={`${Math.max(0, unit.hp)} / ${unit.maxHp}`} pct={hpPct} />
+              <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '4px 0',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Icon component={Zap} size={14} color={HUD.cyan} strokeWidth={2} glow />
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.5px', color: HUD.textDim }}>
+                    ACTION POINTS
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{
+                    fontSize: 12, fontFamily: HUD.fontMono, fontWeight: 700, color: HUD.text,
+                  }}>
+                    {unit.ap} / {maxAp}
+                  </span>
+                  <ApPips ap={unit.ap} maxAp={maxAp} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div style={{
+          margin: '20px 0 16px',
+          borderTop: `1px solid ${accent}22`,
+        }} />
+
+        {/* Attribute grid */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10,
+          marginBottom: 18,
+        }}>
+          <AttrCell icon={Target}      label="AIM"       value={`${unit.aim ?? CLASSES[unit.classKey]?.aim ?? '—'}%`} color={HUD.amber} />
+          <AttrCell icon={Shield}      label="DEFENSE"   value={unit.defense ?? CLASSES[unit.classKey]?.defense ?? '—'} color={HUD.cyan} />
+          <AttrCell icon={ShieldAlert} label="ARMOR"     value={unit.armor   ?? CLASSES[unit.classKey]?.armor   ?? '—'} color={HUD.green} />
+          <AttrCell icon={Footprints}  label="MOVE"      value={`${unit.moveRange ?? CLASSES[unit.classKey]?.moveRange ?? '—'} tiles`} color={HUD.purple} />
+        </div>
+
+        {/* Weapon + Ability cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <DetailCard
+            iconComponent={flavor.weaponIcon}
+            tag="WEAPON"
+            title={wpn.kind === 'melee' ? 'Melee weapon' : 'Ranged weapon'}
+            color={HUD.red}
+            stats={[
+              { label: 'Damage',  value: wpn.dmg ? `${wpn.dmg[0]}–${wpn.dmg[1]}` : '—' },
+              { label: 'Range',   value: wpn.optimalRange === wpn.range
+                ? `${wpn.range}`
+                : `${wpn.optimalRange ?? wpn.range} optimal · ${wpn.range} max` },
+              { label: 'Kind',    value: wpn.kind || '—' },
+            ]}
+          />
+          <DetailCard
+            iconComponent={flavor.abilityIcon}
+            tag="ABILITY"
+            title={ab.name || '—'}
+            color={accent}
+            stats={[
+              { label: 'AP cost',  value: ab.apCost ?? '—' },
+              { label: 'Range',    value: ab.range ?? '—' },
+              { label: 'Uses left', value: ab.uses === Infinity || ab.uses === undefined
+                ? '∞'
+                : `${unit.abilityUsesLeft ?? ab.uses} / ${ab.uses}` },
+              ...(ab.dmg       ? [{ label: 'Damage',  value: `${ab.dmg[0]}–${ab.dmg[1]}` }] : []),
+              ...(ab.healAmount ? [{ label: 'Heals',  value: `+${ab.healAmount}` }] : []),
+            ]}
+          />
+        </div>
+
+        {/* Bio */}
+        <div style={{
+          marginTop: 16,
+          padding: '12px 14px',
+          background: 'rgba(8,12,20,0.55)',
+          border: `1px solid ${accent}22`,
+          borderRadius: 6,
+          fontSize: 12, color: HUD.textDim,
+          lineHeight: 1.55,
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontSize: 10, fontWeight: 700, letterSpacing: '2px', color: accent,
+            marginBottom: 6,
+          }}>
+            <Icon component={BookOpen} size={11} color={accent} strokeWidth={2.2} />
+            DOSSIER
+          </div>
+          {flavor.bio}
+        </div>
+
+        {/* Footer hint */}
+        <div style={{
+          marginTop: 14,
+          fontSize: 10, color: HUD.textMuted, letterSpacing: '1.5px',
+          textAlign: 'center',
+        }}>
+          ESC OR CLICK OUTSIDE TO CLOSE
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BarRow({ icon, color, label, value, pct }) {
+  return (
+    <div>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        marginBottom: 3,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Icon component={icon} size={14} color={color} strokeWidth={2} glow />
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.5px', color: HUD.textDim }}>{label}</span>
+        </div>
+        <span style={{ fontSize: 12, fontFamily: HUD.fontMono, fontWeight: 700, color }}>{value}</span>
+      </div>
+      <div style={{
+        height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden',
+      }}>
+        <div style={{
+          width: `${Math.max(0, Math.min(1, pct)) * 100}%`, height: '100%',
+          background: `linear-gradient(90deg, ${color} 0%, ${color}cc 100%)`,
+          boxShadow: `0 0 10px ${color}aa`,
+          transition: 'width 0.25s ease',
+        }} />
+      </div>
+    </div>
+  );
+}
+
+function AttrCell({ icon, label, value, color }) {
+  return (
+    <div style={{
+      padding: '10px 12px',
+      background: 'rgba(8,12,20,0.55)',
+      border: `1px solid ${color}33`,
+      borderRadius: 6,
+      textAlign: 'center',
+      transition: 'border-color 0.15s ease',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+        fontSize: 9, fontWeight: 700, letterSpacing: '2px', color: HUD.textMuted,
+        marginBottom: 4,
+      }}>
+        <Icon component={icon} size={11} color={color} strokeWidth={2.2} />
+        {label}
+      </div>
+      <div style={{
+        fontSize: 22, fontWeight: 800, fontFamily: HUD.fontMono, color,
+        textShadow: `0 0 12px ${color}55`,
+      }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function DetailCard({ iconComponent, tag, title, stats, color }) {
+  return (
+    <div style={{
+      padding: '12px 14px',
+      background: `linear-gradient(180deg, ${color}10 0%, rgba(8,12,20,0.65) 100%)`,
+      border: `1px solid ${color}55`,
+      borderRadius: 6,
+      boxShadow: `inset 0 0 0 1px ${color}1a`,
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 28, height: 28,
+          background: `${color}1a`,
+          border: `1px solid ${color}66`,
+          borderRadius: 4,
+        }}>
+          <Icon component={iconComponent} size={16} color={color} strokeWidth={2} glow />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '2px', color }}>{tag}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: HUD.text, letterSpacing: '0.3px' }}>{title}</div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {stats.map((s, i) => (
+          <div key={i} style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+            fontSize: 11.5,
+            paddingTop: i > 0 ? 4 : 0,
+            borderTop: i > 0 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+          }}>
+            <span style={{ color: HUD.textMuted, letterSpacing: '0.5px' }}>{s.label}</span>
+            <span style={{ color: HUD.text, fontFamily: HUD.fontMono, fontWeight: 600 }}>{s.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
