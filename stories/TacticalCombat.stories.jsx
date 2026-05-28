@@ -8,6 +8,7 @@ const MISSIONS = [
   'procedural-swamp',
   'procedural-ruined',
   'procedural-chaos',
+  'procedural-stone',
   'the-bridge',
   'the-vault',
 ];

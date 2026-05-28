@@ -190,6 +190,12 @@ const PROCEDURAL_THEMES = {
     trailStyle: 'night stone floor',
     monsterPack: ['lava demon', 'fire skeleton', 'imp'],
   },
+  'procedural-stone': {
+    groundStyle: 'day tile floor', obstacleKind: 'wall', obstacleStyle: 'bright brick wall',
+    hazardSprite: 'blue puddle', hazardDensity: 0, ringNoiseScale: 4, ringThickness: 3,
+    trailStyle: 'dusk tile floor',
+    monsterPack: ['goblin', 'kobold', 'imp'],
+  },
 };
 
 const DIFFICULTY = {
@@ -214,8 +220,10 @@ const MONSTER_STATS = {
 };
 
 // XP progression. Level N -> N+1 takes `xpForLevel(N)` XP earned this level.
-const XP_BASE = 50;
-const XP_GROWTH = 25;
+// Tuned low so a single skirmish reliably levels squad members up — these
+// stories are demos, not 40-hour campaigns.
+const XP_BASE = 20;
+const XP_GROWTH = 10;
 function xpForLevel(level) {
   return XP_BASE + (Math.max(1, level) - 1) * XP_GROWTH;
 }
@@ -937,8 +945,11 @@ export default function TacticalCombatExample({
       if (atlas.byName[trail.name]) layers.push({ name: trail.name, z: 1 });
     }
 
-    if (tile.bridge && atlas.byName['bridge e w']) {
-      layers.push({ name: 'bridge e w', z: 1 });
+    if (tile.bridge) {
+      const bridgeN = !!s.tiles[`${x},${y - 1}`]?.bridge;
+      const bridgeS = !!s.tiles[`${x},${y + 1}`]?.bridge;
+      const bridgeName = (bridgeN || bridgeS) ? 'bridge n s' : 'bridge e w';
+      if (atlas.byName[bridgeName]) layers.push({ name: bridgeName, z: 1 });
     }
     if (tile.hazard && theme.hazardSprite && atlas.byName[theme.hazardSprite]) {
       layers.push({ name: theme.hazardSprite, z: 1.5 });
