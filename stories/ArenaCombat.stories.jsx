@@ -75,7 +75,7 @@ const THEMES = {
 const THEME_NAMES = Object.keys(THEMES);
 
 export default {
-  title: 'Dawnlike/Zone Examples/Arena Combat',
+  title: 'Dawnlike/Examples/Arena Combat',
   component: ArenaCombatExample,
   parameters: {
     layout: 'fullscreen',

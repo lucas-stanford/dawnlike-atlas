@@ -14,7 +14,7 @@ const MISSIONS = [
 ];
 
 export default {
-  title: 'Dawnlike/Zone Examples/Tactical Combat',
+  title: 'Dawnlike/Examples/Tactical Combat',
   component: TacticalCombatExample,
   parameters: {
     layout: 'fullscreen',
