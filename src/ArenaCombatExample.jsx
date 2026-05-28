@@ -567,7 +567,7 @@ export default function ArenaCombatExample({
       className="autotile-layout full-viewport"
       style={{ outline: 'none', ...dawnlikeAnimVars }}
     >
-      <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 30, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+      <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 60, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
         <button onClick={restart} style={{ padding: '6px 12px', cursor: 'pointer' }}>🔄 Restart</button>
         <HudPanel atlas={atlas} player={player} gaugeName={gaugeName} cstats={cstats} />
         <div style={{
@@ -671,7 +671,7 @@ export default function ArenaCombatExample({
 
       {/* Combat log overlay (bottom-left). */}
       <div style={{
-        position: 'absolute', left: 8, bottom: 8, zIndex: 30,
+        position: 'absolute', left: 8, bottom: 8, zIndex: 60,
         background: 'rgba(0,0,0,0.65)', color: '#fff',
         padding: '6px 10px', borderRadius: 4,
         fontFamily: 'ui-monospace, Menlo, monospace', fontSize: 11,

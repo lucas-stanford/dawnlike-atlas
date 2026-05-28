@@ -1307,7 +1307,7 @@ function TopBar({ state, onEndTurn }) {
   const turnColor = isPlayer ? HUD.cyan : HUD.red;
   return (
     <div style={{
-      position: 'absolute', top: 0, left: 0, right: 0, zIndex: 30,
+      position: 'absolute', top: 0, left: 0, right: 0, zIndex: 60,
       display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', gap: 10,
       padding: '10px 14px',
       background: 'linear-gradient(180deg, rgba(8,12,20,0.92) 0%, rgba(8,12,20,0.55) 70%, rgba(8,12,20,0) 100%)',
@@ -1396,7 +1396,7 @@ function TopBar({ state, onEndTurn }) {
 function SidePanel({ state, squad, selectedUnitId, setSelected, atlas, onShowCharacter }) {
   return (
     <div style={{
-      position: 'absolute', right: 10, top: 78, zIndex: 30,
+      position: 'absolute', right: 10, top: 78, zIndex: 60,
       width: 224,
       background: HUD.panelBg,
       border: HUD.border,
@@ -1696,7 +1696,7 @@ function CombatLog({ lines }) {
       onDoubleClick={onDoubleClick}
       title="Drag anywhere to move · double-click to reset position"
       style={{
-        position: 'absolute', zIndex: 30,
+        position: 'absolute', zIndex: 60,
         ...positionStyle,
         width: COMBAT_LOG_WIDTH,
         background: HUD.panelBg,
@@ -1769,7 +1769,7 @@ function ModeIndicator({ mode, unit, rangeOverlay, moveReachable }) {
   }
   return (
     <div style={{
-      position: 'absolute', left: '50%', bottom: 116, zIndex: 30,
+      position: 'absolute', left: '50%', bottom: 116, zIndex: 60,
       transform: 'translateX(-50%)',
       display: 'flex', alignItems: 'center', gap: 10,
       padding: '8px 14px',
@@ -1882,7 +1882,7 @@ function ActionBar({ state, selectedUnit, mode, setMode, onMove, onAttack, onCas
 
   return (
     <div style={{
-      position: 'absolute', bottom: 12, left: '50%', zIndex: 30,
+      position: 'absolute', bottom: 12, left: '50%', zIndex: 60,
       transform: 'translateX(-50%)',
       display: 'flex', alignItems: 'stretch', gap: 0,
       background: HUD.panelBg,
