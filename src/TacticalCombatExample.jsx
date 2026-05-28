@@ -199,19 +199,38 @@ const DIFFICULTY = {
 };
 
 const MONSTER_STATS = {
-  goblin:           { hp: 6,  atk: 3, def: 0, armor: 0, aim: 55, weapon: { dmg: [2,4], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'corpse' },
-  kobold:           { hp: 5,  atk: 3, def: 0, armor: 0, aim: 50, weapon: { dmg: [2,3], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'corpse' },
-  'kobold barbarian':{hp: 8,  atk: 4, def: 5, armor: 1, aim: 55, weapon: { dmg: [3,5], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'corpse' },
-  'kobold zombie':  { hp: 7,  atk: 3, def: 0, armor: 0, aim: 45, weapon: { dmg: [2,3], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'bones' },
-  imp:              { hp: 7,  atk: 4, def: 5, armor: 0, aim: 60, weapon: { dmg: [2,4], range: 4, optimalRange: 3, kind: 'ranged' }, corpse: 'corpse' },
-  'lava demon':     { hp: 14, atk: 5, def: 10, armor: 2, aim: 60, weapon: { dmg: [4,6], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'spoiled corpse' },
-  'fire elemental': { hp: 10, atk: 5, def: 0, armor: 1, aim: 65, weapon: { dmg: [3,5], range: 5, optimalRange: 5, kind: 'ranged' }, corpse: 'spoiled corpse' },
-  'fire skeleton':  { hp: 8,  atk: 4, def: 5, armor: 1, aim: 60, weapon: { dmg: [2,4], range: 5, optimalRange: 5, kind: 'ranged' }, corpse: 'bones' },
-  'human zombie':   { hp: 10, atk: 3, def: 0, armor: 0, aim: 40, weapon: { dmg: [2,4], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'spoiled corpse' },
-  skeleton:         { hp: 6,  atk: 4, def: 5, armor: 1, aim: 60, weapon: { dmg: [2,4], range: 5, optimalRange: 5, kind: 'ranged' }, corpse: 'bones' },
-  ghost:            { hp: 5,  atk: 5, def: 20, armor: 0, aim: 70, weapon: { dmg: [3,4], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'old bones' },
-  'hell hound':     { hp: 9,  atk: 4, def: 5, armor: 1, aim: 60, weapon: { dmg: [3,5], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'corpse' },
+  goblin:           { hp: 6,  atk: 3, def: 0, armor: 0, aim: 55, weapon: { dmg: [2,4], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'corpse', xp: 12, rank: 'Common' },
+  kobold:           { hp: 5,  atk: 3, def: 0, armor: 0, aim: 50, weapon: { dmg: [2,3], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'corpse', xp: 10, rank: 'Common' },
+  'kobold barbarian':{hp: 8,  atk: 4, def: 5, armor: 1, aim: 55, weapon: { dmg: [3,5], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'corpse', xp: 22, rank: 'Veteran' },
+  'kobold zombie':  { hp: 7,  atk: 3, def: 0, armor: 0, aim: 45, weapon: { dmg: [2,3], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'bones',  xp: 14, rank: 'Undead' },
+  imp:              { hp: 7,  atk: 4, def: 5, armor: 0, aim: 60, weapon: { dmg: [2,4], range: 4, optimalRange: 3, kind: 'ranged' }, corpse: 'corpse', xp: 24, rank: 'Demon' },
+  'lava demon':     { hp: 14, atk: 5, def: 10, armor: 2, aim: 60, weapon: { dmg: [4,6], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'spoiled corpse', xp: 50, rank: 'Elite' },
+  'fire elemental': { hp: 10, atk: 5, def: 0, armor: 1, aim: 65, weapon: { dmg: [3,5], range: 5, optimalRange: 5, kind: 'ranged' }, corpse: 'spoiled corpse', xp: 32, rank: 'Elemental' },
+  'fire skeleton':  { hp: 8,  atk: 4, def: 5, armor: 1, aim: 60, weapon: { dmg: [2,4], range: 5, optimalRange: 5, kind: 'ranged' }, corpse: 'bones',  xp: 22, rank: 'Undead' },
+  'human zombie':   { hp: 10, atk: 3, def: 0, armor: 0, aim: 40, weapon: { dmg: [2,4], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'spoiled corpse', xp: 16, rank: 'Undead' },
+  skeleton:         { hp: 6,  atk: 4, def: 5, armor: 1, aim: 60, weapon: { dmg: [2,4], range: 5, optimalRange: 5, kind: 'ranged' }, corpse: 'bones',  xp: 18, rank: 'Undead' },
+  ghost:            { hp: 5,  atk: 5, def: 20, armor: 0, aim: 70, weapon: { dmg: [3,4], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'old bones', xp: 28, rank: 'Spirit' },
+  'hell hound':     { hp: 9,  atk: 4, def: 5, armor: 1, aim: 60, weapon: { dmg: [3,5], range: 1, optimalRange: 1, kind: 'melee' }, corpse: 'corpse', xp: 26, rank: 'Beast' },
 };
+
+// XP progression. Level N -> N+1 takes `xpForLevel(N)` XP earned this level.
+const XP_BASE = 50;
+const XP_GROWTH = 25;
+function xpForLevel(level) {
+  return XP_BASE + (Math.max(1, level) - 1) * XP_GROWTH;
+}
+// Per-level passive bumps applied to squad units on level up.
+function applyLevelUpBumps(unit) {
+  const hpBump = 2;
+  const aimBump = 3;
+  unit.maxHp += hpBump;
+  unit.hp = Math.min(unit.maxHp, unit.hp + hpBump);
+  unit.aim = (unit.aim ?? 50) + aimBump;
+  if (Number.isFinite(unit.ability?.uses)) {
+    unit.ability.uses += 1;
+    unit.abilityUsesLeft = (unit.abilityUsesLeft ?? 0) + 1;
+  }
+}
 
 export default function TacticalCombatExample({
   mission = 'procedural-forest',
@@ -234,6 +253,8 @@ export default function TacticalCombatExample({
   const [selectedUnitId, setSelectedUnitId] = useState(null);
   const [mode, setMode] = useState('idle'); // 'idle' | 'move' | 'attack' | 'cast' | 'heal' | 'overwatch'
   const [characterScreenUnitId, setCharacterScreenUnitId] = useState(null);
+  const [enemyScreenId, setEnemyScreenId] = useState(null);
+  const [mousePos, setMousePos] = useState(null);
 
   // Atlas load
   useEffect(() => {
@@ -253,6 +274,9 @@ export default function TacticalCombatExample({
         if (characterScreenUnitId) {
           setCharacterScreenUnitId(null);
           e.preventDefault();
+        } else if (enemyScreenId) {
+          setEnemyScreenId(null);
+          e.preventDefault();
         } else if (mode !== 'idle') {
           setMode('idle');
           e.preventDefault();
@@ -261,7 +285,7 @@ export default function TacticalCombatExample({
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [characterScreenUnitId, mode]);
+  }, [characterScreenUnitId, enemyScreenId, mode]);
 
   // Build the level on prop change.
   const buildLevel = useCallback(() => {
@@ -436,6 +460,9 @@ export default function TacticalCombatExample({
         weapon: cfg.weapon,
         ability: { ...cfg.ability },
         abilityUsesLeft: cfg.ability.uses,
+        level: 1,
+        xp: 0,
+        kills: 0,
         ended: false,
         overwatching: false,
         side: 'player',
@@ -457,6 +484,8 @@ export default function TacticalCombatExample({
         moveRange: 4,
         weapon: stats.weapon,
         corpse: stats.corpse,
+        rank: stats.rank,
+        xpReward: stats.xp,
         ended: false,
         aware: false,
         side: 'enemy',
@@ -624,7 +653,14 @@ export default function TacticalCombatExample({
       selectedUnit.abilityUsesLeft -= 1;
       damaged.forEach(({ e, r }) => {
         pushLog(`Fireball hits ${e.name} for ${r.damage}${r.crit ? ' (CRIT!)' : ''}.`);
-        if (r.killed) { e.hp = 0; state.tiles[`${e.x},${e.y}`].corpse = e.corpse; pushLog(`${e.name} dies.`); }
+        if (r.killed) {
+          e.hp = 0;
+          state.tiles[`${e.x},${e.y}`].corpse = e.corpse;
+          pushLog(`${e.name} dies.`);
+          grantKillCredit(selectedUnit, e);
+        } else if (e.side === 'enemy') {
+          grantXp(selectedUnit, 2, 'fireball hit');
+        }
       });
       spendAP(selectedUnit, ability.apCost);
       endUnitTurn(selectedUnit);
@@ -642,6 +678,7 @@ export default function TacticalCombatExample({
       selectedUnit.abilityUsesLeft -= 1;
       pushLog(`Cleric heals ${ally.name} for ${healed}.`);
       spawnVfx('aligned priest', ally.x, ally.y, 400);
+      grantXp(selectedUnit, 5, 'healed ally');
       spendAP(selectedUnit, ability.apCost);
       setState({ ...state });
       setMode('idle');
@@ -663,7 +700,14 @@ export default function TacticalCombatExample({
           pushLog(`${target.name} is shoved back.`);
         }
       }
-      if (r.killed) { target.hp = 0; state.tiles[`${target.x},${target.y}`].corpse = target.corpse; pushLog(`${target.name} dies.`); }
+      if (r.killed) {
+        target.hp = 0;
+        state.tiles[`${target.x},${target.y}`].corpse = target.corpse;
+        pushLog(`${target.name} dies.`);
+        grantKillCredit(selectedUnit, target);
+      } else if (target.side === 'enemy') {
+        grantXp(selectedUnit, 3, 'hit');
+      }
     } else {
       pushLog(`${selectedUnit.name} misses ${target.name}.`);
       spawnVfx('fire burst c', target.x, target.y, 100); // tiny puff for misses
@@ -704,6 +748,26 @@ export default function TacticalCombatExample({
   }
   function pushLog(line) {
     state.log = [...state.log.slice(-9), line];
+  }
+  function grantXp(unit, amount, reason) {
+    if (!unit || unit.side !== 'player' || amount <= 0) return;
+    unit.xp = (unit.xp ?? 0) + amount;
+    pushLog(`${unit.name} gains ${amount} XP${reason ? ` (${reason})` : ''}.`);
+    let need = xpForLevel(unit.level ?? 1);
+    while (unit.xp >= need) {
+      unit.xp -= need;
+      unit.level = (unit.level ?? 1) + 1;
+      applyLevelUpBumps(unit);
+      pushLog(`★ ${unit.name} reaches level ${unit.level}!`);
+      spawnVfx('aligned priest', unit.x, unit.y, 520);
+      need = xpForLevel(unit.level);
+    }
+  }
+  function grantKillCredit(attacker, victim) {
+    if (!attacker || attacker.side !== 'player') return;
+    attacker.kills = (attacker.kills ?? 0) + 1;
+    const reward = victim?.xpReward ?? 10;
+    grantXp(attacker, reward, `slew ${victim?.name || 'enemy'}`);
   }
   function spawnVfx(name, x, y, ms = 300) {
     if (!atlas?.byName[name]) return;
@@ -771,7 +835,14 @@ export default function TacticalCombatExample({
                 if (r.hit) {
                   spawnVfx(w.weapon.kind === 'ranged' ? 'arrow' : 'red liquid spatter', enemy.x, enemy.y, 220);
                   pushLog(`Overwatch: ${w.name} hits ${enemy.name} for ${r.damage}.`);
-                  if (r.killed) { enemy.hp = 0; state.tiles[`${enemy.x},${enemy.y}`].corpse = enemy.corpse; pushLog(`${enemy.name} dies.`); }
+                  if (r.killed) {
+                    enemy.hp = 0;
+                    state.tiles[`${enemy.x},${enemy.y}`].corpse = enemy.corpse;
+                    pushLog(`${enemy.name} dies.`);
+                    grantKillCredit(w, enemy);
+                  } else {
+                    grantXp(w, 3, 'overwatch hit');
+                  }
                 } else {
                   pushLog(`Overwatch: ${w.name} misses ${enemy.name}.`);
                 }
@@ -896,7 +967,16 @@ export default function TacticalCombatExample({
 
   // Tile click dispatch.
   const onTileClick = (x, y) => {
-    if (!state || state.turn !== 'player' || state.victory || state.defeat) return;
+    if (!state || state.victory || state.defeat) return;
+    // In idle mode, clicking a visible enemy opens its info screen (any turn).
+    if (mode === 'idle') {
+      const enemyOnTile = state.enemies.find(e => e.x === x && e.y === y && state.fov.has(`${x},${y}`));
+      if (enemyOnTile) {
+        setEnemyScreenId(enemyOnTile.id);
+        return;
+      }
+    }
+    if (state.turn !== 'player') return;
     if (mode === 'move') {
       moveTo({ x, y });
       return;
@@ -925,6 +1005,11 @@ export default function TacticalCombatExample({
   const visibleEnemiesNow = enemies.filter(e => e.hp > 0 && fov.has(`${e.x},${e.y}`));
   const px = W * TILE_SIZE, py = H * TILE_SIZE;
 
+  // Enemy hovered (alive + visible) → drives the floating tooltip.
+  const hoveredEnemy = hoverTile
+    ? visibleEnemiesNow.find(e => e.x === hoverTile.x && e.y === hoverTile.y)
+    : null;
+
   // Hit-chance preview when in 'attack' mode + hovering an enemy.
   let hitPreview = null;
   if (showHitPreview && mode === 'attack' && hoverTile && selectedUnit) {
@@ -951,7 +1036,8 @@ export default function TacticalCombatExample({
         <div
           className="map-grid"
           style={{ width: px, height: py }}
-          onMouseLeave={() => setHoverTile(null)}
+          onMouseLeave={() => { setHoverTile(null); setMousePos(null); }}
+          onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
         >
           {Array.from({ length: H }).map((_, y) =>
             Array.from({ length: W }).map((__, x) => {
@@ -1104,6 +1190,19 @@ export default function TacticalCombatExample({
           <CharacterScreen unit={u} atlas={atlas} onClose={() => setCharacterScreenUnitId(null)} />
         ) : null;
       })()}
+
+      {/* Enemy detail modal (triggered by clicking an enemy in idle mode). */}
+      {enemyScreenId && (() => {
+        const e = enemies.find(en => en.id === enemyScreenId);
+        return e ? (
+          <EnemyScreen enemy={e} atlas={atlas} onClose={() => setEnemyScreenId(null)} />
+        ) : null;
+      })()}
+
+      {/* Hover tooltip: visible enemy + idle mode + no modal open. */}
+      {hoveredEnemy && mousePos && !enemyScreenId && !characterScreenUnitId && !state.victory && !state.defeat && (
+        <EnemyTooltip enemy={hoveredEnemy} mouse={mousePos} atlas={atlas} />
+      )}
 
       {(state.victory || state.defeat) && (
         <div style={{
@@ -1335,9 +1434,26 @@ function SidePanel({ state, squad, selectedUnitId, setSelected, atlas, onShowCha
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 marginBottom: 3,
               }}>
-                <span style={{ fontSize: 11.5, fontWeight: 700, color: HUD.text, letterSpacing: '0.3px' }}>
-                  {u.name}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
+                  <span style={{
+                    fontSize: 8.5, fontWeight: 800, letterSpacing: '0.5px',
+                    color: accent,
+                    padding: '1px 4px',
+                    background: `${accent}1f`,
+                    border: `1px solid ${accent}55`,
+                    borderRadius: 3,
+                    fontFamily: HUD.fontMono,
+                    whiteSpace: 'nowrap',
+                  }}>
+                    L{u.level ?? 1}
+                  </span>
+                  <span style={{
+                    fontSize: 11.5, fontWeight: 700, color: HUD.text, letterSpacing: '0.3px',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {u.name}
+                  </span>
+                </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   {dead && <Icon component={Skull} size={11} color={HUD.red} />}
                   {ended && (
@@ -1370,7 +1486,7 @@ function SidePanel({ state, squad, selectedUnitId, setSelected, atlas, onShowCha
               {/* HP bar */}
               <div style={{
                 height: 5, background: 'rgba(255,255,255,0.08)', borderRadius: 2,
-                overflow: 'hidden', marginBottom: 4,
+                overflow: 'hidden', marginBottom: 3,
               }}>
                 <div style={{
                   width: `${hpPct * 100}%`, height: '100%',
@@ -1379,6 +1495,25 @@ function SidePanel({ state, squad, selectedUnitId, setSelected, atlas, onShowCha
                   transition: 'width 0.2s ease',
                 }} />
               </div>
+              {/* XP bar */}
+              {!dead && (() => {
+                const need = xpForLevel(u.level ?? 1);
+                const xpPct = Math.max(0, Math.min(1, (u.xp ?? 0) / need));
+                return (
+                  <div title={`${u.xp ?? 0} / ${need} XP to level ${(u.level ?? 1) + 1}`}
+                       style={{
+                         height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 1.5,
+                         overflow: 'hidden', marginBottom: 4,
+                       }}>
+                    <div style={{
+                      width: `${xpPct * 100}%`, height: '100%',
+                      background: accent,
+                      boxShadow: `0 0 5px ${accent}aa`,
+                      transition: 'width 0.25s ease',
+                    }} />
+                  </div>
+                );
+              })()}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 10, color: hpColor, fontWeight: 600, fontFamily: HUD.fontMono }}>
                   {Math.max(0, u.hp)}/{u.maxHp}
@@ -2008,6 +2143,26 @@ function CharacterScreen({ unit, atlas, onClose }) {
             }}>
               <Icon component={UserIcon} size={13} color={accent} strokeWidth={2.2} glow />
               {className.toUpperCase()}
+              <span style={{
+                fontSize: 10, color: accent, padding: '2px 7px',
+                background: `${accent}1f`, border: `1px solid ${accent}66`,
+                borderRadius: 4, letterSpacing: '1.5px',
+                fontFamily: HUD.fontMono,
+              }}>
+                LVL {unit.level ?? 1}
+              </span>
+              {Number.isFinite(unit.kills) && (
+                <span style={{
+                  fontSize: 10, color: HUD.amber, padding: '2px 7px',
+                  background: `${HUD.amber}1f`, border: `1px solid ${HUD.amber}55`,
+                  borderRadius: 4, letterSpacing: '1.5px',
+                  fontFamily: HUD.fontMono,
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                }}>
+                  <Icon component={Skull} size={10} color={HUD.amber} strokeWidth={2.2} />
+                  {unit.kills}
+                </span>
+              )}
             </div>
             <div style={{
               marginTop: 12,
@@ -2039,6 +2194,19 @@ function CharacterScreen({ unit, atlas, onClose }) {
                   <ApPips ap={unit.ap} maxAp={maxAp} />
                 </div>
               </div>
+              {(() => {
+                const need = xpForLevel(unit.level ?? 1);
+                const xpPct = Math.max(0, Math.min(1, (unit.xp ?? 0) / need));
+                return (
+                  <BarRow
+                    icon={TrendingUp}
+                    color={accent}
+                    label={`EXPERIENCE · LVL ${unit.level ?? 1}`}
+                    value={`${unit.xp ?? 0} / ${need}`}
+                    pct={xpPct}
+                  />
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -2219,6 +2387,321 @@ function DetailCard({ iconComponent, tag, title, stats, color }) {
             <span style={{ color: HUD.text, fontFamily: HUD.fontMono, fontWeight: 600 }}>{s.value}</span>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// =====================================================================
+// Enemy hover tooltip and full-detail modal
+// =====================================================================
+
+function EnemyTooltip({ enemy, mouse, atlas }) {
+  const hpPct = Math.max(0, enemy.hp) / enemy.maxHp;
+  const hpColor = hpPct > 0.66 ? HUD.green : hpPct > 0.33 ? HUD.amber : HUD.red;
+  const wpn = enemy.weapon || {};
+  // Position the tooltip near the cursor, but clamp so it stays in viewport.
+  const W = 220;
+  const padX = 16;
+  const left = Math.min(window.innerWidth - W - 8, mouse.x + padX);
+  const top  = Math.max(8, mouse.y - 60);
+  return (
+    <div style={{
+      position: 'fixed', left, top, zIndex: 95,
+      width: W,
+      background: HUD.panelBg,
+      border: `1px solid ${HUD.red}66`,
+      boxShadow: `${HUD.shadow}, 0 0 16px ${HUD.red}33`,
+      borderRadius: 6,
+      padding: '8px 10px',
+      fontFamily: HUD.font,
+      color: HUD.text,
+      pointerEvents: 'none',
+      animation: 'tac-fadeIn 0.12s ease',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6,
+      }}>
+        <div style={{
+          width: 30, height: 30, padding: 1, position: 'relative',
+          background: `${HUD.red}1a`,
+          border: `1px solid ${HUD.red}66`,
+          borderRadius: 3,
+          flexShrink: 0,
+        }}>
+          <SpriteFrame atlas={atlas} sprite={enemy.sprite} />
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontSize: 12, fontWeight: 700, color: HUD.text, letterSpacing: '0.3px',
+            textTransform: 'capitalize',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {enemy.name}
+          </div>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            fontSize: 9, fontWeight: 700, letterSpacing: '1.5px', color: HUD.red,
+            textTransform: 'uppercase',
+          }}>
+            <Icon component={Skull} size={9} color={HUD.red} strokeWidth={2.2} />
+            {enemy.rank || 'Hostile'}
+            {enemy.aware && (
+              <span style={{
+                marginLeft: 4, color: HUD.amber,
+                padding: '0 4px', borderRadius: 2,
+                background: `${HUD.amber}1a`, border: `1px solid ${HUD.amber}55`,
+              }}>
+                ALERT
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      <div style={{
+        height: 5, background: 'rgba(255,255,255,0.08)', borderRadius: 2,
+        overflow: 'hidden', marginBottom: 2,
+      }}>
+        <div style={{
+          width: `${hpPct * 100}%`, height: '100%',
+          background: `linear-gradient(90deg, ${hpColor} 0%, ${hpColor}cc 100%)`,
+          boxShadow: `0 0 6px ${hpColor}aa`,
+        }} />
+      </div>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        marginBottom: 6,
+      }}>
+        <span style={{ fontSize: 10, color: hpColor, fontWeight: 600, fontFamily: HUD.fontMono }}>
+          HP {Math.max(0, enemy.hp)}/{enemy.maxHp}
+        </span>
+        <span style={{ fontSize: 9, color: HUD.textMuted, letterSpacing: '0.8px' }}>
+          XP {enemy.xpReward ?? 0}
+        </span>
+      </div>
+      <div style={{
+        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3,
+        fontSize: 10, fontFamily: HUD.fontMono,
+        paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.06)',
+      }}>
+        <TooltipStat icon={wpn.kind === 'ranged' ? Crosshair : Sword}
+                     label={wpn.kind === 'ranged' ? 'RNG ATK' : 'MLE ATK'}
+                     value={wpn.dmg ? `${wpn.dmg[0]}–${wpn.dmg[1]}` : '—'} color={HUD.red} />
+        <TooltipStat icon={Target}      label="RANGE"   value={wpn.range ?? '—'}   color={HUD.amber} />
+        <TooltipStat icon={Crosshair}   label="AIM"     value={`${enemy.aim ?? '—'}%`} color={HUD.amber} />
+        <TooltipStat icon={Shield}      label="DEF"     value={enemy.defense ?? 0} color={HUD.cyan} />
+        <TooltipStat icon={ShieldAlert} label="ARMOR"   value={enemy.armor ?? 0}   color={HUD.green} />
+        <TooltipStat icon={Footprints}  label="MOVE"    value={`${enemy.moveRange ?? 4}t`} color={HUD.purple} />
+      </div>
+      <div style={{
+        marginTop: 6, paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.06)',
+        fontSize: 9, color: HUD.textMuted, letterSpacing: '0.8px', textAlign: 'center',
+      }}>
+        CLICK FOR FULL DOSSIER
+      </div>
+    </div>
+  );
+}
+
+function TooltipStat({ icon, label, value, color }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 4,
+      padding: '2px 4px',
+      background: 'rgba(8,12,20,0.45)',
+      border: `1px solid ${color}22`,
+      borderRadius: 3,
+    }}>
+      <Icon component={icon} size={9} color={color} strokeWidth={2.2} />
+      <span style={{ color: HUD.textMuted, letterSpacing: '0.4px', fontSize: 8.5 }}>{label}</span>
+      <span style={{ color: HUD.text, fontWeight: 700, marginLeft: 'auto' }}>{value}</span>
+    </div>
+  );
+}
+
+function EnemyScreen({ enemy, atlas, onClose }) {
+  const accent = HUD.red;
+  const hpPct = Math.max(0, enemy.hp) / enemy.maxHp;
+  const hpColor = hpPct > 0.66 ? HUD.green : hpPct > 0.33 ? HUD.amber : HUD.red;
+  const wpn = enemy.weapon || {};
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'absolute', inset: 0, zIndex: 110,
+        background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.92) 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)',
+        animation: 'tac-fadeIn 0.18s ease',
+        fontFamily: HUD.font,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: 'relative',
+          width: 620, maxWidth: '92vw', maxHeight: '92vh',
+          padding: '24px 28px',
+          background: HUD.panelBg,
+          color: HUD.text,
+          borderRadius: 10,
+          border: `1px solid ${accent}88`,
+          boxShadow: `${HUD.shadow}, 0 0 48px ${accent}55`,
+          overflow: 'auto',
+        }}
+      >
+        {/* Top accent bar */}
+        <div style={{
+          position: 'absolute', left: 0, right: 0, top: 0, height: 3,
+          background: `linear-gradient(90deg, transparent 0%, ${accent} 50%, transparent 100%)`,
+          borderTopLeftRadius: 10, borderTopRightRadius: 10,
+        }} />
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          onMouseEnter={(e) => { e.currentTarget.style.color = HUD.text; e.currentTarget.style.borderColor = `${accent}aa`; e.currentTarget.style.background = `${accent}22`; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = HUD.textMuted; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; e.currentTarget.style.background = 'rgba(8,12,20,0.55)'; }}
+          style={{
+            position: 'absolute', top: 12, right: 12,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 28, height: 28,
+            background: 'rgba(8,12,20,0.55)',
+            color: HUD.textMuted,
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderRadius: 4,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <Icon component={X} size={16} strokeWidth={2.2} />
+        </button>
+
+        {/* Header row: portrait + name */}
+        <div style={{ display: 'flex', gap: 22, alignItems: 'flex-start' }}>
+          <PortraitLarge atlas={atlas} sprite={enemy.sprite} size={120} accent={accent} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: '3px', color: HUD.textMuted,
+            }}>
+              HOSTILE · ID {enemy.id?.toString().padStart(2, '0')}
+            </div>
+            <div style={{
+              fontSize: 26, fontWeight: 800, letterSpacing: '1px',
+              color: HUD.text, marginTop: 2,
+              textTransform: 'capitalize',
+            }}>
+              {enemy.name}
+            </div>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              fontSize: 12, fontWeight: 700, letterSpacing: '2px',
+              color: accent, marginTop: 4,
+            }}>
+              <Icon component={Skull} size={13} color={accent} strokeWidth={2.2} glow />
+              {(enemy.rank || 'Hostile').toUpperCase()}
+              {enemy.aware && (
+                <span style={{
+                  fontSize: 10, color: HUD.amber, padding: '2px 7px',
+                  background: `${HUD.amber}1f`, border: `1px solid ${HUD.amber}66`,
+                  borderRadius: 4, letterSpacing: '1.5px',
+                  fontFamily: HUD.fontMono,
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                }}>
+                  <Icon component={Eye} size={10} color={HUD.amber} strokeWidth={2.2} />
+                  ALERT
+                </span>
+              )}
+            </div>
+
+            {/* HP + XP reward */}
+            <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <BarRow icon={Heart} color={hpColor} label="HEALTH" value={`${Math.max(0, enemy.hp)} / ${enemy.maxHp}`} pct={hpPct} />
+              <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '4px 0',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Icon component={TrendingUp} size={14} color={HUD.amber} strokeWidth={2} glow />
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.5px', color: HUD.textDim }}>
+                    BOUNTY
+                  </span>
+                </div>
+                <span style={{
+                  fontSize: 12, fontFamily: HUD.fontMono, fontWeight: 700, color: HUD.amber,
+                }}>
+                  +{enemy.xpReward ?? 0} XP
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div style={{
+          margin: '20px 0 16px',
+          borderTop: `1px solid ${accent}22`,
+        }} />
+
+        {/* Attribute grid */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10,
+          marginBottom: 18,
+        }}>
+          <AttrCell icon={Target}      label="AIM"     value={`${enemy.aim ?? '—'}%`} color={HUD.amber} />
+          <AttrCell icon={Shield}      label="DEFENSE" value={enemy.defense ?? 0}      color={HUD.cyan} />
+          <AttrCell icon={ShieldAlert} label="ARMOR"   value={enemy.armor ?? 0}        color={HUD.green} />
+          <AttrCell icon={Footprints}  label="MOVE"    value={`${enemy.moveRange ?? 4} tiles`} color={HUD.purple} />
+        </div>
+
+        {/* Weapon card */}
+        <DetailCard
+          iconComponent={wpn.kind === 'ranged' ? Crosshair : Sword}
+          tag="WEAPON"
+          title={wpn.kind === 'melee' ? 'Melee strike' : 'Ranged attack'}
+          color={HUD.red}
+          stats={[
+            { label: 'Damage', value: wpn.dmg ? `${wpn.dmg[0]}–${wpn.dmg[1]}` : '—' },
+            { label: 'Range',  value: wpn.optimalRange === wpn.range
+              ? `${wpn.range ?? '—'}`
+              : `${wpn.optimalRange ?? wpn.range} optimal · ${wpn.range} max` },
+            { label: 'Kind',   value: wpn.kind || '—' },
+          ]}
+        />
+
+        {/* Position + awareness */}
+        <div style={{
+          marginTop: 16,
+          padding: '12px 14px',
+          background: 'rgba(8,12,20,0.55)',
+          border: `1px solid ${accent}22`,
+          borderRadius: 6,
+          fontSize: 12, color: HUD.textDim,
+          lineHeight: 1.55,
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontSize: 10, fontWeight: 700, letterSpacing: '2px', color: accent,
+            marginBottom: 6,
+          }}>
+            <Icon component={BookOpen} size={11} color={accent} strokeWidth={2.2} />
+            INTEL
+          </div>
+          Spotted at <span style={{ color: HUD.text, fontFamily: HUD.fontMono, fontWeight: 700 }}>
+            ({enemy.x}, {enemy.y})
+          </span>. {enemy.aware
+            ? 'Target is aware of the squad and will engage on its next turn.'
+            : 'Target is not yet alerted — flanking attacks may strike from concealment.'}
+        </div>
+
+        {/* Footer hint */}
+        <div style={{
+          marginTop: 14,
+          fontSize: 10, color: HUD.textMuted, letterSpacing: '1.5px',
+          textAlign: 'center',
+        }}>
+          ESC OR CLICK OUTSIDE TO CLOSE
+        </div>
       </div>
     </div>
   );
