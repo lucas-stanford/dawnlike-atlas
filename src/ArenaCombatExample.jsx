@@ -760,13 +760,21 @@ function HudPanel({ atlas, player, gaugeName, cstats }) {
 function SpriteFrame({ atlas, sprite }) {
   const s = atlas?.byName?.[sprite];
   if (!s) return null;
+  const tileW = s.w || atlas.meta.tile.w;
+  const tileH = s.h || atlas.meta.tile.h;
+  const atlasW = atlas.meta.size.w;
+  const atlasH = atlas.meta.size.h;
+  const bgSizeW = (atlasW / tileW) * 100;
+  const bgSizeH = (atlasH / tileH) * 100;
+  const bgPosX = (s.x / (atlasW - tileW)) * 100;
+  const bgPosY = (s.y / (atlasH - tileH)) * 100;
   return (
     <div
       style={{
         position: 'absolute', inset: 0,
         backgroundImage: `url(${DAWNLIKE_ATLAS_0_URL})`,
-        backgroundPosition: `-${s.x}px -${s.y}px`,
-        backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`,
+        backgroundPosition: `${bgPosX}% ${bgPosY}%`,
+        backgroundSize: `${bgSizeW}% ${bgSizeH}%`,
         imageRendering: 'pixelated',
       }}
     />
