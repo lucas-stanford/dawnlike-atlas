@@ -28,6 +28,8 @@ import * as ROT from 'rot-js';
 import { resolveAssetPath } from './utils/paths';
 import { dawnlikeAnimVars, DAWNLIKE_ATLAS_0_URL } from './utils/spriteAnim';
 import './utils/spriteAnim.css';
+import { MovablePanel } from './components/MovablePanel';
+import { Swords, ScrollText } from 'lucide-react';
 import {
   resolveDawnLikeFloorName,
   resolveDawnLikeForestName,
@@ -567,30 +569,39 @@ export default function ArenaCombatExample({
       className="autotile-layout full-viewport"
       style={{ outline: 'none', ...dawnlikeAnimVars }}
     >
-      <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 60, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        <button onClick={restart} style={{ padding: '6px 12px', cursor: 'pointer' }}>🔄 Restart</button>
-        <HudPanel atlas={atlas} player={player} gaugeName={gaugeName} cstats={cstats} />
-        <div style={{
-          padding: '6px 10px',
-          background: 'rgba(0,0,0,0.6)',
-          color: '#fff',
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: 12,
-          borderRadius: 4,
-        }}>
-          turn {state.turn} · monsters {aliveMonsters} · cd {player.cooldown}
+      <MovablePanel
+        storageKey="arena-hud-pos"
+        defaultAnchor={{ top: 8, left: 8 }}
+        title="Arena"
+        icon={Swords}
+        accent="#5dd4d4"
+        bodyPadding="8px 10px"
+      >
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <button onClick={restart} style={{ padding: '6px 12px', cursor: 'pointer' }}>🔄 Restart</button>
+          <HudPanel atlas={atlas} player={player} gaugeName={gaugeName} cstats={cstats} />
+          <div style={{
+            padding: '6px 10px',
+            background: 'rgba(0,0,0,0.6)',
+            color: '#fff',
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: 12,
+            borderRadius: 4,
+          }}>
+            turn {state.turn} · monsters {aliveMonsters} · cd {player.cooldown}
+          </div>
+          <div style={{
+            padding: '6px 10px',
+            background: 'rgba(0,0,0,0.6)',
+            color: '#aef',
+            fontFamily: 'system-ui, sans-serif',
+            fontSize: 11,
+            borderRadius: 4,
+          }}>
+            WASD / arrows move · F = {cstats.actionName.toLowerCase()} · . wait
+          </div>
         </div>
-        <div style={{
-          padding: '6px 10px',
-          background: 'rgba(0,0,0,0.6)',
-          color: '#aef',
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: 11,
-          borderRadius: 4,
-        }}>
-          WASD / arrows move · F = {cstats.actionName.toLowerCase()} · . wait
-        </div>
-      </div>
+      </MovablePanel>
 
       <div className="map-viewport maximized">
         <div className="map-grid" style={{ width: px, height: py }}>
@@ -670,15 +681,25 @@ export default function ArenaCombatExample({
       </div>
 
       {/* Combat log overlay (bottom-left). */}
-      <div style={{
-        position: 'absolute', left: 8, bottom: 8, zIndex: 60,
-        background: 'rgba(0,0,0,0.65)', color: '#fff',
-        padding: '6px 10px', borderRadius: 4,
-        fontFamily: 'ui-monospace, Menlo, monospace', fontSize: 11,
-        maxWidth: 360, lineHeight: 1.35,
-      }}>
-        {state.log.map((line, i) => <div key={i}>{line}</div>)}
-      </div>
+      <MovablePanel
+        storageKey="arena-log-pos"
+        defaultAnchor={{ left: 8, bottom: 8 }}
+        title="Combat Log"
+        icon={ScrollText}
+        accent="#aef"
+        width={360}
+        defaultCollapsed={false}
+        bodyPadding="8px 10px"
+      >
+        <div style={{
+          color: '#fff',
+          fontFamily: 'ui-monospace, Menlo, monospace', fontSize: 11,
+          lineHeight: 1.35,
+          maxHeight: 160, overflowY: 'auto',
+        }}>
+          {state.log.map((line, i) => <div key={i}>{line}</div>)}
+        </div>
+      </MovablePanel>
 
       {/* Game-over modal. */}
       {state.gameOver && (

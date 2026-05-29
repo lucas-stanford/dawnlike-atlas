@@ -38,6 +38,7 @@ import {
 import { resolveAssetPath } from './utils/paths';
 import { dawnlikeAnimVars, isAnimatedSprite, DAWNLIKE_ATLAS_0_URL } from './utils/spriteAnim';
 import './utils/spriteAnim.css';
+import { MovablePanel } from './components/MovablePanel';
 import {
   resolveDawnLikeFloorName,
   resolveDawnLikeForestName,
@@ -1305,120 +1306,101 @@ export default function TacticalCombatExample({
 function TopBar({ state, onEndTurn }) {
   const isPlayer = state.turn === 'player';
   const turnColor = isPlayer ? HUD.cyan : HUD.red;
+  const collapsedTurnPreview = (
+    <span style={{ fontSize: 9, color: turnColor, letterSpacing: '1px' }}>
+      T{state.turnNumber} · {isPlayer ? 'YOU' : 'ENEMY'}
+    </span>
+  );
   return (
-    <div style={{
-      position: 'absolute', top: 0, left: 0, right: 0, zIndex: 60,
-      display: 'flex', alignItems: 'stretch', justifyContent: 'space-between', gap: 10,
-      padding: '10px 14px',
-      background: 'linear-gradient(180deg, rgba(8,12,20,0.92) 0%, rgba(8,12,20,0.55) 70%, rgba(8,12,20,0) 100%)',
-      pointerEvents: 'none',
-      fontFamily: HUD.font,
-    }}>
-      {/* Turn badge */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '8px 14px',
-        background: HUD.panelBg,
-        border: `1px solid ${turnColor}66`,
-        boxShadow: `${HUD.shadow}, 0 0 24px ${turnColor}33`,
-        borderRadius: 6,
-        color: HUD.text,
-        pointerEvents: 'auto',
-      }}>
-        <div style={{
-          width: 8, height: 8, borderRadius: 4,
-          background: turnColor,
-          boxShadow: `0 0 12px ${turnColor}`,
-          animation: isPlayer ? 'tac-pulse 1.6s ease-in-out infinite' : 'none',
-        }} />
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '1.5px', color: HUD.textMuted }}>
-            TURN {state.turnNumber}
-          </div>
-          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '1px', color: turnColor }}>
-            {isPlayer ? 'YOUR PHASE' : 'ENEMY PHASE…'}
-          </div>
-        </div>
-      </div>
-
-      {/* Objective banner */}
-      {state.objective && (
-        <div style={{
-          flex: 1, maxWidth: 540,
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '8px 14px',
-          background: HUD.panelBg,
-          border: HUD.border,
-          boxShadow: HUD.shadow,
-          borderRadius: 6,
-          pointerEvents: 'auto',
-        }}>
+    <>
+      {/* Turn / end-turn panel (top-left). */}
+      <MovablePanel
+        storageKey="tac-turn-pos"
+        defaultAnchor={{ top: 10, left: 14 }}
+        width={240}
+        title="Turn"
+        icon={Activity}
+        accent={turnColor}
+        fontFamily={HUD.font}
+        collapsedPreview={collapsedTurnPreview}
+        bodyPadding="10px 12px"
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            fontSize: 10, fontWeight: 700, letterSpacing: '1.5px',
-            color: HUD.amber, padding: '2px 7px',
-            border: `1px solid ${HUD.amber}55`, borderRadius: 3,
-            background: `${HUD.amber}14`,
-          }}>
-            <Icon component={Target} size={11} color={HUD.amber} strokeWidth={2.2} glow />
-            OBJECTIVE
+            width: 8, height: 8, borderRadius: 4,
+            background: turnColor,
+            boxShadow: `0 0 12px ${turnColor}`,
+            animation: isPlayer ? 'tac-pulse 1.6s ease-in-out infinite' : 'none',
+            flexShrink: 0,
+          }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '1.5px', color: HUD.textMuted }}>
+              TURN {state.turnNumber}
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: '1px', color: turnColor }}>
+              {isPlayer ? 'YOUR PHASE' : 'ENEMY PHASE…'}
+            </div>
           </div>
-          <div style={{ fontSize: 12.5, color: HUD.text, lineHeight: 1.35 }}>{state.objective}</div>
+          {isPlayer && !state.victory && !state.defeat && (
+            <button onClick={onEndTurn}
+              onMouseEnter={(e) => { e.currentTarget.style.background = `linear-gradient(180deg, ${HUD.amber}33 0%, ${HUD.amber}14 100%)`; e.currentTarget.style.borderColor = `${HUD.amber}cc`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = HUD.panelBg; e.currentTarget.style.borderColor = `${HUD.amber}66`; }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 10px',
+                background: HUD.panelBg,
+                color: HUD.amber,
+                border: `1px solid ${HUD.amber}66`,
+                boxShadow: `${HUD.shadow}, 0 0 12px ${HUD.amber}22`,
+                borderRadius: 5,
+                cursor: 'pointer',
+                fontFamily: HUD.font,
+                fontSize: 11, fontWeight: 700, letterSpacing: '1.2px',
+                transition: 'all 0.15s ease',
+              }}>
+              END <Icon component={SkipForward} size={13} color={HUD.amber} glow />
+            </button>
+          )}
         </div>
-      )}
+      </MovablePanel>
 
-      {/* End-turn button */}
-      {isPlayer && !state.victory && !state.defeat && (
-        <button onClick={onEndTurn}
-          onMouseEnter={(e) => { e.currentTarget.style.background = `linear-gradient(180deg, ${HUD.amber}33 0%, ${HUD.amber}14 100%)`; e.currentTarget.style.borderColor = `${HUD.amber}cc`; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = HUD.panelBg; e.currentTarget.style.borderColor = `${HUD.amber}66`; }}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '8px 16px',
-            background: HUD.panelBg,
-            color: HUD.amber,
-            border: `1px solid ${HUD.amber}66`,
-            boxShadow: `${HUD.shadow}, 0 0 18px ${HUD.amber}22`,
-            borderRadius: 6,
-            cursor: 'pointer',
-            fontFamily: HUD.font,
-            fontSize: 12, fontWeight: 700, letterSpacing: '1.5px',
-            transition: 'all 0.15s ease',
-            pointerEvents: 'auto',
-          }}>
-          END TURN <Icon component={SkipForward} size={15} color={HUD.amber} glow />
-        </button>
+      {/* Objective panel (top-center). */}
+      {state.objective && (
+        <MovablePanel
+          storageKey="tac-objective-pos"
+          defaultAnchor={{ top: 10, left: '50%', transform: 'translateX(-50%)' }}
+          width={520}
+          title="Objective"
+          icon={Target}
+          accent={HUD.amber}
+          fontFamily={HUD.font}
+          bodyPadding="8px 12px 10px"
+        >
+          <div style={{ fontSize: 12.5, color: HUD.text, lineHeight: 1.4 }}>{state.objective}</div>
+        </MovablePanel>
       )}
-    </div>
+    </>
   );
 }
 
 function SidePanel({ state, squad, selectedUnitId, setSelected, atlas, onShowCharacter }) {
+  const aliveCount = squad.filter(u => u.hp > 0).length;
   return (
-    <div style={{
-      position: 'absolute', right: 10, top: 78, zIndex: 60,
-      width: 224,
-      background: HUD.panelBg,
-      border: HUD.border,
-      boxShadow: HUD.shadow,
-      borderRadius: 8,
-      padding: '10px 10px 8px',
-      fontFamily: HUD.font,
-      color: HUD.text,
-    }}>
-      <div style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        marginBottom: 8, paddingBottom: 6,
-        borderBottom: `1px solid ${HUD.cyan}22`,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Icon component={Award} size={13} color={HUD.cyan} strokeWidth={2} />
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '2px', color: HUD.cyan }}>SQUAD</div>
-        </div>
-        <div style={{ fontSize: 10, color: HUD.textMuted, letterSpacing: '1px' }}>
-          {squad.filter(u => u.hp > 0).length}/{squad.length} ALIVE
-        </div>
-      </div>
+    <MovablePanel
+      storageKey="tac-squad-pos"
+      defaultAnchor={{ right: 10, top: 78 }}
+      width={236}
+      title="Squad"
+      icon={Award}
+      accent={HUD.cyan}
+      fontFamily={HUD.font}
+      headerExtras={
+        <span style={{ fontSize: 9, color: HUD.textMuted, letterSpacing: '1px', marginRight: 4 }}>
+          {aliveCount}/{squad.length} ALIVE
+        </span>
+      }
+      bodyPadding="8px 10px 8px"
+    >
       {squad.map(u => {
         const sel = u.id === selectedUnitId;
         const dead = u.hp <= 0;
@@ -1556,7 +1538,7 @@ function SidePanel({ state, squad, selectedUnitId, setSelected, atlas, onShowCha
           </div>
         );
       })}
-    </div>
+    </MovablePanel>
   );
 }
 
@@ -1600,126 +1582,21 @@ function logLineStyle(line) {
 }
 
 const COMBAT_LOG_STORAGE_KEY = 'tac-combat-log-pos';
-const COMBAT_LOG_WIDTH = 224;
+const COMBAT_LOG_WIDTH = 240;
 
 function CombatLog({ lines }) {
   const recent = lines.slice(-8);
-  const panelRef = useRef(null);
-  const dragRef = useRef(null);
-  const [pos, setPos] = useState(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const raw = window.localStorage.getItem(COMBAT_LOG_STORAGE_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      if (parsed && Number.isFinite(parsed.left) && Number.isFinite(parsed.top)) return parsed;
-    } catch (_) {}
-    return null;
-  });
-  const [dragging, setDragging] = useState(false);
-
-  const clamp = (left, top, parentRect, panelRect) => {
-    const maxLeft = Math.max(0, parentRect.width - panelRect.width);
-    const maxTop = Math.max(0, parentRect.height - panelRect.height);
-    return {
-      left: Math.min(Math.max(0, left), maxLeft),
-      top: Math.min(Math.max(0, top), maxTop),
-    };
-  };
-
-  useEffect(() => {
-    if (!pos) return;
-    const el = panelRef.current;
-    if (!el || !el.offsetParent) return;
-    const parentRect = el.offsetParent.getBoundingClientRect();
-    const panelRect = el.getBoundingClientRect();
-    const next = clamp(pos.left, pos.top, parentRect, panelRect);
-    if (next.left !== pos.left || next.top !== pos.top) setPos(next);
-  }, []);
-
-  const onPointerDown = (e) => {
-    if (e.button !== 0) return;
-    const el = panelRef.current;
-    if (!el || !el.offsetParent) return;
-    const parentRect = el.offsetParent.getBoundingClientRect();
-    const panelRect = el.getBoundingClientRect();
-    dragRef.current = {
-      parentRect, panelRect,
-      grabOffsetX: e.clientX - panelRect.left,
-      grabOffsetY: e.clientY - panelRect.top,
-      pointerId: e.pointerId,
-    };
-    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
-    setDragging(true);
-    e.preventDefault();
-  };
-
-  const onPointerMove = (e) => {
-    const d = dragRef.current;
-    if (!d) return;
-    const left = e.clientX - d.parentRect.left - d.grabOffsetX;
-    const top = e.clientY - d.parentRect.top - d.grabOffsetY;
-    setPos(clamp(left, top, d.parentRect, d.panelRect));
-  };
-
-  const finishDrag = (e) => {
-    const d = dragRef.current;
-    if (!d) return;
-    try { e.currentTarget.releasePointerCapture(d.pointerId); } catch (_) {}
-    dragRef.current = null;
-    setDragging(false);
-    setPos((p) => {
-      if (p && typeof window !== 'undefined') {
-        try { window.localStorage.setItem(COMBAT_LOG_STORAGE_KEY, JSON.stringify(p)); } catch (_) {}
-      }
-      return p;
-    });
-  };
-
-  const onDoubleClick = () => {
-    setPos(null);
-    if (typeof window !== 'undefined') {
-      try { window.localStorage.removeItem(COMBAT_LOG_STORAGE_KEY); } catch (_) {}
-    }
-  };
-
-  const positionStyle = pos
-    ? { left: pos.left, top: pos.top }
-    : { right: 10, bottom: 12 };
-
   return (
-    <div ref={panelRef}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={finishDrag}
-      onPointerCancel={finishDrag}
-      onDoubleClick={onDoubleClick}
-      title="Drag anywhere to move · double-click to reset position"
-      style={{
-        position: 'absolute', zIndex: 60,
-        ...positionStyle,
-        width: COMBAT_LOG_WIDTH,
-        background: HUD.panelBg,
-        border: dragging ? `1px solid ${HUD.cyan}aa` : HUD.border,
-        boxShadow: dragging ? `${HUD.shadow}, 0 0 22px ${HUD.cyan}55` : HUD.shadow,
-        borderRadius: 8,
-        padding: '8px 10px 8px',
-        fontFamily: HUD.font,
-        color: HUD.text,
-        userSelect: 'none',
-        transition: dragging ? 'none' : 'box-shadow 160ms ease, border-color 160ms ease',
-        touchAction: 'none',
-        cursor: dragging ? 'grabbing' : 'grab',
-      }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 6,
-        fontSize: 10, fontWeight: 700, letterSpacing: '2px', color: HUD.cyan,
-        marginBottom: 6, paddingBottom: 4, borderBottom: `1px solid ${HUD.cyan}22`,
-      }}>
-        <Icon component={BookOpen} size={11} color={HUD.cyan} strokeWidth={2} />
-        <span style={{ flex: 1 }}>COMBAT LOG</span>
-        <Icon component={MoveIcon} size={11} color={HUD.cyan} strokeWidth={2} style={{ opacity: 0.7 }} />
-      </div>
+    <MovablePanel
+      storageKey={COMBAT_LOG_STORAGE_KEY}
+      defaultAnchor={{ right: 10, bottom: 12 }}
+      width={COMBAT_LOG_WIDTH}
+      title="Combat Log"
+      icon={BookOpen}
+      accent={HUD.cyan}
+      bodyPadding="8px 10px 10px"
+      fontFamily={HUD.font}
+    >
       <div style={{
         fontFamily: HUD.fontMono, fontSize: 11, lineHeight: 1.45,
         display: 'flex', flexDirection: 'column', gap: 3,
@@ -1741,7 +1618,7 @@ function CombatLog({ lines }) {
           );
         })}
       </div>
-    </div>
+    </MovablePanel>
   );
 }
 
@@ -1881,78 +1758,76 @@ function ActionBar({ state, selectedUnit, mode, setMode, onMove, onAttack, onCas
   }
 
   return (
-    <div style={{
-      position: 'absolute', bottom: 12, left: '50%', zIndex: 60,
-      transform: 'translateX(-50%)',
-      display: 'flex', alignItems: 'stretch', gap: 0,
-      background: HUD.panelBg,
-      border: `1px solid ${accent}55`,
-      boxShadow: `${HUD.shadow}, 0 0 24px ${accent}22`,
-      padding: 0,
-      borderRadius: 8,
-      fontFamily: HUD.font,
-      color: HUD.text,
-      overflow: 'hidden',
-    }}>
-      {/* Selected-unit info */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '10px 14px',
-        background: `linear-gradient(180deg, ${accent}18 0%, ${accent}06 100%)`,
-        borderRight: `1px solid ${accent}33`,
-      }}>
+    <MovablePanel
+      storageKey="tac-actionbar-pos"
+      defaultAnchor={{ bottom: 12, left: '50%', transform: 'translateX(-50%)' }}
+      title={`Actions · ${selectedUnit.name}`}
+      icon={Sword}
+      accent={accent}
+      fontFamily={HUD.font}
+      bodyPadding="0"
+    >
+      <div style={{ display: 'flex', alignItems: 'stretch', gap: 0, color: HUD.text }}>
+        {/* Selected-unit info */}
         <div style={{
-          width: 42, height: 42, position: 'relative',
-          padding: 2,
-          background: `${accent}14`,
-          border: `1px solid ${accent}88`,
-          borderRadius: 5,
-          boxShadow: `0 0 14px ${accent}44, inset 0 0 0 1px ${accent}33`,
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '10px 14px',
+          background: `linear-gradient(180deg, ${accent}18 0%, ${accent}06 100%)`,
+          borderRight: `1px solid ${accent}33`,
         }}>
-          <SpriteFrame atlas={atlas} sprite={selectedUnit.sprite} />
-        </div>
-        <div style={{ minWidth: 130 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.5px' }}>{selectedUnit.name}</div>
-            <div style={{ fontSize: 9, color: accent, letterSpacing: '1.5px', fontWeight: 700 }}>
-              {CLASSES[selectedUnit.classKey]?.name?.toUpperCase()}
-            </div>
-          </div>
-          {/* HP bar */}
           <div style={{
-            height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 3,
-            overflow: 'hidden', marginTop: 4, marginBottom: 4,
+            width: 42, height: 42, position: 'relative',
+            padding: 2,
+            background: `${accent}14`,
+            border: `1px solid ${accent}88`,
+            borderRadius: 5,
+            boxShadow: `0 0 14px ${accent}44, inset 0 0 0 1px ${accent}33`,
           }}>
-            <div style={{
-              width: `${hpPct * 100}%`, height: '100%',
-              background: `linear-gradient(90deg, ${hpColor} 0%, ${hpColor}cc 100%)`,
-              boxShadow: `0 0 8px ${hpColor}aa`,
-              transition: 'width 0.2s ease',
-            }} />
+            <SpriteFrame atlas={atlas} sprite={selectedUnit.sprite} />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: hpColor, fontFamily: HUD.fontMono }}>
-              {Math.max(0, selectedUnit.hp)}/{selectedUnit.maxHp} HP
-            </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ fontSize: 9, color: HUD.textMuted, letterSpacing: '0.8px' }}>AP</span>
-              <ApPips ap={apLeft} maxAp={maxAp} />
+          <div style={{ minWidth: 130 }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: '0.5px' }}>{selectedUnit.name}</div>
+              <div style={{ fontSize: 9, color: accent, letterSpacing: '1.5px', fontWeight: 700 }}>
+                {CLASSES[selectedUnit.classKey]?.name?.toUpperCase()}
+              </div>
+            </div>
+            {/* HP bar */}
+            <div style={{
+              height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 3,
+              overflow: 'hidden', marginTop: 4, marginBottom: 4,
+            }}>
+              <div style={{
+                width: `${hpPct * 100}%`, height: '100%',
+                background: `linear-gradient(90deg, ${hpColor} 0%, ${hpColor}cc 100%)`,
+                boxShadow: `0 0 8px ${hpColor}aa`,
+                transition: 'width 0.2s ease',
+              }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 10, fontWeight: 600, color: hpColor, fontFamily: HUD.fontMono }}>
+                {Math.max(0, selectedUnit.hp)}/{selectedUnit.maxHp} HP
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 9, color: HUD.textMuted, letterSpacing: '0.8px' }}>AP</span>
+                <ApPips ap={apLeft} maxAp={maxAp} />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Action buttons */}
-      <div style={{ display: 'flex', gap: 6, padding: '10px 12px', alignItems: 'center' }}>
-        <ActionBtn iconComponent={Footprints} label="MOVE" sub={`rng ${selectedUnit.moveRange}`} hotkey="1"
-          onClick={onMove} active={mode === 'move'} accent={HUD.cyan} />
-        <ActionBtn iconComponent={Crosshair} label="ATTACK" sub={attackSub} hotkey="2"
-          onClick={onAttack} active={mode === 'attack'} accent={HUD.red} />
-        {abilityBtn}
-        <ActionBtn iconComponent={Eye} label="OVERWATCH" sub="end turn" hotkey="4"
-          onClick={onOverwatch} active={mode === 'overwatch'} accent={HUD.amber} />
+        {/* Action buttons */}
+        <div style={{ display: 'flex', gap: 6, padding: '10px 12px', alignItems: 'center' }}>
+          <ActionBtn iconComponent={Footprints} label="MOVE" sub={`rng ${selectedUnit.moveRange}`} hotkey="1"
+            onClick={onMove} active={mode === 'move'} accent={HUD.cyan} />
+          <ActionBtn iconComponent={Crosshair} label="ATTACK" sub={attackSub} hotkey="2"
+            onClick={onAttack} active={mode === 'attack'} accent={HUD.red} />
+          {abilityBtn}
+          <ActionBtn iconComponent={Eye} label="OVERWATCH" sub="end turn" hotkey="4"
+            onClick={onOverwatch} active={mode === 'overwatch'} accent={HUD.amber} />
+        </div>
       </div>
-    </div>
+    </MovablePanel>
   );
 }
 
