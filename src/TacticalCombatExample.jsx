@@ -2014,13 +2014,11 @@ function ActorSprite({ atlas, sprite, x, y, z = 5, selected, overwatching, side 
 function SpriteFrame({ atlas, sprite }) {
   const s = atlas?.byName?.[sprite];
   if (!s) return null;
-  const animated = !!s.isAnimated;
   return (
     <div
-      className={animated ? 'dawnlike-tile-anim' : undefined}
       style={{
         position: 'absolute', inset: 0,
-        ...(animated ? null : { backgroundImage: `url(${DAWNLIKE_ATLAS_0_URL})` }),
+        backgroundImage: `url(${DAWNLIKE_ATLAS_0_URL})`,
         backgroundPosition: `-${s.x}px -${s.y}px`,
         backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`,
         imageRendering: 'pixelated',
@@ -2036,7 +2034,6 @@ function PortraitLarge({ atlas, sprite, size = 128, accent = HUD.cyan }) {
   const tileW = s.w || atlas.meta.tile.w;
   const tileH = s.h || atlas.meta.tile.h;
   const scale = size / tileW;
-  const animated = !!s.isAnimated;
   return (
     <div style={{
       position: 'relative',
@@ -2048,13 +2045,12 @@ function PortraitLarge({ atlas, sprite, size = 128, accent = HUD.cyan }) {
       overflow: 'hidden',
     }}>
       <div
-        className={animated ? 'dawnlike-tile-anim' : undefined}
         style={{
           position: 'absolute', left: 0, top: 0,
           width: tileW, height: tileH,
           transform: `scale(${scale})`,
           transformOrigin: 'top left',
-          ...(animated ? null : { backgroundImage: `url(${DAWNLIKE_ATLAS_0_URL})` }),
+          backgroundImage: `url(${DAWNLIKE_ATLAS_0_URL})`,
           backgroundPosition: `-${s.x}px -${s.y}px`,
           backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`,
           imageRendering: 'pixelated',

@@ -760,13 +760,11 @@ function HudPanel({ atlas, player, gaugeName, cstats }) {
 function SpriteFrame({ atlas, sprite }) {
   const s = atlas?.byName?.[sprite];
   if (!s) return null;
-  const animated = !!s.isAnimated;
   return (
     <div
-      className={animated ? 'dawnlike-tile-anim' : undefined}
       style={{
         position: 'absolute', inset: 0,
-        ...(animated ? null : { backgroundImage: `url(${DAWNLIKE_ATLAS_0_URL})` }),
+        backgroundImage: `url(${DAWNLIKE_ATLAS_0_URL})`,
         backgroundPosition: `-${s.x}px -${s.y}px`,
         backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`,
         imageRendering: 'pixelated',
