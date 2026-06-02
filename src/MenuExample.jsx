@@ -137,9 +137,9 @@ function useTypewriter(text, speed = 22) {
 // =====================================================================
 
 const DIALOGUE_SCRIPT = [
-  { speaker: 'Old Sage', portrait: 'ordinary human', text: '"Traveler! At long last you have come. The wind itself spoke your name."' },
-  { speaker: 'Old Sage', portrait: 'ordinary human', text: '"The northern caves stir with unrest. The lich of Vorn has awoken from his thousand-year slumber."' },
-  { speaker: 'Old Sage', portrait: 'ordinary human', text: '"Will you take up the silver blade and ride to meet him?"',
+  { speaker: 'Old Sage', portraitImage: 'char1_portrait.png', text: '"Traveler! At long last you have come. The wind itself spoke your name."' },
+  { speaker: 'Old Sage', portraitImage: 'char1_portrait.png', text: '"The northern caves stir with unrest. The lich of Vorn has awoken from his thousand-year slumber."' },
+  { speaker: 'Old Sage', portraitImage: 'char1_portrait.png', text: '"Will you take up the silver blade and ride to meet him?"',
     choices: [
       { label: 'Accept the quest', icon: 'confirm box', next: 'accept' },
       { label: 'Tell me more first', icon: 'talk box', next: 'more' },
@@ -150,13 +150,13 @@ const DIALOGUE_SCRIPT = [
 
 const DIALOGUE_BRANCHES = {
   accept: [
-    { speaker: 'Old Sage', portrait: 'ordinary human', text: '"Brave soul! Take this blessed scroll — it will guide you through the dark woods."' },
+    { speaker: 'Old Sage', portraitImage: 'char1_portrait.png', text: '"Brave soul! Take this blessed scroll — it will guide you through the dark woods."' },
   ],
   more: [
-    { speaker: 'Old Sage', portrait: 'ordinary human', text: '"The lich commands an army of bone — skeletons, wraiths, and worse things still."' },
+    { speaker: 'Old Sage', portraitImage: 'char1_portrait.png', text: '"The lich commands an army of bone — skeletons, wraiths, and worse things still."' },
   ],
   decline: [
-    { speaker: 'Old Sage', portrait: 'ordinary human', text: '"…Then the world is truly doomed. May the gods forgive your choice."' },
+    { speaker: 'Old Sage', portraitImage: 'char1_portrait.png', text: '"…Then the world is truly doomed. May the gods forgive your choice."' },
   ],
 };
 
@@ -401,6 +401,11 @@ function DialogueModal({ atlas, onClose, frameFamily = 'gray white' }) {
         </button>
         <div className="menu-modal-content menu-modal-content-dialogue" onClick={advance}>
           <div className="menu-dialogue">
+            {line.portraitImage && (
+              <div className="menu-dialogue-portrait">
+                <img src={line.portraitImage} alt={line.speaker} />
+              </div>
+            )}
             <div className="menu-dialogue-body">
               <div className="menu-dialogue-text pixel-small">
                 {shown}

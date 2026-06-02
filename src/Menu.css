@@ -272,8 +272,27 @@ button {
 
 .menu-dialogue {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  gap: 20px;
   flex: 1;
+}
+
+.menu-dialogue-portrait {
+  width: 128px;
+  height: 128px;
+  flex-shrink: 0;
+  border: 4px solid #6a3a1a;
+  border-radius: 4px;
+  background: #000;
+  overflow: hidden;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+}
+
+.menu-dialogue-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: auto;
 }
 
 .menu-dialogue-body {
