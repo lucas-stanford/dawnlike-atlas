@@ -32,7 +32,7 @@
  * @property {number} [dirtPatchScale=8]         Simplex coordinate divisor for dirt patches.
  * @property {number} [elevationThreshold=0.35]  Tile is forest/mountain when elev > this.
  * @property {number} [biomeSplit=0]             Within elevated tiles, > this becomes mountain, else forest.
- * @property {number} [dirtPatchThreshold=0.4]   Low-elevation tile becomes dirt when patch noise > this.
+ * @property {number} [dirtPatchThreshold=0.6]   Low-elevation tile becomes dirt when patch noise > this.
  * @property {number} [decorChance=0.04]         Chance per eligible grass tile to spawn a decor sprite.
  * @property {string[]} [decorVariants]          Decor sprite names to pick from.
  * @property {number} [riverPosition=0.7]        River starting column as fraction of width.
