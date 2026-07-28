@@ -32,7 +32,7 @@
  * @property {number} [dirtPatchScale=8]         Simplex coordinate divisor for dirt patches.
  * @property {number} [elevationThreshold=0.35]  Tile is forest/mountain when elev > this.
  * @property {number} [biomeSplit=0]             Within elevated tiles, > this becomes mountain, else forest.
- * @property {number} [dirtPatchThreshold=0.4]   Low-elevation tile becomes dirt when patch noise > this.
+ * @property {number} [dirtPatchThreshold=0.6]   Low-elevation tile becomes dirt when patch noise > this.
  * @property {number} [decorChance=0.04]         Chance per eligible grass tile to spawn a decor sprite.
  * @property {string[]} [decorVariants]          Decor sprite names to pick from.
  * @property {number} [riverPosition=0.7]        River starting column as fraction of width.
@@ -65,7 +65,12 @@ export const DEFAULT_WORLD_MANIFEST = Object.freeze({
   dirtPatchScale: 8,
   elevationThreshold: 0.35,
   biomeSplit: 0,
-  dirtPatchThreshold: 0.4,
+  // Dirt is an accent, not a biome. The grass→dirt floor transition is a
+  // high-contrast rim, so at the old 0.4 the patches covered ~19% of the map
+  // in big rounded blobs that read as desert and out-weighed the forests and
+  // peaks. 0.6 keeps the same number of patches at roughly half the size
+  // (~8% coverage), which reads as worn ground between the biomes.
+  dirtPatchThreshold: 0.6,
   decorChance: 0.04,
   decorVariants: DEFAULT_WORLD_DECORS,
   riverPosition: 0.7,
@@ -122,8 +127,11 @@ export function generateWorld(manifest) {
       } else if (patch > dirtPatchThreshold) {
         t.type = 'dirt';
       }
+      // Decor scatters on bare dirt as well as grass. Dirt patches carry no
+      // trees and no flowers of their own, so skipping them left every patch
+      // a flat unbroken slab of colour.
       if (
-        t.type === 'grass' && !t.tree && !t.mountain &&
+        !t.tree && !t.mountain &&
         decorChance > 0 && ROT.RNG.getUniform() < decorChance &&
         decorVariants && decorVariants.length > 0
       ) {
@@ -132,40 +140,80 @@ export function generateWorld(manifest) {
     }
   }
 
+  // 1b. Drop lone dirt tiles. A floor family names its variants by which
+  //     neighbours are MISSING, so a one-tile patch resolves to the all-edges
+  //     variant and draws a bright rim on all four sides — a little donut sat
+  //     in the grass. A patch needs a neighbour to read as ground.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (tiles[y][x].type !== 'dirt') continue;
+      const hasNeighbour = [[0, -1], [0, 1], [-1, 0], [1, 0]].some(([dx, dy]) => {
+        const nx = x + dx, ny = y + dy;
+        return nx >= 0 && ny >= 0 && nx < W && ny < H && tiles[ny][nx].type === 'dirt';
+      });
+      if (!hasNeighbour) tiles[y][x].type = 'grass';
+    }
+  }
+
   // 2. Road — runs W→E across the middle with a tiny wobble. Clears trees
   //    and mountains it passes over so the road stays passable.
+  //
+  //    A wobble marks two tiles in the same column (the row it leaves and the
+  //    row it arrives at) so the road stays 4-connected. Two wobbles in a row
+  //    that reverse direction therefore put the SAME pair of rows in adjacent
+  //    columns — a 2x2 block, which the openPath resolver renders as a
+  //    lasso-shaped loop because all four corners see two neighbours. Forcing
+  //    a straight column after every wobble makes the road a proper staircase
+  //    and keeps it one tile wide everywhere.
   let ry = Math.floor(H / 2);
   const riverX = Math.floor(W * riverPosition);
+  let wobbledLastColumn = false;
   for (let rx = 0; rx < W; rx++) {
     const t = tiles[ry][rx];
     t.road = true; t.tree = false; t.mountain = false;
-    if (rx < W - 1 && rx !== riverX - 1 && rx !== riverX) {
+    if (rx < W - 1 && rx !== riverX - 1 && rx !== riverX && !wobbledLastColumn) {
       const move = ROT.RNG.getItem([-1, 0, 0, 0, 1]);
       if (move !== 0 && ry + move >= 1 && ry + move < H - 1) {
         ry += move;
         const t2 = tiles[ry][rx];
         t2.road = true; t2.tree = false; t2.mountain = false;
+        wobbledLastColumn = true;
+        continue;
       }
     }
+    wobbledLastColumn = false;
   }
 
-  // 3. River — N→S with one bridge where it crosses the road.
+  // 3. River — N→S, bridged wherever it crosses the road.
+  //
+  //    EVERY river tile that lands on road gets a bridge, not just the first.
+  //    The river wobbles the same way the road does, so on the row where the
+  //    two cross it is often two tiles wide; bridging only the first left the
+  //    other half of the crossing as open water and walled the road off. That
+  //    used to be masked by the dungeon spur in step 5b accidentally laying a
+  //    second crossing somewhere else on the map.
+  //    The river meanders on the same staircase rule as the road, and for the
+  //    same reason: a wobble puts two tiles in one row, so two wobbles that
+  //    reverse on consecutive rows would close a 2x2 loop of water.
   let rvX = riverX;
-  let bridged = false;
+  let wobbledLastRow = false;
   for (let rvY = 0; rvY < H; rvY++) {
     const t = tiles[rvY][rvX];
     t.river = true; t.tree = false; t.mountain = false;
-    if (t.road && !bridged) { t.bridge = true; bridged = true; }
-    if (rvY < H - 1 && rvY > 1 && rvY < H - 2) {
+    if (t.road) t.bridge = true;
+    if (rvY < H - 1 && rvY > 1 && rvY < H - 2 && !wobbledLastRow) {
       const move = ROT.RNG.getItem([-1, 0, 0, 0, 0, 1]);
       if (move !== 0 && rvX + move >= 1 && rvX + move < W - 1) {
         const newX = rvX + move;
         const conn = tiles[rvY][newX];
         conn.river = true; conn.tree = false; conn.mountain = false;
-        if (conn.road && !bridged) { conn.bridge = true; bridged = true; }
+        if (conn.road) conn.bridge = true;
         rvX = newX;
+        wobbledLastRow = true;
+        continue;
       }
     }
+    wobbledLastRow = false;
   }
 
   // 4. Town marker — pick a road tile in the middle third of the map and
@@ -210,11 +258,18 @@ export function generateWorld(manifest) {
   //     mountains, trees, and rivers via a fresh bridge). This guarantees
   //     the dungeon entrance is reachable from spawn regardless of where
   //     the random biome generator placed it.
+  //     Target the road tile NEAREST the dungeon. Scanning for the first road
+  //     tile in row-major order instead picks the one closest to the top-left
+  //     corner, so on most seeds the spur ran the width of the map alongside
+  //     the existing highway and the world ended up with two parallel roads.
   const carveAnyPassable = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
   let roadTarget = null;
-  for (let y = 0; y < H && !roadTarget; y++) {
-    for (let x = 0; x < W && !roadTarget; x++) {
-      if (tiles[y][x].road) roadTarget = { x, y };
+  let roadTargetDist = Infinity;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (!tiles[y][x].road) continue;
+      const d = Math.abs(x - dungeon.x) + Math.abs(y - dungeon.y);
+      if (d < roadTargetDist) { roadTargetDist = d; roadTarget = { x, y }; }
     }
   }
   if (roadTarget) {
@@ -234,6 +289,92 @@ export function generateWorld(manifest) {
       if (t.river && !t.bridge) t.bridge = true;
     });
   }
+
+  // 5c. Reachability guarantee. Steps 2–5b are all heuristics, and a run of
+  //     bad noise can still wall the dungeon off behind a mountain ridge or
+  //     an unbridged stretch of river. Flood the walkable region from the
+  //     town marker; if the dungeon marker isn't in it, carve a corridor
+  //     between the two the same way step 5b does. Without this the generator
+  //     can emit a world the player cannot finish.
+  const floodFrom = (start) => {
+    const seen = new Set([`${start.x},${start.y}`]);
+    const queue = [start];
+    while (queue.length) {
+      const { x, y } = queue.pop();
+      for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+        const nx = x + dx, ny = y + dy;
+        const key = `${nx},${ny}`;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H || seen.has(key)) continue;
+        const t = tiles[ny][nx];
+        if (t.mountain || (t.river && !t.bridge)) continue;
+        seen.add(key);
+        queue.push({ x: nx, y: ny });
+      }
+    }
+    return seen;
+  };
+  if (!floodFrom(town).has(`${dungeon.x},${dungeon.y}`)) {
+    const rescue = new ROT.Path.Dijkstra(town.x, town.y, carveAnyPassable, { topology: 4 });
+    rescue.compute(dungeon.x, dungeon.y, (x, y) => {
+      const t = tiles[y][x];
+      if (t.marker) return;
+      t.mountain = false;
+      t.tree = false;
+      t.road = true;
+      if (t.river && !t.bridge) t.bridge = true;
+    });
+  }
+
+  // 5d. Thin the road and river networks to one tile wide.
+  //
+  //     Both render through the openPath family, which draws a ribbon down
+  //     the middle of each tile. A 2x2 block therefore resolves to four
+  //     corner pieces meeting nose-to-tail — a closed lasso lying in a field,
+  //     which is the single most obvious tell that a map was generated. The
+  //     staircase rules in steps 2 and 3 stop each line making them on its
+  //     own; this catches what's left, where the dungeon spur runs alongside
+  //     the highway or the carve passes lay road over water.
+  //
+  //     For each 2x2 block, drop the first corner whose removal leaves that
+  //     network connected. Bridges and marker tiles are load-bearing and are
+  //     never dropped.
+  const staysConnected = (flag) => {
+    const all = [];
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) if (tiles[y][x][flag]) all.push({ x, y });
+    }
+    if (all.length === 0) return true;
+    const seen = new Set([`${all[0].x},${all[0].y}`]);
+    const queue = [all[0]];
+    while (queue.length) {
+      const { x, y } = queue.pop();
+      for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
+        const nx = x + dx, ny = y + dy;
+        const key = `${nx},${ny}`;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+        if (!tiles[ny][nx][flag] || seen.has(key)) continue;
+        seen.add(key);
+        queue.push({ x: nx, y: ny });
+      }
+    }
+    return seen.size === all.length;
+  };
+  const thin = (flag) => {
+    for (let y = 0; y < H - 1; y++) {
+      for (let x = 0; x < W - 1; x++) {
+        const block = [tiles[y][x], tiles[y][x + 1], tiles[y + 1][x], tiles[y + 1][x + 1]];
+        if (!block.every((t) => t[flag])) continue;
+        for (const t of block) {
+          if (t.bridge || t.marker) continue;
+          t[flag] = false;
+          if (staysConnected(flag)) break;
+          t[flag] = true;
+        }
+      }
+    }
+  };
+  thin('road');
+  thin('river');
 
   // 6. Walkability helper. Mountains block; rivers without a bridge block.
   const walkable = (x, y) => {

@@ -64,7 +64,7 @@ for the rendering contract.
     <tr><td><code>dirtPatchScale</code></td><td><code>number</code></td><td><code>8</code></td><td>Simplex coordinate divisor for the secondary noise field that paints dirt patches on low ground.</td></tr>
     <tr><td><code>elevationThreshold</code></td><td><code>number</code></td><td><code>0.35</code></td><td>A tile becomes forest/mountain when its elevation noise exceeds this.</td></tr>
     <tr><td><code>biomeSplit</code></td><td><code>number</code></td><td><code>0</code></td><td>Within elevated tiles, biome noise &gt; this → mountain; ≤ this → forest.</td></tr>
-    <tr><td><code>dirtPatchThreshold</code></td><td><code>number</code></td><td><code>0.4</code></td><td>Low-elevation tile becomes dirt when patch noise &gt; this.</td></tr>
+    <tr><td><code>dirtPatchThreshold</code></td><td><code>number</code></td><td><code>0.6</code></td><td>Low-elevation tile becomes dirt when patch noise &gt; this. Lower values grow the patches fast — the grass&rarr;dirt floor transition is a high-contrast rim, so by <code>0.4</code> the patches cover about a fifth of the map and read as desert.</td></tr>
     <tr><td><code>decorChance</code></td><td><code>number</code></td><td><code>0.04</code></td><td>Per-grass-tile probability of dropping a decoration.</td></tr>
     <tr><td><code>decorVariants</code></td><td><code>string[]</code></td><td>flowers + pebbles + rock</td><td>Sprite names to pick from when scattering decorations.</td></tr>
     <tr><td><code>riverPosition</code></td><td><code>number</code></td><td><code>0.7</code></td><td>River starting column as a fraction of <code>width</code>.</td></tr>
