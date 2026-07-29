@@ -29,21 +29,22 @@ const get = (tiles, x, y) => (inBounds(tiles, x, y) ? tiles[y][x] : null);
  * Render layers for an OVERWORLD tile.
  *
  * Tile schema (world): { type:'grass'|'dirt', tree, mountain, road, river,
- *   bridge, decor, marker }.
+ *   bridge, bank, decor, marker }.
  */
 export function renderWorldTile(tiles, x, y, styles, byName) {
   const tile = get(tiles, x, y);
   if (!tile) return [];
   const layers = [];
 
-  const terrain = tile.type === 'dirt' ? styles.dirt : styles.grass;
+  // River banks draw with the dirt family too, so the water sits in an
+  // earthen channel rather than butting straight against grass. Banks and
+  // dirt patches count as one surface for autotiling, so a bank running into
+  // a patch joins it instead of drawing a seam between them.
+  const isEarth = (t) => !!t && (t.type === 'dirt' || !!t.bank);
+  const terrain = isEarth(tile) ? styles.dirt : styles.grass;
   layers.push({ name: `${terrain} c`, z: -1 });
 
-  const sameType = (nx, ny) => {
-    const n = get(tiles, nx, ny);
-    if (!n) return false;
-    return (n.type === 'dirt') === (tile.type === 'dirt');
-  };
+  const sameType = (nx, ny) => isEarth(get(tiles, nx, ny)) === isEarth(tile);
   layers.push({
     name: resolveDawnLikeFloorName(
       terrain,
