@@ -1,0 +1,130 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Dawnlike/Docs/Getting Started" />
+
+# Getting Started
+
+A bin-packed **mega-atlas** and rich metadata for the
+[DawnLike](https://dragondeplatino.itch.io/dawnlike) roguelike tileset —
+4,157 named sprites in a single 2048×2080 PNG, with a second sheet holding the
+alternate frame for the 1,258 animated ones.
+
+Tiles are 32×32: a strict nearest-neighbour 2× upscale of the original 16×16
+art, so every source pixel survives as a clean 2×2 block.
+
+## Install
+
+```bash
+npm install dawnlike-atlas
+# or: bun add dawnlike-atlas
+```
+
+The package ships the atlas assets, the helper API, the autotile resolvers, the
+React components and the tactical toolkit.
+
+```js
+import { AtlasSprite, useAtlas } from 'dawnlike-atlas';
+import { resolveDawnLikeBuildingWallName } from 'dawnlike-atlas/autotile';
+import { searchSprites } from 'dawnlike-atlas/atlas-api';
+
+// Point your bundler at the assets:
+//   dawnlike-atlas/atlas/DawnlikeAtlas.json
+//   dawnlike-atlas/atlas/DawnlikeAtlas0.png
+//   dawnlike-atlas/atlas/DawnlikeAtlas1.png
+```
+
+## The five-minute version
+
+Three things to understand and you can use the whole pack.
+
+### 1. Sprites are addressed by name
+
+`DawnlikeAtlas.json` has a `byName` map from a human-readable name to its
+position in the packed sheet:
+
+```js
+atlas.byName['wizard']
+// → { x: 2016, y: 192, w: 32, h: 32,
+//     tags: ['humanoid', 'male', 'brown', 'adventurer'], isAnimated: true }
+```
+
+Rendering one is just a background offset:
+
+```js
+const { x, y } = atlas.byName['wizard'];
+el.style.backgroundImage    = 'url(DawnlikeAtlas0.png)';
+el.style.backgroundPosition = `-${x}px -${y}px`;
+el.style.imageRendering     = 'pixelated';
+```
+
+…or, in React, let the component do it:
+
+```jsx
+<AtlasSprite atlas={atlas} name="wizard" scale={3} animated />
+```
+
+**Don't know the name you want?** That is what
+[Sprite Browser](?path=/story/dawnlike-sprite-browser--browser) is for — search
+by name or tag, click a result, copy the snippet.
+
+### 2. Animation is two frames on two sheets
+
+A sprite flagged `isAnimated` has a second frame at the **same coordinates** on
+`DawnlikeAtlas1.png`. Flipping between the sheets at 2–4 fps is DawnLike's
+signature idle. Static sprites simply have nothing there, so it is safe to run
+the flip globally and let the flag decide.
+
+```js
+animationFrames(atlas, 'fighting fish')
+// → [ { sheet: 'DawnlikeAtlas0.png', x, y },
+//     { sheet: 'DawnlikeAtlas1.png', x, y } ]
+```
+
+### 3. Terrain is autotiled by name
+
+DawnLike ships terrain as families of variants named
+`"<family> <suffix>"` — `"bright brick wall left up down"`. The resolvers in
+`dawnlike-atlas/autotile` turn a neighbour truth table into the right name:
+
+```js
+resolveDawnLikeBuildingWallName(
+  'bright brick wall',
+  { n: true, s: true, e: false, w: true },
+  atlas.byName,
+);
+// → 'bright brick wall left up down'
+```
+
+The resolvers take `atlas.byName` so they can check what actually exists and
+fall back when a family is missing a variant. See
+[Autotile Guide](?path=/docs/dawnlike-docs-autotile-guide--docs) for the
+per-family conventions, and play with them in
+[Autotile Lab](?path=/story/dawnlike-autotile-lab--lab).
+
+## Where to go next
+
+| If you want to… | Go to |
+| --- | --- |
+| Find a sprite | [Sprite Browser](?path=/story/dawnlike-sprite-browser--browser) |
+| Understand autotiling | [Autotile Lab](?path=/story/dawnlike-autotile-lab--lab) · [Autotile Guide](?path=/docs/dawnlike-docs-autotile-guide--docs) |
+| See the whole packed sheet | [Mega Atlas](?path=/story/dawnlike-mega-atlas--sprites) |
+| Copy a map generator | [Cave](?path=/story/dawnlike-zone-examples-cave--cave) · [Island](?path=/story/dawnlike-zone-examples-island--island) · [Dungeon](?path=/story/dawnlike-zone-examples-dungeon--dungeon) · [Wilderness](?path=/story/dawnlike-zone-examples-wilderness--wilderness) · [Town](?path=/story/dawnlike-zone-examples-town--town) |
+| Build a real game | [Phaser Roguelike](?path=/story/dawnlike-examples-phaser-roguelike--phaser-roguelike) |
+| Build squad tactics | [Tactical Combat](?path=/story/dawnlike-examples-tactical-combat--tactical-combat) |
+| Build a HUD | [Menu HUD](?path=/story/dawnlike-examples-menu-hud--menu-hud) |
+| Look up the API | [Atlas API](?path=/docs/dawnlike-docs-atlas-api--docs) |
+| Hand the repo to an LLM | [Prompts](?path=/story/dawnlike-prompts--game-template) |
+
+## Every zone example is a starting point
+
+The zone examples are not screenshots — each is a single self-contained
+component, deterministic in a `seed`, with its generator knobs wired to the
+Storybook **Controls** panel. Dial in the look you want, note the arg values,
+then copy the component into your project and pass them as props.
+
+## Licence
+
+Sprite art by **DragonDePlatino** and **DawnBringer**, CC-BY 4.0. The atlas,
+tooling and examples are under the same licence. Carry the attribution:
+
+> Sprite art: DawnLike by DragonDePlatino and DawnBringer (CC-BY 4.0)
