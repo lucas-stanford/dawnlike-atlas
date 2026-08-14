@@ -8,7 +8,7 @@ description: Use the `dawnlike-atlas` repo — a bin-packed 32×32 mega-atlas of
 A semantic mega-atlas for the [DawnLike](https://dragondeplatino.itch.io/dawnlike) tileset (CC-BY 4.0). Sprites are stored at **32×32** (a strict 2× nearest-neighbour upscale of the original 16×16 art, so every source pixel becomes a clean 2×2 block).
 
 - **4,157 sprites** packed into a single `2048×2080` PNG (`64×65` grid).
-- Companion `DawnlikeAtlas1.png` provides the alt frame for the 2,226 animated sprites.
+- Companion `DawnlikeAtlas1.png` provides the alt frame for the 1,258 animated sprites.
 - `DawnlikeAtlas.json` gives semantic name lookup + tags + a legacy index map.
 - Pure JS autotile resolvers for walls, floors, rivers, pools, forests, mountains.
 
@@ -16,10 +16,22 @@ Live demo / browser: <https://lucas-stanford.github.io/dawnlike-atlas/>
 
 ## Get the assets
 
-This repo is **not published to npm** — consume it directly from the source tree (clone, git submodule, or copy the needed files into your project):
+Published to npm — install it, or consume the source tree directly (clone, git
+submodule, or copy the needed files into your project):
 
 ```bash
+npm install dawnlike-atlas    # or: bun add dawnlike-atlas
+# or:
 git clone https://github.com/lucas-stanford/dawnlike-atlas.git
+```
+
+From the package:
+
+```js
+import { AtlasSprite, useAtlas, searchSprites } from 'dawnlike-atlas';
+import { resolveDawnLikeBuildingWallName } from 'dawnlike-atlas/autotile';
+import { loadAtlas, spriteStyle } from 'dawnlike-atlas/atlas-api';
+import atlas from 'dawnlike-atlas/atlas/DawnlikeAtlas.json';
 ```
 
 Files you actually need at runtime (raw URLs are from the `master` branch — pin to a commit SHA for reproducibility):
@@ -28,8 +40,9 @@ Files you actually need at runtime (raw URLs are from the `master` branch — pi
 |---|---|---|
 | `atlas/DawnlikeAtlas.json` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas.json> | Atlas metadata. Top-level keys: `meta` (size `2048×2080`, `tile {w:32,h:32}`, `scale:2`, `columns:64`, `rows:65`), `frames` (Phaser-min texture atlas, `{ "<name>": { frame: {x,y,w,h} } }`), `byName` (flat lookup keyed by lowercase human-readable sprite name → `{x,y,w,h,tags[]}`), and `legacyFrames` (legacy numeric index → name, useful when iterating the sheet as a grid). |
 | `atlas/DawnlikeAtlas0.png` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas0.png> | Primary mega-atlas spritesheet. `2048×2080` PNG packing all **4,157 sprites** at 32×32 each (a strict 2× nearest-neighbour upscale of the original 16×16 DawnLike art — every source pixel is a clean 2×2 block). This is the sheet you draw from for static sprites. |
-| `atlas/DawnlikeAtlas1.png` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas1.png> | Alt-frame spritesheet for the **2,226 animated sprites** (creatures, torches, etc.). Same dimensions and per-sprite coordinates as `DawnlikeAtlas0.png`, so a 2-frame walk animation is just `[atlas0.frame(name), atlas1.frame(name)]` at ~2 fps. Sprites that aren't animated leave their cell blank here. |
+| `atlas/DawnlikeAtlas1.png` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas1.png> | Alt-frame spritesheet for the **1,258 animated sprites** (creatures, torches, etc.). Same dimensions and per-sprite coordinates as `DawnlikeAtlas0.png`, so a 2-frame walk animation is just `[atlas0.frame(name), atlas1.frame(name)]` at ~2 fps. Sprites that aren't animated leave their cell blank here. |
 | `src/utils/autotile.js` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/src/utils/autotile.js> | Pure-JS autotile resolvers. Exports `resolveDawnLikeWallName`, `resolveDawnLikeBuildingWallName`, `resolveDawnLikeDungeonWallName`, `resolveDawnLikeFloorName`, `resolveDawnLikeRiverName`, `resolveDawnLikePoolName`, `resolveDawnLikeForestName` (8-way), `resolveDawnLikeMountainName` (blob), the generic manifest-driven `resolveAutotile`, and the `AUTOTILE_MANIFESTS` registry. Maps a `{n,s,e,w}` neighbour mask to the correct atlas sprite name. No runtime deps. |
+| `src/utils/atlasApi.js` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/src/utils/atlasApi.js> | Framework-agnostic helpers over the atlas JSON. Exports `loadAtlas` (fetch + dedupe + cache), `getSprite`, `hasSprite`, `isAnimated`, `spriteNames`, `spriteTags`, `tagIndex`, `searchSprites`, `spritesByTag`, `autotileFamilies`, `spriteCell`, `nameAtIndex`, `spriteStyle` (CSS bag), `drawSprite` (canvas blit), `pickSprite` (random pick filtered to names that exist), `animationFrames`. No runtime deps. |
 | `react/index.js` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/react/index.js> | React-helper barrel. Re-exports `DawnLikeIcon`, `HeartIcon`, `ManaIcon`, `HealthBar`, `ManaBar`, and the `GUI_FRAMES` map. Pure React 19+ components (no other runtime deps). Render the **separate 16×16 GUI spritesheet**, not the mega atlas. |
 | `react/icons.jsx` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/react/icons.jsx> | Source of the GUI React helpers. `DawnLikeIcon` is a positioned `<div>` backed by a `GUI_FRAMES[name]` lookup (`scale` prop for integer pixel zoom); `HeartIcon`/`ManaIcon` accept a `fill` count; `HealthBar`/`ManaBar` accept `current`/`max`. Defaults to `src="/atlas/GUIAtlas0.png"` + `glowSrc="/atlas/GUIAtlas1.png"` — **GUI sheets are not in this repo**, so you must pass your own `src`/`glowSrc` props. |
 | `react/frames.js` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/react/frames.js> | The `GUI_FRAMES` lookup table. Maps GUI sprite keys (`heartFull`, `heartEmpty`, `manaFull`, `manaEmpty`, `sword`, …) to their `{x,y,w,h}` rect on the 16×16 GUI sheet. Use it directly if you want to render GUI sprites without React. |
@@ -137,15 +150,29 @@ import {
   AUTOTILE_MANIFESTS,
 } from './src/utils/autotile.js';
 
-const name = resolveDawnLikeWallName(
+const name = resolveDawnLikeBuildingWallName(
   'bright brick wall',
   { n: true, s: true, e: false, w: true },
   atlas.byName,
 );
-// → "bright brick wall left right down"
+// → "bright brick wall left up down"
 ```
 
-All `resolveDawnLike*Name` helpers return a **plain string** (the resolved sprite name). Use `resolveAutotile(manifestId, baseName, neighbors, byName)` directly if you want the richer `{ name, suffix, fallback?, missing? }` object.
+**Pick the resolver that matches the family.** `bright brick wall` is on the
+Objects/Wall sheet, so it needs `resolveDawnLikeBuildingWallName`; calling
+`resolveDawnLikeWallName` (which drives the Objects/Map open-path family) on it
+returns `"bright brick wall up down"` — a real sprite, but the wrong piece.
+
+Return shapes differ, so destructure accordingly:
+
+| Resolver | Returns |
+|---|---|
+| `resolveDawnLikeWallName`, `resolveDawnLikeBuildingWallName`, `resolveDawnLikeMountainName` | a plain `string` |
+| `resolveDawnLikeDungeonWallName` | a `string`, or `null` for buried interior wall |
+| `resolveDawnLikeRiverName` | `{ name }` |
+| `resolveDawnLikeFloorName`, `resolveDawnLikeForestName` | `{ name, reason }` |
+| `resolveDawnLikePoolName` | `{ name, flipY? }` — honour `flipY` with `transform: scaleY(-1)` |
+| `resolveAutotile` | `{ name, suffix, fallback?, missing? }` |
 
 ### Naming-convention gotchas
 
@@ -158,18 +185,26 @@ These conventions are baked into the atlas; trust the resolvers over hand-rolled
 
 ## When to use which sprite-lookup strategy
 
-1. **You know the exact sprite name** → `atlas.byName[name]`.
-2. **You're tiling terrain / structures with neighbors** → `resolveDawnLike*Name(...)` from `dawnlike-atlas/autotile`.
-3. **You want to browse** → run Storybook locally (`bun install && bun run dev`) or open the [hosted demo](https://lucas-stanford.github.io/dawnlike-atlas/) and visit **DawnLike › Mega Atlas › All Sprites**.
-4. **You need the GUI icons** (`health icon`, `mana icon`, `fire icon`, …) → use the React `DawnLikeIcon` / `HealthBar` / `ManaBar` helpers, or look them up by name in `byName`.
+1. **You know the exact sprite name** → `atlas.byName[name]`, or `getSprite(atlas, name)` for a null-safe read.
+2. **You know roughly what you want** → `searchSprites(atlas, { query, tags })` from `dawnlike-atlas/atlas-api`. Every query word must appear in the name **or** the AI-generated tags, in any order, so `"glowing sword"` and `"brick wall"` both work. `tagIndex(atlas)` lists every tag with its count.
+3. **You're picking randomly from a candidate list** → `pickSprite(atlas, candidates, rng)`. It filters to names the atlas actually has and returns `null` rather than a blank tile; pass `ROT.RNG.getUniform` for seeded generation.
+4. **You're tiling terrain / structures with neighbors** → `resolveDawnLike*Name(...)` from `dawnlike-atlas/autotile`. Discover the available families with `autotileFamilies(atlas, suffixes, min)` instead of hard-coding a list that can drift from the pack.
+5. **You want to browse** → run Storybook locally (`bun install && bun run dev`) or open the [hosted demo](https://lucas-stanford.github.io/dawnlike-atlas/): **Sprite Browser** to search, **Autotile Lab** to understand the resolvers, **Mega Atlas** for the raw packed sheet.
+6. **You need the GUI icons** (`health icon`, `mana icon`, `fire icon`, …) → use the React `DawnLikeIcon` / `HealthBar` / `ManaBar` helpers, or look them up by name in `byName`.
 
 ## Reference examples in the repo
 
 Working integrations live under `src/` and `stories/`:
 
-- `src/AutotileExample.jsx` — rot.js dungeon, autotiled walls.
+- `src/AutotileLabExample.jsx` — interactive playground for every resolver: neighbour pad, full variant sheet, live paint canvas. **Read this first** to understand the resolvers.
+- `src/SpriteBrowserExample.jsx` — search all 4,157 sprites by name and tag; also the reference usage of `src/utils/atlasApi.js`.
+- `src/DungeonExample.jsx` — rot.js rooms-and-corridors, autotiled walls.
+- `src/CaveExample.jsx` — cellular-automata caverns, largest-region flood fill, distance-transform lakes.
 - `src/OutdoorExample.jsx` — overworld with biome floors, river, road, bridge, forest canopy.
+- `src/IslandExample.jsx` — radial-falloff landmass; pool + floor + forest + mountain resolvers on one map.
 - `src/TownExample.jsx` — town generation with building walls, doors, furniture, NPCs.
+- `src/SewerExample.jsx` — sludge channel with brick walkways and crossing bridges.
+- `src/TacticalCombatExample.jsx` + `src/utils/tactical/` — XCOM-style squad tactics (AP, LOS, cover, flanking).
 - `src/PhaserExample.jsx` + `src/phaser/` — Phaser 4 roguelike (overworld + town + 3-level dungeon, HUD, save/resume).
 - `Example_LLM_Prompts/game-template.md` — a self-contained prompt for handing this repo to an LLM to scaffold a new 2D browser game.
 
