@@ -1,0 +1,157 @@
+/* ComponentsExample — gallery chrome. */
+
+.cg-root {
+  --cg-bg: #0f1113;
+  --cg-panel: #1a1d20;
+  --cg-line: #2c3136;
+  --cg-accent: #4caf50;
+  --cg-text: #e8eaed;
+  --cg-muted: #9aa2aa;
+
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 24px;
+  background: var(--cg-bg);
+  color: var(--cg-text);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.cg-root *,
+.cg-root *::before,
+.cg-root *::after {
+  box-sizing: border-box;
+}
+
+.cg-header {
+  max-width: 72ch;
+  margin-bottom: 24px;
+}
+
+.cg-header h1 {
+  margin: 0 0 6px;
+  font-size: 21px;
+}
+
+.cg-header p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--cg-muted);
+}
+
+.cg-panel {
+  padding: 20px;
+  margin-bottom: 18px;
+  background: var(--cg-panel);
+  border: 1px solid var(--cg-line);
+  border-radius: 12px;
+}
+
+.cg-panel h2 {
+  margin: 0 0 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  letter-spacing: 0.3px;
+  color: var(--cg-accent);
+}
+
+.cg-hint {
+  max-width: 76ch;
+  margin: 0 0 18px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--cg-muted);
+}
+
+.cg-hint code,
+.cg-root code {
+  padding: 1px 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: #cfd6dc;
+  background: #101315;
+  border-radius: 4px;
+}
+
+.cg-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.cg-demo > pre {
+  flex: 1 1 320px;
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #cfd6dc;
+  background: #101315;
+  border: 1px solid var(--cg-line);
+  border-radius: 8px;
+}
+
+.cg-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.cg-row-baseline {
+  align-items: flex-end;
+  padding: 16px 20px;
+  background: #000;
+  border-radius: 8px;
+}
+
+.cg-root figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.cg-root figcaption {
+  font-size: 10.5px;
+  letter-spacing: 0.4px;
+  color: var(--cg-muted);
+}
+
+/* ---- HUD demo ---------------------------------------------------- */
+
+.cg-hud {
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 20px;
+  background: #000;
+  border-radius: 8px;
+}
+
+.cg-gauge {
+  gap: 0;
+}
+
+.cg-hud button {
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--cg-text);
+  background: #1c2124;
+  border: 1px solid var(--cg-line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.cg-hud button:hover {
+  border-color: var(--cg-accent);
+}
+
+.cg-count {
+  font-size: 12px;
+  color: var(--cg-muted);
+  font-variant-numeric: tabular-nums;
+}

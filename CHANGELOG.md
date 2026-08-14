@@ -21,6 +21,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   variant sheet for any family, and a paint canvas that autotiles live.
 - **Sprite Browser** example and story — search all 4,157 sprites by name and
   tag, inspect any atlas record, and copy React / CSS / Phaser snippets.
+- **Components** gallery example and story — every component the package
+  exports, rendered live with its props, including a HUD assembled from the GUI
+  sprites inside the mega-atlas.
 - **Island** zone example — radial-falloff landmass exercising the pool, floor,
   forest and mountain resolvers together. The first example to use
   `resolveDawnLikeMountainName`.

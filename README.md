@@ -201,6 +201,7 @@ self-contained component under `src/`.
 | **Autotile Lab** | `src/AutotileLabExample.jsx` | Interactive playground for all six resolvers: neighbour pad, full variant sheet, and a live paint canvas. |
 | **Sprite Browser** | `src/SpriteBrowserExample.jsx` | Search all 4,157 sprites by name and tag, inspect any record, copy React/CSS/Phaser snippets. |
 | **Mega Atlas** | `src/components/SpriteSheet.jsx` | The packed sheet itself, in its 64×65 grid, with hover names and animation toggle. |
+| **Components** | `src/ComponentsExample.jsx` | Live gallery of every component the npm package exports, each with the props beside it — plus a HUD built only from GUI sprites inside the mega-atlas. |
 
 ### Zone generators
 
