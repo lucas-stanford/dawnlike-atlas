@@ -1,35 +1,54 @@
 /**
- * Get the base URL for the application.
- * In production (GitHub Pages), this is '/GameGenFiles/'
- * In development, this is '/'
+ * Asset path resolution for the Storybook examples.
+ *
+ * The atlas PNGs and JSON are served from Storybook's `staticDirs`
+ * (`../atlas`), so examples reference them with a leading slash —
+ * `/DawnlikeAtlas0.png`. That works in dev, but the published Storybook
+ * lives under a GitHub Pages project subpath, so the leading slash has
+ * to be rewritten against the deployment base.
+ */
+
+/** GitHub Pages project path for the published Storybook. */
+const PAGES_BASE = '/dawnlike-atlas/';
+
+/**
+ * Get the base URL the app is served from.
+ *
+ * Prefers Vite's `import.meta.env.BASE_URL` (correct in both dev and a
+ * built Storybook), then falls back to the known Pages subpath, then to
+ * the site root.
+ *
+ * @returns {string} base URL, always ending in '/'
  */
 export function getBaseUrl() {
-  // Try to get from Vite's import.meta.env first
   if (import.meta?.env?.BASE_URL) {
     return import.meta.env.BASE_URL;
   }
-  
-  // Fallback: check if we're on GitHub Pages
+
   if (typeof window !== 'undefined' && window.location.hostname.includes('github.io')) {
-    return '/GameGenFiles/';
+    return PAGES_BASE;
   }
-  
-  // Default to root
+
   return '/';
 }
 
 /**
- * Resolve an absolute path relative to the base URL.
- * @param {string} path - An absolute path like '/Characters/Player0.png'
- * @returns {string} - The resolved path like '/GameGenFiles/Characters/Player0.png'
+ * Resolve an absolute path against the base URL.
+ *
+ * Relative paths are returned untouched — a build whose `BASE_URL` is
+ * './' already produces document-relative URLs that resolve correctly.
+ *
+ * @param {string} path - an absolute path like '/DawnlikeAtlas0.png'
+ * @returns {string} the resolved path, e.g. '/dawnlike-atlas/DawnlikeAtlas0.png'
  */
 export function resolveAssetPath(path) {
   if (!path || !path.startsWith('/')) {
     return path;
   }
-  
+
   const base = getBaseUrl();
-  // Remove trailing slash from base and leading slash from path to avoid double slashes
+  // Strip the trailing slash from the base and keep the leading slash on
+  // the path so the join never produces a double slash.
   const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
   return cleanBase + path;
 }

@@ -1,36 +1,25 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import { defineConfig } from 'vitest/config';
 
-import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
-
-import { playwright } from '@vitest/browser-playwright';
-
-const dirname =
-  typeof __dirname !== 'undefined' ? __dirname : path.dirname(fileURLToPath(import.meta.url));
-
-// More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
+/**
+ * Default test project: plain Node unit tests over the atlas metadata,
+ * the autotile resolvers, the atlas helper API, and the tactical
+ * toolkit. No browser, no Storybook — `bun run test` is fast and works
+ * on a bare CI runner.
+ *
+ * The Storybook browser-test project lives in `vitest.storybook.config.ts`
+ * (`bun run test:storybook`); it needs a Storybook major that matches
+ * `@storybook/addon-vitest`, so it is deliberately kept out of the
+ * default run.
+ */
 export default defineConfig({
   test: {
-    projects: [
-      {
-        extends: true,
-        plugins: [
-          // The plugin will run tests for the stories defined in your Storybook config
-          // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
-          storybookTest({ configDir: path.join(dirname, '.storybook') }),
-        ],
-        test: {
-          name: 'storybook',
-          browser: {
-            enabled: true,
-            headless: true,
-            provider: playwright({}),
-            instances: [{ browser: 'chromium' }],
-          },
-        },
-      },
-    ],
+    name: 'unit',
+    environment: 'node',
+    include: ['tests/**/*.test.{js,ts}'],
+    coverage: {
+      provider: 'v8',
+      include: ['src/utils/**/*.js'],
+      exclude: ['src/utils/**/*.d.ts', 'src/utils/spriteAnim.js'],
+    },
   },
 });
