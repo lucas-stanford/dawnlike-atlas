@@ -1,0 +1,35 @@
+# Licence
+
+## Sprite artwork
+
+The DawnLike tileset — every sprite packed into `atlas/DawnlikeAtlas0.png` and
+`atlas/DawnlikeAtlas1.png` — was created by **DragonDePlatino** and
+**DawnBringer** and is released under the
+[Creative Commons Attribution 4.0 International Licence (CC-BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
+
+Original pack: https://dragondeplatino.itch.io/dawnlike
+
+## This repository
+
+The atlas packing, metadata, autotile resolvers, helper API, example
+components, generators and documentation in this repository are released under
+the same licence, **CC-BY 4.0**.
+
+## What that means for you
+
+You may use, remix and redistribute all of it — including commercially — as
+long as you give appropriate credit, link to the licence, and note any changes
+you made.
+
+The minimum attribution to carry in a shipped game (credits screen, README, or
+about box):
+
+> Sprite art: **DawnLike** by DragonDePlatino and DawnBringer (CC-BY 4.0) —
+> https://dragondeplatino.itch.io/dawnlike
+> Atlas and tooling: **dawnlike-atlas** (CC-BY 4.0) —
+> https://github.com/lucas-stanford/dawnlike-atlas
+
+## Full licence text
+
+Creative Commons Attribution 4.0 International:
+https://creativecommons.org/licenses/by/4.0/legalcode

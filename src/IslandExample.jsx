@@ -1,0 +1,336 @@
+/**
+ * IslandExample — a procedurally-generated island, and the only example
+ * that exercises `resolveDawnLikeMountainName`.
+ *
+ * Where OutdoorExample generates open wilderness, this one generates a
+ * *bounded* landmass: simplex elevation multiplied by a radial falloff,
+ * so the map always resolves to land in the middle and ocean at every
+ * edge. That shape is what makes it a good demonstration of four
+ * resolvers cooperating on one map:
+ *
+ *   ocean / shallows  → resolveDawnLikePoolName    (water body edges)
+ *   beach / grass     → resolveDawnLikeFloorName   (terrain transitions)
+ *   woodland          → resolveDawnLikeForestName  (8-way canopy)
+ *   highlands         → resolveDawnLikeMountainName(10-sprite blob set)
+ *
+ * The key idea worth stealing: each layer autotiles against its own
+ * "same-type" predicate, and the predicates are deliberately *nested* —
+ * beach counts grass as same-type so the sand never draws an edge
+ * against the meadow it flows into, while water counts only water. Get
+ * those predicates right and the seams disappear.
+ */
+
+import React, { useState, useEffect, useMemo } from 'react';
+import * as ROT from 'rot-js';
+import { resolveAssetPath } from './utils/paths';
+import { pickSprite } from './utils/atlasApi';
+import { dawnlikeAnimVars, DAWNLIKE_ATLAS_0_URL } from './utils/spriteAnim';
+import './utils/spriteAnim.css';
+import {
+  resolveDawnLikeFloorName,
+  resolveDawnLikePoolName,
+  resolveDawnLikeForestName,
+  resolveDawnLikeMountainName,
+} from './utils/autotile';
+import './Autotile.css';
+
+const TILE_SIZE = 32;
+
+/** Terrain bands, low → high. Thresholds are on the shaped elevation. */
+const OCEAN = 'ocean';
+const BEACH = 'beach';
+const GRASS = 'grass';
+const PEAK = 'peak';
+
+export default function IslandExample({
+  width: widthProp = 34,
+  height: heightProp = 24,
+  seed: seedProp,
+  waterStyle: waterStyleProp = 'stone clear pool',
+  beachStyle: beachStyleProp = 'day dirt floor',
+  grassStyle: grassStyleProp = 'day grass floor',
+  treeStyle: treeStyleProp = 'light oak',
+  mountainStyle: mountainStyleProp = 'brown peak',
+  seaLevel: seaLevelProp = 0.30,
+  beachWidth: beachWidthProp = 0.06,
+  treeLine: treeLineProp = 0.60,
+  forestDensity: forestDensityProp = 0.55,
+  decors: decorsProp,
+  decorDensity: decorDensityProp = 0.04,
+} = {}) {
+  const [atlas, setAtlas] = useState(null);
+  const [hoverInfo, setHoverInfo] = useState(null);
+  const [seed, setSeed] = useState(seedProp ?? Math.floor(Math.random() * 1_000_000));
+
+  useEffect(() => { if (seedProp != null) setSeed(seedProp); }, [seedProp]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(resolveAssetPath('/DawnlikeAtlas.json'))
+      .then((r) => r.json())
+      .then((json) => { if (!cancelled) setAtlas(json); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  // ---- generation --------------------------------------------------
+
+  const mapData = useMemo(() => {
+    if (!atlas) return null;
+    ROT.RNG.setSeed(seed);
+    const W = widthProp;
+    const H = heightProp;
+    const noise = new ROT.Noise.Simplex();
+
+    /**
+     * Radial falloff: 1 at the centre, 0 at the furthest corner. Squaring
+     * it keeps a broad plateau in the middle and drops off sharply near
+     * the border, which is what stops the island touching the edge.
+     */
+    const falloff = (x, y) => {
+      const nx = (x / (W - 1)) * 2 - 1;
+      const ny = (y / (H - 1)) * 2 - 1;
+      const d = Math.min(1, Math.sqrt(nx * nx + ny * ny) / Math.SQRT2);
+      return (1 - d) ** 2;
+    };
+
+    // Two octaves of simplex give coastlines with both broad bays and
+    // small inlets; one octave alone reads as a smooth blob.
+    const elevationAt = (x, y) => {
+      const base = (noise.get(x / 14, y / 14) + 1) / 2;
+      const detail = (noise.get(x / 5, y / 5) + 1) / 2;
+      return (base * 0.72 + detail * 0.28) * falloff(x, y) * 1.9;
+    };
+
+    const tiles = {};
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const elevation = elevationAt(x, y);
+        let band = OCEAN;
+        if (elevation >= treeLineProp) band = PEAK;
+        else if (elevation >= seaLevelProp + beachWidthProp) band = GRASS;
+        else if (elevation >= seaLevelProp) band = BEACH;
+        tiles[`${x},${y}`] = { band, elevation, tree: false, decor: null };
+      }
+    }
+
+    // Woodland: a separate noise field masked to the grass band, so
+    // forests form connected stands instead of a uniform speckle — the
+    // 8-way canopy resolver only looks good on contiguous blobs.
+    const forestNoise = new ROT.Noise.Simplex();
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const tile = tiles[`${x},${y}`];
+        if (tile.band !== GRASS) continue;
+        const density = (forestNoise.get(x / 7, y / 7) + 1) / 2;
+        if (density > 1 - forestDensityProp) tile.tree = true;
+      }
+    }
+
+    // Scatter: only on open ground, never under a canopy or on rock.
+    const decors = decorsProp?.length
+      ? decorsProp
+      : ['pebble', 'rock', 'boulder', 'red cap mushroom', 'bones'];
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const tile = tiles[`${x},${y}`];
+        if (tile.tree || (tile.band !== GRASS && tile.band !== BEACH)) continue;
+        if (ROT.RNG.getUniform() >= decorDensityProp) continue;
+        tile.decor = pickSprite(atlas, decors, ROT.RNG.getUniform.bind(ROT.RNG));
+      }
+    }
+
+    const counts = { [OCEAN]: 0, [BEACH]: 0, [GRASS]: 0, [PEAK]: 0, trees: 0 };
+    for (const tile of Object.values(tiles)) {
+      counts[tile.band]++;
+      if (tile.tree) counts.trees++;
+    }
+
+    return { tiles, W, H, counts };
+  }, [
+    atlas, seed, widthProp, heightProp,
+    seaLevelProp, beachWidthProp, treeLineProp, forestDensityProp,
+    decorsProp, decorDensityProp,
+  ]);
+
+  // ---- rendering ---------------------------------------------------
+
+  const getTileLayers = (x, y) => {
+    if (!mapData || !atlas) return [];
+    const key = `${x},${y}`;
+    const tile = mapData.tiles[key];
+    if (!tile) return [];
+
+    const { W, H, tiles } = mapData;
+    const inBounds = (nx, ny) => nx >= 0 && ny >= 0 && nx < W && ny < H;
+    /** Off-map reads as ocean, which closes the coastline at the border. */
+    const bandAt = (nx, ny) => (inBounds(nx, ny) ? tiles[`${nx},${ny}`].band : OCEAN);
+    const treeAt = (nx, ny) => (inBounds(nx, ny) ? tiles[`${nx},${ny}`].tree : false);
+
+    const layers = [];
+
+    // Layer 0 — ground. Land tiles get a grass underlay everywhere so
+    // beach and rock edges always have something behind them; ocean
+    // tiles are left bare for the water layer.
+    if (tile.band !== OCEAN) {
+      const isLand = (nx, ny) => bandAt(nx, ny) !== OCEAN;
+      const grass = resolveDawnLikeFloorName(
+        grassStyleProp,
+        { n: isLand(x, y - 1), s: isLand(x, y + 1), e: isLand(x + 1, y), w: isLand(x - 1, y) },
+        atlas.byName,
+      );
+      layers.push({ name: grass.name, z: 0, reason: 'Ground · floor resolver' });
+    }
+
+    // Layer 1 — beach. Sand counts grass as same-type so the shoreline
+    // draws its edge against the WATER, not against the meadow inland.
+    if (tile.band === BEACH) {
+      const sandLike = (nx, ny) => bandAt(nx, ny) !== OCEAN;
+      const sand = resolveDawnLikeFloorName(
+        beachStyleProp,
+        { n: sandLike(x, y - 1), s: sandLike(x, y + 1), e: sandLike(x + 1, y), w: sandLike(x - 1, y) },
+        atlas.byName,
+      );
+      layers.push({ name: sand.name, z: 1, reason: 'Beach · floor resolver' });
+    }
+
+    // Layer 1 — water. Only water counts as same-type, so the pool
+    // family draws banks wherever the ocean meets any land band.
+    if (tile.band === OCEAN) {
+      const isWater = (nx, ny) => bandAt(nx, ny) === OCEAN;
+      const water = resolveDawnLikePoolName(
+        waterStyleProp,
+        { n: isWater(x, y - 1), s: isWater(x, y + 1), e: isWater(x + 1, y), w: isWater(x - 1, y) },
+        atlas.byName,
+      );
+      layers.push({ name: water.name, z: 1, flipY: water.flipY, reason: 'Ocean · pool resolver' });
+    }
+
+    // Layer 2 — highlands. A true blob set: the suffix names the edge
+    // the tile sits on, so the predicate is simply "is this also rock".
+    if (tile.band === PEAK) {
+      const isRock = (nx, ny) => bandAt(nx, ny) === PEAK;
+      const peak = resolveDawnLikeMountainName(
+        mountainStyleProp,
+        { n: isRock(x, y - 1), s: isRock(x, y + 1), e: isRock(x + 1, y), w: isRock(x - 1, y) },
+        atlas.byName,
+      );
+      layers.push({ name: peak, z: 2, reason: 'Highlands · mountain blob' });
+    }
+
+    // Layer 3 — canopy. The one 8-way resolver: diagonals decide
+    // whether each corner of the canopy curves away.
+    if (tile.tree) {
+      const canopy = resolveDawnLikeForestName(
+        treeStyleProp,
+        {
+          n: treeAt(x, y - 1), s: treeAt(x, y + 1), e: treeAt(x + 1, y), w: treeAt(x - 1, y),
+          nw: treeAt(x - 1, y - 1), ne: treeAt(x + 1, y - 1),
+          sw: treeAt(x - 1, y + 1), se: treeAt(x + 1, y + 1),
+        },
+        atlas.byName,
+      );
+      layers.push({ name: canopy.name, z: 3, reason: `Canopy · ${canopy.reason}` });
+    }
+
+    if (tile.decor) layers.push({ name: tile.decor, z: 4, reason: 'Scatter' });
+
+    return layers;
+  };
+
+  if (!atlas || !mapData) {
+    return <div className="autotile-layout full-viewport"><div className="control-card">Loading…</div></div>;
+  }
+
+  const { W, H, counts } = mapData;
+
+  return (
+    <div className="autotile-layout full-viewport" style={dawnlikeAnimVars}>
+      <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 10, display: 'flex', gap: 8, alignItems: 'center' }}>
+        <button
+          onClick={() => setSeed(Math.floor(Math.random() * 1_000_000))}
+          style={{ padding: '6px 12px', cursor: 'pointer' }}
+        >
+          🔄 New island
+        </button>
+        <div style={{
+          padding: '6px 10px',
+          background: 'rgba(0,0,0,0.55)',
+          color: '#fff',
+          fontFamily: 'system-ui, sans-serif',
+          fontSize: 12,
+          borderRadius: 4,
+        }}>
+          seed: {seed} · {W}×{H} · land {Math.round(((W * H - counts[OCEAN]) / (W * H)) * 100)}%
+          {' · '}beach {counts[BEACH]} · woods {counts.trees} · peaks {counts[PEAK]}
+        </div>
+      </div>
+
+      <div className="map-viewport maximized">
+        <div
+          className="map-grid"
+          style={{ width: W * TILE_SIZE, height: H * TILE_SIZE }}
+          onMouseLeave={() => setHoverInfo(null)}
+        >
+          {Array.from({ length: H }).map((_, y) =>
+            Array.from({ length: W }).map((__, x) => {
+              const layers = getTileLayers(x, y);
+              return (
+                <div
+                  key={`${x},${y}`}
+                  onMouseEnter={() => setHoverInfo({ x, y, layers, band: mapData.tiles[`${x},${y}`].band })}
+                  style={{
+                    position: 'absolute',
+                    left: x * TILE_SIZE,
+                    top: y * TILE_SIZE,
+                    width: TILE_SIZE,
+                    height: TILE_SIZE,
+                  }}
+                >
+                  {layers.map((layer, i) => {
+                    const sprite = atlas.byName[layer.name];
+                    if (!sprite) return null;
+                    const animated = Boolean(sprite.isAnimated);
+                    return (
+                      <div
+                        key={i}
+                        className={animated ? 'dawnlike-tile-anim' : undefined}
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          ...(animated ? null : { backgroundImage: `url(${DAWNLIKE_ATLAS_0_URL})` }),
+                          backgroundPosition: `-${sprite.x}px -${sprite.y}px`,
+                          backgroundSize: `${atlas.meta.size.w}px ${atlas.meta.size.h}px`,
+                          zIndex: Math.round(layer.z * 10),
+                          imageRendering: 'pixelated',
+                          ...(layer.flipY ? { transform: 'scaleY(-1)' } : null),
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            }),
+          )}
+        </div>
+
+        {hoverInfo && (
+          <div className="logic-popup" style={{ position: 'absolute', right: 16, top: 16, maxWidth: 280 }}>
+            <div className="popup-header">
+              ({hoverInfo.x}, {hoverInfo.y}) · {hoverInfo.band}
+            </div>
+            <div className="popup-layers">
+              {hoverInfo.layers.map((l, i) => (
+                <div className="popup-layer" key={i}>
+                  <span className="layer-tag">L{l.z}</span>
+                  <span className="layer-name">{l.name}</span>
+                  <span className="layer-reason">{l.reason}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

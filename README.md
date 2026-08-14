@@ -1,103 +1,299 @@
 # DawnLike Semantic Atlas
 
-A bin-packed **mega-atlas** and rich metadata for the [DawnLike](https://dragondeplatino.itch.io/dawnlike) roguelike tileset (32×32 cells — a strict nearest-neighbour 2× upscale of the original 16×16 art, so every source pixel is preserved as a clean 2×2 block), plus a small React/Storybook playground that demonstrates semantic lookup, 16-way autotiling, and integration with rendering libraries.
+A bin-packed **mega-atlas** and rich metadata for the [DawnLike](https://dragondeplatino.itch.io/dawnlike) roguelike tileset, plus a React/Storybook playground of working examples: semantic name lookup, 16-way autotiling, procedural zone generators, a tactical-combat toolkit, and Phaser integration.
+
+Tiles are 32×32 — a strict nearest-neighbour 2× upscale of the original 16×16 art, so every source pixel is preserved as a clean 2×2 block.
 
 **🔗 Live demo:** https://lucas-stanford.github.io/dawnlike-atlas/
 
+```bash
+npm install dawnlike-atlas    # or: bun add dawnlike-atlas
+```
+
+```jsx
+import { useAtlas, AtlasSprite } from 'dawnlike-atlas';
+
+function Wizard() {
+  const { atlas, loading } = useAtlas('/atlas/DawnlikeAtlas.json');
+  if (loading) return null;
+  return <AtlasSprite atlas={atlas} name="wizard" scale={3} animated />;
+}
+```
+
+---
+
 ## Contents
 
-- `atlas/`
-  - `DawnlikeAtlas0.png` — primary frames (4,157 sprites, 2048×2080)
-  - `DawnlikeAtlas1.png` — alt frames for the 1,258 animated sprites
-  - `DawnlikeAtlas.json` — `byName` lookup (with `meta.tile = {w:32,h:32}`) + AI-generated tags + semantic connections
-- `src/` — autotile resolvers (`src/utils/autotile.js`) and the example components
-- `react/` — re-exports for consuming the atlas from a React project
-- `stories/` — Storybook stories that render the examples
+| Path | What's in it |
+| --- | --- |
+| `atlas/DawnlikeAtlas0.png` | Primary frames — 4,157 sprites, 2048×2080 |
+| `atlas/DawnlikeAtlas1.png` | Alternate frames for the 1,258 animated sprites |
+| `atlas/DawnlikeAtlas.json` | `byName` lookup, Phaser `frames`, AI-generated tags |
+| `src/utils/atlasApi.js` | Framework-agnostic helpers over the atlas JSON |
+| `src/utils/autotile.js` | The six autotile resolvers + their manifests |
+| `src/utils/tactical/` | XCOM-style AP / LOS / cover / combat toolkit |
+| `src/*Example.jsx` | The example components |
+| `src/phaser/` | A complete Phaser 4 roguelike |
+| `stories/` | Storybook stories wrapping each example |
+| `tests/` | Unit tests — atlas integrity, resolvers, API, tactical |
 
-## Key Features
+## Key features
 
-- **Semantic lookup**: assets keyed by human-readable names (`"fighting fish"`, `"bright brick wall left right down"`).
-- **AI-generated tags**: 3,700+ sprites tagged with descriptive keywords (`creature`, `metallic`, `glowing`, …).
-- **16-way autotiling**: cardinal-neighbor resolvers for walls, floors, rivers, pools, and forest canopies.
+- **Semantic lookup.** Sprites are keyed by human-readable names: `"fighting fish"`, `"bright brick wall left right down"`, `"luminous mushroom"`.
+- **AI-generated tags.** 3,700+ sprites tagged with descriptive keywords (`creature`, `metallic`, `glowing`, `aquatic`, …) so you can search the pack by intent rather than by filename.
+- **Six autotile resolvers.** Cardinal- and 8-way neighbour resolvers for walls, floors, rivers, pools, forest canopies and mountains, each with a fallback chain so a family missing a variant degrades instead of rendering a hole.
+- **Two-frame animation.** Every animated sprite occupies the same coordinates on both sheets; flip between them for DawnLike's signature idle.
 
-## Install
+---
 
-```bash
-npm install dawnlike-atlas
-# or: bun add dawnlike-atlas
-```
+## The atlas API
 
-Import the atlas + React sprite components from the package root, and the raw atlas assets from their subpaths:
+`dawnlike-atlas/atlas-api` (also re-exported from the package root) is plain
+JavaScript over the parsed JSON — no React, no DOM, no bundler assumptions. It
+works in a Node script, a Web Worker, or a `<script type="module">` tag.
 
 ```js
-import { Sprite, AnimatedSprite } from 'dawnlike-atlas';
-import atlas from 'dawnlike-atlas/atlas/DawnlikeAtlas.json';
-import { resolveDawnLikeWallName } from 'dawnlike-atlas/autotile';
+import {
+  loadAtlas, getSprite, searchSprites, tagIndex,
+  spriteStyle, drawSprite, pickSprite, autotileFamilies,
+} from 'dawnlike-atlas/atlas-api';
 
-// The two atlas PNGs are also published — point your bundler at them:
-//   dawnlike-atlas/atlas/DawnlikeAtlas0.png
-//   dawnlike-atlas/atlas/DawnlikeAtlas1.png
+const atlas = await loadAtlas('/atlas/DawnlikeAtlas.json');
 ```
 
-## Getting Started (local dev)
+| Function | Purpose |
+| --- | --- |
+| `loadAtlas(url)` | Fetch + cache the JSON. Concurrent callers share one request. |
+| `getSprite(atlas, name)` | `{ x, y, w, h, tags, isAnimated }` or `null`. |
+| `hasSprite` / `isAnimated` | Existence and animation predicates. |
+| `searchSprites(atlas, opts)` | Search by name words, tags, prefix, animation state. |
+| `tagIndex(atlas)` | Every tag with its sprite count, most common first. |
+| `spritesByTag(atlas, tag)` | Names carrying a tag. |
+| `autotileFamilies(atlas, suffixes, min)` | Discover autotile base names present in the pack. |
+| `spriteCell` / `nameAtIndex` | Convert between a sprite and its packed-grid index. |
+| `spriteStyle(atlas, name, opts)` | A CSS-in-JS bag that renders the sprite. |
+| `drawSprite(ctx, sheet, atlas, name, x, y, scale)` | Blit to a 2D canvas. |
+| `pickSprite(atlas, candidates, rng)` | Random pick, filtered to names that exist. |
+| `animationFrames(atlas, name)` | The 1- or 2-frame sequence with its sheets. |
 
-The hosted Storybook is available at https://lucas-stanford.github.io/dawnlike-atlas/.
-To run it locally:
+Full TypeScript definitions ship alongside (`src/utils/atlasApi.d.ts`).
 
-```bash
-bun install
-bun run dev          # launches Storybook on http://localhost:6006
+### Searching
+
+Every word in `query` must appear somewhere in the name *or* the tags, in any
+order — so `"brick wall"` finds `"bright brick wall left right"`, and
+`"glowing sword"` finds a sword tagged `glowing`.
+
+```js
+searchSprites(atlas, { query: 'rat' });                     // by name or tag
+searchSprites(atlas, { tags: ['creature', 'aquatic'] });    // must have both
+searchSprites(atlas, { tags: ['undead'], tagMode: 'any' }); // any of them
+searchSprites(atlas, { animated: true, limit: 20 });        // 2-frame sprites
+searchSprites(atlas, { prefix: 'bright brick wall' });      // one family
 ```
 
-## Examples
+### React components
 
-All examples live in `stories/` and are browsable from the Storybook sidebar.
+```jsx
+import {
+  useAtlas,       // load the atlas once, share it everywhere
+  AtlasSprite,    // one sprite, addressed by name
+  AtlasTileMap,   // a 2D grid of names (or layer stacks)
+  Sprite,         // generic frame-indexed sprite, any spritesheet
+  AnimatedSprite, // cycle arbitrary frame indices
+  NineSlicePanel, // resizable pixel-art panel
+  PixelButton,
+  HealthBar, ManaBar, DawnLikeIcon,
+} from 'dawnlike-atlas';
+```
 
-### DawnLike › Mega Atlas › All Sprites
-`stories/MegaAtlas.stories.jsx` → `src/components/SpriteSheet`
+`<AtlasTileMap>` takes a row-major grid where each cell is a name, an array of
+names drawn as layers, or `null`:
 
-Renders every named sprite from `DawnlikeAtlas0.png` in its bin-packed 64×65 grid. Toggle animation to flip in `DawnlikeAtlas1.png` for the animated sprites; hover any cell to read its name from the atlas lookup. Use this to browse what's available before reaching for it by name.
+```jsx
+<AtlasTileMap atlas={atlas} scale={2} tiles={[
+  ['dark brick wall left right', 'dark brick wall left right'],
+  ['dusk brick floor c',         ['dusk brick floor c', 'wizard']],
+]} />
+```
 
-### Examples › Autotile (rot.js)
-`stories/Autotile.stories.jsx` → `src/AutotileExample.jsx`
+### Raw usage, no framework
 
-A dungeon generator built on [rot.js](https://github.com/ondras/rot.js). Pick from six map algorithms (Digger, Uniform, Cellular, Divided / Icey / Eller mazes) and a wall style; walls are autotiled via `resolveDawnLikeWallName`. Demonstrates how to feed `{ n, s, e, w }` neighbor flags into the resolver to get the correct sprite name back.
+```js
+const { x, y } = atlas.byName['wizard'];
+el.style.backgroundImage = 'url(DawnlikeAtlas0.png)';
+el.style.backgroundPosition = `-${x}px -${y}px`;
+el.style.imageRendering = 'pixelated';
+```
 
-### Examples › Outdoor Wilderness
-`stories/Outdoor.stories.jsx` → `src/OutdoorExample.jsx`
+### Phaser 3 / 4
 
-A procedurally-generated overworld using simplex noise for biomes, a meandering road, and a single-line meandering river that drops a bridge where it crosses the road. The floating gear panel lets you swap terrain, dirt patch, path, river, and tree styles independently; the selected ground terrain renders under forests, roads, and rivers. Shows off `resolveDawnLikeFloorName`, `resolveDawnLikeRiverName`, and `resolveDawnLikeForestName` working together.
+The JSON doubles as a Phaser texture atlas, so sprites are addressable by name
+straight out of the loader:
 
-### Examples › Phaser Roguelike
-`stories/PhaserExample.stories.jsx` → `src/PhaserExample.jsx` → `src/phaser/`
+```js
+// preload
+this.load.atlas('dawnlike',  'DawnlikeAtlas0.png', 'DawnlikeAtlas.json');
+this.load.atlas('dawnlike1', 'DawnlikeAtlas1.png', 'DawnlikeAtlas.json');
 
-A small explorable roguelike built on [Phaser 4](https://phaser.io/): an overworld + a town (with NPCs, furniture, signs and scattered flowers populating each building) + a 3-level dungeon, wired up with working bidirectional exits, a chrome-framed HUD that sits in its own band above the play area, hold-to-walk movement, sprite animations driven off `DawnlikeAtlas0.png` ↔ `DawnlikeAtlas1.png`, and `localStorage` save/resume keyed off a single seed (reload → same world, same spot). The Storybook **Controls** panel exposes the generator manifests live — tweak the world seed, biome thresholds, town building mix / NPC density / flower density, or dungeon depth and the game rebuilds in-place. All game code lives under `src/phaser/`. Use this as a starting point for integrating the atlas into a Phaser game.
+// create
+this.add.sprite(x, y, 'dawnlike', 'wizard');
 
-## LLM Prompts
+this.anims.create({
+  key: 'wizard-walk',
+  frames: [
+    { key: 'dawnlike',  frame: 'wizard' },
+    { key: 'dawnlike1', frame: 'wizard' },
+  ],
+  frameRate: 2,
+  repeat: -1,
+});
+```
 
-A single self-contained prompt — [`Example_LLM_Prompts/game-template.md`](./Example_LLM_Prompts/game-template.md) — that you can hand to an LLM (Claude, GPT-4, Copilot, …) to **build any 2D browser game** on top of this repo. Drop your game idea into the `<<<…>>>` slot and the model has everything it needs (atlas, generators, autotile helpers, reference examples) linked by raw/blob GitHub URL.
+---
 
-The prompt is also available inside Storybook under **Dawnlike › Prompts** with a starter-pitch dropdown, an "Include sections" toggle row (overworld / town / dungeon / arena / HUD / full Phaser wiring), and a one-click copy button.
+## Semantic autotiling
 
-See [`Example_LLM_Prompts/README.md`](./Example_LLM_Prompts/README.md) for the section layout and authoring conventions.
+DawnLike names autotile variants as `"<family> <suffix>"`. Each resolver takes
+the family, a neighbour truth table, and `atlas.byName` (so it can check which
+variants the pack actually has and fall back when one is missing).
 
-## Semantic Autotiling
+```js
+import { resolveDawnLikeBuildingWallName } from 'dawnlike-atlas/autotile';
 
-```javascript
-import { resolveDawnLikeWallName } from './src/utils/autotile';
-
-// Build the correct sprite name from cardinal neighbors
-const { name } = resolveDawnLikeWallName(
-  "bright brick wall",
+resolveDawnLikeBuildingWallName(
+  'bright brick wall',
   { n: true, s: true, e: false, w: true },
   atlas.byName,
 );
-// → "bright brick wall left right down"
+// → 'bright brick wall left up down'
 ```
 
-Other resolvers in the same module: `resolveDawnLikeFloorName`, `resolveDawnLikeRiverName`, `resolveDawnLikePoolName`, `resolveDawnLikeForestName`.
+| Resolver | Family | Neighbours | Notes |
+| --- | --- | --- | --- |
+| `resolveDawnLikeBuildingWallName` | Objects/Wall walls | 4-way | Suffix order `left right up down`; isolated → `center` |
+| `resolveDawnLikeDungeonWallName` | Objects/Wall walls | via `isWall(x,y)` | Returns `null` for buried rock; handles cave/corridor geometry |
+| `resolveDawnLikeWallName` / `…RiverName` | Rivers, roads, castle walls | 4-way | Suffix order `up down left right`; vertical T's are E/W-inverted |
+| `resolveDawnLikeFloorName` | Floors | 4-way | Variants named by the neighbours that are **missing** |
+| `resolveDawnLikePoolName` | Pools, water | 4-way | May return `flipY` — apply `transform: scaleY(-1)` |
+| `resolveDawnLikeForestName` | Tree canopies | 8-way | A corner curves away unless its diagonal *and* both cardinals are trees |
+| `resolveDawnLikeMountainName` | Peaks, snowcaps, volcanoes | 4-way | Blob set: the suffix names the **edge** the tile sits on |
 
-## Credits
+The gotcha worth internalising: these families do not agree on suffix ordering.
+A north-east corner is `right up` on the wall sheet but `up right` on the map
+sheet. Use the matching resolver rather than string-building names yourself.
 
-Sprite assets by **DragonDePlatino** and **DawnBringer** — [DawnLike on itch.io](https://dragondeplatino.itch.io/dawnlike) (CC-BY 4.0). Atlas packing, metadata, and semantic tooling layered on top.
+**The [Autotile Lab](https://lucas-stanford.github.io/dawnlike-atlas/?path=/story/dawnlike-autotile-lab--lab)
+is the fastest way to understand any of this** — toggle neighbours, browse a
+family's whole variant sheet, or paint a shape and watch it tile live.
 
+---
+
+## Examples
+
+Every example is browsable from the Storybook sidebar, and each one is a single
+self-contained component under `src/`.
+
+### Tools
+
+| Story | Source | What it shows |
+| --- | --- | --- |
+| **Autotile Lab** | `src/AutotileLabExample.jsx` | Interactive playground for all six resolvers: neighbour pad, full variant sheet, and a live paint canvas. |
+| **Sprite Browser** | `src/SpriteBrowserExample.jsx` | Search all 4,157 sprites by name and tag, inspect any record, copy React/CSS/Phaser snippets. |
+| **Mega Atlas** | `src/components/SpriteSheet.jsx` | The packed sheet itself, in its 64×65 grid, with hover names and animation toggle. |
+
+### Zone generators
+
+| Story | Source | What it shows |
+| --- | --- | --- |
+| **Dungeon** | `src/DungeonExample.jsx` | Six rot.js map algorithms, autotiled with the dungeon wall resolver. |
+| **Cave** | `src/CaveExample.jsx` | Cellular-automata caverns, largest-region flood fill, distance-transform lakes. |
+| **Wilderness** | `src/OutdoorExample.jsx` | Simplex biomes, a meandering road and river, with a bridge where they cross. |
+| **Island** | `src/IslandExample.jsx` | Radial-falloff landmass — pool, floor, forest and mountain resolvers on one map. |
+| **Town** | `src/TownExample.jsx` | Buildings, NPCs, furniture, signs and scattered flowers. |
+| **Sewer** | `src/SewerExample.jsx` | A central sludge channel with brick walkways and crossing bridges. |
+| **Arena** | `src/ArenaExample.jsx` | A combat arena layout. |
+
+Each zone example is deterministic in its `seed` and exposes its generator knobs
+through the Storybook **Controls** panel, so you can dial in a look before
+lifting the generator into your own project.
+
+### Games and systems
+
+| Story | Source | What it shows |
+| --- | --- | --- |
+| **Phaser Roguelike** | `src/phaser/` | An explorable overworld + town + 3-level dungeon on [Phaser 4](https://phaser.io/), with working exits, a chrome HUD, hold-to-walk movement, sprite animation, and `localStorage` save/resume keyed off one seed. |
+| **Tactical Combat** | `src/TacticalCombatExample.jsx` | XCOM-style squad tactics on `src/utils/tactical/` — action points, fog of war, cover, flanking, overwatch. |
+| **Arena Combat** | `src/ArenaCombatExample.jsx` | Real-time arena fighting with movable, collapsible HUD panels. |
+| **Menu HUD** | `src/MenuExample.jsx` | Inventory, equipment and dialogue built from the GUI sprites. |
+| **Character Gallery** | `src/CharacterGallery.jsx` | AI-generated portrait and JRPG-style sprite variants. |
+
+### The tactical toolkit
+
+`src/utils/tactical/` is framework-agnostic and published separately at
+`dawnlike-atlas/utils/tactical`:
+
+```js
+import {
+  resetAP, spendAP,          // action points
+  reachableTiles, previewPath, // movement
+  visibleSet, losBetween,      // line of sight (rot.js shadowcasting)
+  coverBetween, isFlanking,    // per-axis cover + flanking
+  hitChance, resolveAttack,    // combat math
+  planTurn,                    // enemy AI
+} from 'dawnlike-atlas/utils/tactical';
+```
+
+All RNG runs through `rot-js`, so seeding `ROT.RNG` makes a whole mission
+deterministic.
+
+---
+
+## LLM prompts
+
+[`Example_LLM_Prompts/game-template.md`](./Example_LLM_Prompts/game-template.md)
+is a single self-contained prompt you can hand to an LLM to **build any 2D
+browser game** on top of this repo. Drop your game idea into the `<<<…>>>` slot;
+the model gets the atlas, generators, autotile helpers and reference examples,
+all linked by raw GitHub URL.
+
+It is also available inside Storybook under **Dawnlike › Prompts**, with a
+starter-pitch dropdown, per-section toggles, and a one-click copy button. See
+[`Example_LLM_Prompts/README.md`](./Example_LLM_Prompts/README.md) for the
+section layout and authoring conventions.
+
+---
+
+## Local development
+
+```bash
+bun install
+bun run dev              # Storybook on http://localhost:6006
+bun run test             # unit tests (fast, no browser)
+bun run test:watch
+bun run test:coverage
+bun run check-package    # verify every export path is packed
+bun run build-storybook
+```
+
+The test suite covers atlas integrity (placement, collisions, lookup-table
+agreement), all six autotile resolvers, the atlas API, and the tactical toolkit.
+The resolver tests assert **totality**: every neighbour pattern for every family
+the examples offer must resolve to a sprite the atlas actually contains, so a
+repack that drops a variant fails CI instead of shipping a hole in someone's map.
+
+> **Note:** `bun run test:storybook` runs each story as a headless browser smoke
+> test, but `@storybook/addon-vitest` needs a Storybook major matching the
+> installed one. This repo pins Storybook 8.6, so that project lives in its own
+> `vitest.storybook.config.ts` and is not part of the default run.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to add an example, a resolver,
+or a zone generator.
+
+## Credits and licence
+
+Sprite assets by **DragonDePlatino** and **DawnBringer** —
+[DawnLike on itch.io](https://dragondeplatino.itch.io/dawnlike), released under
+[CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/). Atlas packing,
+metadata, tooling and examples are layered on top and released under the same
+licence. See [LICENSE](./LICENSE) for the attribution you need to carry.
