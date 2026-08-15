@@ -13,7 +13,7 @@
  * Returns: { width, height, tiles, markers, walkable(x,y) }
  *
  * `tiles[y][x]` matches the schema renderWorldTile expects:
- *   { type, tree, mountain, road, river, bridge, decor, marker }.
+ *   { type, tree, mountain, road, river, bridge, bank, decor, marker }.
  *
  * Deterministic — same `manifest.seed` always produces the same world.
  * Uses ROT.RNG exclusively; callers must not interleave other RNG work
@@ -32,7 +32,8 @@
  * @property {number} [dirtPatchScale=8]         Simplex coordinate divisor for dirt patches.
  * @property {number} [elevationThreshold=0.35]  Tile is forest/mountain when elev > this.
  * @property {number} [biomeSplit=0]             Within elevated tiles, > this becomes mountain, else forest.
- * @property {number} [dirtPatchThreshold=0.6]   Low-elevation tile becomes dirt when patch noise > this.
+ * @property {number} [dirtPatchThreshold=0.6]   Low-elevation tile becomes dirt when patch noise > this. Lower
+ *                                               values grow patches fast; by 0.4 they cover ~19% of the map.
  * @property {number} [decorChance=0.04]         Chance per eligible grass tile to spawn a decor sprite.
  * @property {string[]} [decorVariants]          Decor sprite names to pick from.
  * @property {number} [riverPosition=0.7]        River starting column as fraction of width.
@@ -108,7 +109,7 @@ export function generateWorld(manifest) {
   const tiles = Array.from({ length: H }, () =>
     Array.from({ length: W }, () => ({
       type: 'grass', tree: false, mountain: false,
-      road: false, river: false, bridge: false, decor: null, marker: null,
+      road: false, river: false, bridge: false, bank: false, decor: null, marker: null,
     }))
   );
 
@@ -375,6 +376,44 @@ export function generateWorld(manifest) {
   };
   thin('road');
   thin('river');
+
+  // 5e. River banks. Runs last, once the river's final shape is settled by
+  //     the carve and thinning passes. Without banks the grass floor runs
+  //     straight up to the water and the river reads as a ribbon laid on top
+  //     of a field rather than as a channel cut through it. Marking the
+  //     ground either side as bank lets the adapter draw it with the dirt
+  //     floor family, which already carries the grass transition.
+  //
+  //     `bank` is its own flag rather than `type = 'dirt'` so the two stay
+  //     distinguishable: dirt patches are noise the generator is tuned to
+  //     keep sparse, banks are structure that follows the water.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t = tiles[y][x];
+      if (t.river || t.type === 'dirt') continue;
+      const besideWater = [[0, -1], [0, 1], [-1, 0], [1, 0]].some(([dx, dy]) => {
+        const nx = x + dx, ny = y + dy;
+        return nx >= 0 && ny >= 0 && nx < W && ny < H && tiles[ny][nx].river;
+      });
+      if (besideWater) t.bank = true;
+    }
+  }
+  // Where the river wobbles, the bank wraps round the bend and can ring a
+  // single grass tile, which reads as a hole punched in the channel. Anything
+  // fully enclosed by bank or water is part of the bank.
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const t = tiles[y][x];
+      if (t.river || t.bank || t.type === 'dirt') continue;
+      const enclosed = [[0, -1], [0, 1], [-1, 0], [1, 0]].every(([dx, dy]) => {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H) return false;
+        const n = tiles[ny][nx];
+        return n.bank || n.river;
+      });
+      if (enclosed) t.bank = true;
+    }
+  }
 
   // 6. Walkability helper. Mountains block; rivers without a bridge block.
   const walkable = (x, y) => {
