@@ -24,6 +24,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Components** gallery example and story — every component the package
   exports, rendered live with its props, including a HUD assembled from the GUI
   sprites inside the mega-atlas.
+- **Shore tiles** — 100 new sprites (`sand shore`, `grass shore`, `snow shore`,
+  `mud shore`, `ash shore` × 20 variants), drawn by `scripts/generate-shore.mjs`
+  because DawnLike ships no coastline art and the substitutes fight each other:
+  the pool families draw a dark rocky rim meant for dungeon pools, the floor
+  families a pale rim, so land beside water produced two competing borders. Each
+  shore tile carries the whole land→water transition and is transparent where
+  the water goes, so one set composites over any water. Includes four
+  inner-corner pieces (`dnw`/`dne`/`dsw`/`dse`) the floor families lack.
+  Authored at 16×16 and upscaled 2× in the DawnBringer 16 palette, 2-frame
+  animated so the surf tracks DawnLike's water. The atlas grew from 65 to 67
+  rows (2048×2144); existing sprites did not move.
+- **`resolveDawnLikeShoreName`** — 8-way coastline resolver for the above.
 - **Island** zone example — radial-falloff landmass exercising the pool, floor,
   forest and mountain resolvers together. The first example to use
   `resolveDawnLikeMountainName`.

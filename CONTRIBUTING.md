@@ -89,6 +89,37 @@ The package entry is `react/index.js`. If you add an export:
   target exists on disk and is covered by `files`, which is the failure mode
   that only shows up in a consumer's build after publishing.
 
+## The shore tiles
+
+`scripts/generate-shore.mjs` draws the `* shore` coastline families. They are
+the only sprites in the atlas that are **not** original DawnLike art — the pack
+ships no land↔water transitions.
+
+```bash
+node scripts/generate-shore.mjs            # preview sheet only, no writes
+node scripts/generate-shore.mjs --apply    # write into the atlas
+node scripts/preview-shore-context.mjs "sand shore" "stone clear pool center" out.png
+```
+
+The context preview is the one that matters — a sheet of 20 tiles tells you
+very little, whereas rendering an actual island shows immediately whether the
+coast reads. Judge changes on that.
+
+Things to preserve if you touch the art:
+
+- **Author at 16×16 and upscale 2×.** The whole atlas is a strict 2× upscale of
+  DawnLike's 16×16 originals; drawing at 32×32 puts pixels off that grid and
+  reads as a different art style.
+- **Stay inside the DawnBringer 16 palette** in `PALETTE`.
+- **Keep the water region transparent.** That is what lets one shore set
+  composite over clear water, toxic water or lava.
+- **Keep the band-depth wobble a function of the along-edge coordinate only**,
+  or adjacent tiles stop meeting cleanly at the seam.
+- `--apply` is additive and idempotent: existing sprites never move, and
+  re-running rewrites the shore tiles in the cells they already own.
+- The PNG write options in `apply()` are deliberate — pngjs's defaults
+  quadruple the file size for pixel art.
+
 ## Repacking the atlas
 
 If `DawnlikeAtlas.json` is regenerated, `tests/atlas.test.js` is the guard: it

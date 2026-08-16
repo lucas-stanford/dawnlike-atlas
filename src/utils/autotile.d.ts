@@ -123,3 +123,17 @@ export function resolveDawnLikeMountainName(
   neighbors: CardinalNeighbors,
   byName?: ByName,
 ): string;
+
+/**
+ * Land ↔ water coastline resolver for the generated `* shore` families.
+ *
+ * Flags mean "this neighbour is more LAND" (same convention as
+ * `resolveDawnLikeFloorName`); the suffix names the sides that are water.
+ * When every cardinal is land, a water diagonal selects the inner-corner
+ * piece (`dnw`/`dne`/`dsw`/`dse`) that the floor families lack.
+ */
+export function resolveDawnLikeShoreName(
+  baseName: string,
+  neighbors: EightWayNeighbors,
+  byName?: ByName,
+): { name: string; reason: string };

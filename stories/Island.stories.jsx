@@ -6,44 +6,52 @@ import IslandExample from '../src/IslandExample';
 // combined with any terrain shape.
 const THEMES = {
   'temperate isle': {
-    waterStyle: 'stone clear pool',
-    beachStyle: 'day dirt floor',
+    waterStyle: 'stone clear pool center',
+    shoreStyle: 'sand shore',
     grassStyle: 'day grass floor',
     treeStyle: 'light oak',
     mountainStyle: 'brown peak',
     decors: ['pebble', 'rock', 'red cap mushroom'],
   },
   'tropical atoll': {
-    waterStyle: 'brick clear pool',
-    beachStyle: 'morning dirt floor',
+    waterStyle: 'brick clear pool center',
+    shoreStyle: 'sand shore',
     grassStyle: 'morning grass floor',
     treeStyle: 'palm',
     mountainStyle: 'yellow peak',
     decors: ['pebble', 'boulder'],
   },
   'arctic shelf': {
-    waterStyle: 'metal clear pool',
-    beachStyle: 'night stone floor',
+    waterStyle: 'metal clear pool center',
+    shoreStyle: 'snow shore',
     grassStyle: 'night grass floor',
     treeStyle: 'light snowy pine',
     mountainStyle: 'blue snowcap',
     decors: ['pebble', 'bones', 'skull'],
   },
   'volcanic caldera': {
-    waterStyle: 'lava pool',
-    beachStyle: 'dusk stone floor',
+    waterStyle: 'lava pool center',
+    shoreStyle: 'ash shore',
     grassStyle: 'dusk dirt floor',
     treeStyle: 'bare oak',
     mountainStyle: 'red volcano',
     decors: ['skull', 'old bones', 'rock'],
   },
   'blighted marsh': {
-    waterStyle: 'stone toxic pool',
-    beachStyle: 'dusk dirt floor',
+    waterStyle: 'stone toxic pool center',
+    shoreStyle: 'mud shore',
     grassStyle: 'dusk grass floor',
     treeStyle: 'dark mangrove',
     mountainStyle: 'dark peak',
     decors: ['green slime', 'bones', 'violet fungus'],
+  },
+  'green lakeshore': {
+    waterStyle: 'stone clear pool center',
+    shoreStyle: 'grass shore',
+    grassStyle: 'day grass floor',
+    treeStyle: 'light oak',
+    mountainStyle: 'green peak',
+    decors: ['pebble', 'red cap mushroom'],
   },
 };
 const THEME_NAMES = Object.keys(THEMES);
@@ -58,10 +66,14 @@ export default {
         component:
           'A bounded landmass: simplex elevation multiplied by a radial falloff, ' +
           'so the map always resolves to land in the middle and ocean at every edge. ' +
-          'Four resolvers cooperate on one map — pool for the coastline, floor for ' +
-          'the beach/meadow transition, the 8-way forest resolver for woodland, and ' +
-          '`resolveDawnLikeMountainName` for the highlands, which no other example ' +
-          'uses. Hover any tile to see the layer stack and which resolver produced it.',
+          'Four resolvers cooperate on one map — `resolveDawnLikeShoreName` for the ' +
+          'coastline, floor for the meadow, the 8-way forest resolver for woodland, ' +
+          'and `resolveDawnLikeMountainName` for the highlands. The shore sprites are ' +
+          'drawn by `scripts/generate-shore.mjs`: DawnLike ships no coastline art, and ' +
+          'the obvious substitutes fight each other (the pool family draws a dark rocky ' +
+          'rim meant for dungeon pools, the floor family a pale rim), so a shore tile ' +
+          'carries the whole land→water transition itself and stays transparent where ' +
+          'the water goes. Hover any tile to see the layer stack.',
       },
     },
   },
@@ -70,7 +82,7 @@ export default {
       table: { category: 'Preset' },
       control: { type: 'select' },
       options: THEME_NAMES,
-      description: 'Remaps the water, beach, meadow, tree and mountain families.',
+      description: 'Remaps the water, shore, meadow, tree and mountain families.',
     },
     seed: {
       table: { category: 'Generator' },

@@ -178,6 +178,7 @@ resolveDawnLikeBuildingWallName(
 | `resolveDawnLikePoolName` | Pools, water | 4-way | May return `flipY` — apply `transform: scaleY(-1)` |
 | `resolveDawnLikeForestName` | Tree canopies | 8-way | A corner curves away unless its diagonal *and* both cardinals are trees |
 | `resolveDawnLikeMountainName` | Peaks, snowcaps, volcanoes | 4-way | Blob set: the suffix names the **edge** the tile sits on |
+| `resolveDawnLikeShoreName` | Coastlines (`* shore`) | 8-way | **Generated, not original DawnLike.** Transparent where the water goes; the only family with inner-corner pieces |
 
 The gotcha worth internalising: these families do not agree on suffix ordering.
 A north-east corner is `right up` on the wall sheet but `up right` on the map
@@ -186,6 +187,50 @@ sheet. Use the matching resolver rather than string-building names yourself.
 **The [Autotile Lab](https://lucas-stanford.github.io/dawnlike-atlas/?path=/story/dawnlike-autotile-lab--lab)
 is the fastest way to understand any of this** — toggle neighbours, browse a
 family's whole variant sheet, or paint a shape and watch it tile live.
+
+### Coastlines
+
+DawnLike ships **no shore art**, and the two obvious substitutes fight each
+other: the pool families draw a dark blue rocky rim (they are meant for a pool
+set into a dungeon floor) and the floor families draw their own pale rim, so a
+sand tile beside a water tile gives you two competing borders.
+
+`scripts/generate-shore.mjs` draws a proper set. Each tile carries the whole
+land → water transition inside one cell and is **transparent where the water
+goes**, so you paint a flat water tile underneath and it shows through — one
+shore set therefore works over clear water, toxic water, or lava.
+
+```js
+import { resolveDawnLikeShoreName } from 'dawnlike-atlas/autotile';
+
+// Flags mean "this neighbour is more LAND" — the same predicate you would
+// hand resolveDawnLikeFloorName.
+resolveDawnLikeShoreName('sand shore', {
+  n: isLand(x, y - 1),      s:  isLand(x, y + 1),
+  w: isLand(x - 1, y),      e:  isLand(x + 1, y),
+  nw: isLand(x - 1, y - 1), ne: isLand(x + 1, y - 1),
+  sw: isLand(x - 1, y + 1), se: isLand(x + 1, y + 1),
+}, atlas.byName);
+// → { name: 'sand shore nw', reason: 'Shore: water n/w' }
+```
+
+Five families — `sand shore`, `grass shore`, `snow shore`, `mud shore`,
+`ash shore` — each with 20 variants: the floor family's 16 cardinal pieces plus
+four **inner corners** (`dnw` `dne` `dsw` `dse`) for when all four cardinals are
+land but a diagonal is water. Without those four a diagonal inlet renders as a
+hard square corner.
+
+The art is authored at 16×16 and upscaled 2× like the rest of the pack, using
+only the DawnBringer 16 palette, and is 2-frame animated so the surf tracks
+DawnLike's animated water. Regenerate or restyle it with:
+
+```bash
+node scripts/generate-shore.mjs           # preview PNG only
+node scripts/generate-shore.mjs --apply   # write into the atlas
+```
+
+See [Island](https://lucas-stanford.github.io/dawnlike-atlas/?path=/story/dawnlike-zone-examples-island--island)
+for them in use.
 
 ---
 

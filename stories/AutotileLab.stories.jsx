@@ -20,7 +20,7 @@ export default {
   argTypes: {
     resolver: {
       control: { type: 'select' },
-      options: ['wall', 'openPath', 'floor', 'pool', 'forest', 'mountain'],
+      options: ['wall', 'openPath', 'floor', 'pool', 'forest', 'shore', 'mountain'],
       description:
         'Which resolver to explore. `wall` = Objects/Wall building walls, ' +
         '`openPath` = rivers/roads, `forest` = the 8-way canopy set, ' +
@@ -61,6 +61,13 @@ export const Rivers = {
 export const Forest = {
   name: 'Forest canopy',
   args: { resolver: 'forest', family: 'light oak' },
+  render,
+};
+
+/** The generated coastline set — the only family with inner-corner pieces. */
+export const Shore = {
+  name: 'Shore (land ↔ water)',
+  args: { resolver: 'shore', family: 'sand shore' },
   render,
 };
 

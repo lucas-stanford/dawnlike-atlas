@@ -5,10 +5,14 @@ Bin-packed from the original DawnLike sprite source, then upscaled
 clean 2×2 block. The packed atlas is therefore stored at 32×32 per
 tile while preserving the original pixelated DawnLike look exactly.
 
-**4157 named sprites** across 4 categories,
-bin-packed into 2048×2080px (64×65 grid, 32px tiles).
-Wasted cells: 3 of 4160
-(0.07% empty).
+**4257 named sprites** across 4 categories plus generated shore tiles,
+bin-packed into 2048×2144px (64×67 grid, 32px tiles).
+
+The last 100 sprites are the `* shore` coastline families — see
+`scripts/generate-shore.mjs`. They are NOT original DawnLike art: the pack has
+no shore transitions, so they are drawn in the same 16×16-upscaled style and
+DawnBringer 16 palette. Unlike everything else, their water region is
+**transparent**, so you render them over a flat water tile.
 
 ## Categories Included
 

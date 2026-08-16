@@ -156,6 +156,54 @@ blobs*. Generate forests from a second noise field masked to your terrain band,
 not from a per-tile dice roll — a uniform speckle makes every tile an isolated
 tree.
 
+### `resolveDawnLikeShoreName` — coastlines
+
+**These are not original DawnLike sprites.** The pack has no coastline art, so
+`scripts/generate-shore.mjs` draws the `* shore` families. Everything else in
+this guide describes art that shipped with DawnLike; this one is ours.
+
+Why it exists: put a pool sprite next to a floor sprite and you get two borders
+fighting — the pool family's dark blue rocky rim (drawn for a pool set into a
+dungeon floor) against the floor family's pale rim. A shore tile instead holds
+the entire land → water transition in one cell, and is **transparent where the
+water goes**, so a flat water tile painted underneath shows through. One set
+works over clear water, toxic water or lava.
+
+Flags mean **"this neighbour is more land"** — the same predicate the floor
+resolver takes — and the suffix names the sides that are water:
+
+| Neighbours (land) | Name |
+| --- | --- |
+| all eight | `sand shore c` |
+| all but N | `sand shore n` |
+| all but N and W | `sand shore nw` |
+| none | `sand shore nswe` |
+| all cardinals, NW diagonal is water | `sand shore dnw` |
+
+That last row is the piece the floor families lack. When every cardinal is land,
+the diagonals decide: a single water diagonal picks an **inner corner**. Without
+it, a diagonal inlet renders as a hard square notch.
+
+Five families ship — `sand shore`, `grass shore`, `snow shore`, `mud shore`,
+`ash shore` — 20 variants each.
+
+```js
+resolveDawnLikeShoreName('sand shore', {
+  n: isLand(x, y - 1),      s:  isLand(x, y + 1),
+  w: isLand(x - 1, y),      e:  isLand(x + 1, y),
+  nw: isLand(x - 1, y - 1), ne: isLand(x + 1, y - 1),
+  sw: isLand(x - 1, y + 1), se: isLand(x + 1, y + 1),
+}, atlas.byName);
+```
+
+Render order is the whole trick: **water first, everywhere**, then the shore
+tile on each land cell.
+
+> One limitation: there are no combined-diagonal pieces, so a tile with two
+> water diagonals resolves to the first in n-w, n-e, s-w, s-e order. Rare on
+> generated maps, and the single-corner approximation reads fine — covering it
+> exactly would need a full 47-tile blob set.
+
 ### `resolveDawnLikeMountainName` — peaks
 
 Cardinal neighbours over the 10-sprite blob set (`blue peak`, `green snowcap`,

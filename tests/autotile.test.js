@@ -21,6 +21,7 @@ import {
   resolveDawnLikePoolName,
   resolveDawnLikeRiverName,
   resolveDawnLikeMountainName,
+  resolveDawnLikeShoreName,
 } from '../src/utils/autotile.js';
 
 const byName = atlas.byName;
@@ -319,4 +320,94 @@ describe('resolveDawnLikeMountainName', () => {
       expect(holes).toEqual([]);
     },
   );
+});
+
+describe('resolveDawnLikeShoreName', () => {
+  const SHORE_FAMILIES = ['sand shore', 'grass shore', 'snow shore', 'mud shore', 'ash shore'];
+  const ALL_LAND = { n: 1, s: 1, e: 1, w: 1, nw: 1, ne: 1, sw: 1, se: 1 };
+
+  it('returns the inland tile when everything around is land', () => {
+    expect(resolveDawnLikeShoreName('sand shore', ALL_LAND, byName).name).toBe('sand shore c');
+  });
+
+  it('names the suffix after the WATER sides, in n-s-w-e order', () => {
+    // Flags mean "is land", so a false flag is water — same convention
+    // as the floor resolver's missing neighbours.
+    expect(resolveDawnLikeShoreName('sand shore', { ...ALL_LAND, n: 0 }, byName).name)
+      .toBe('sand shore n');
+    expect(resolveDawnLikeShoreName('sand shore', { ...ALL_LAND, n: 0, w: 0 }, byName).name)
+      .toBe('sand shore nw');
+    expect(resolveDawnLikeShoreName('sand shore', { ...ALL_LAND, s: 0, e: 0 }, byName).name)
+      .toBe('sand shore se');
+  });
+
+  it('returns the islet when water surrounds the tile', () => {
+    expect(resolveDawnLikeShoreName('sand shore', {}, byName).name).toBe('sand shore nswe');
+  });
+
+  it('picks an inner corner when only a diagonal is water', () => {
+    expect(resolveDawnLikeShoreName('sand shore', { ...ALL_LAND, nw: 0 }, byName).name)
+      .toBe('sand shore dnw');
+    expect(resolveDawnLikeShoreName('sand shore', { ...ALL_LAND, se: 0 }, byName).name)
+      .toBe('sand shore dse');
+  });
+
+  it('ignores diagonals whenever a cardinal is already water', () => {
+    // The cardinal band already covers that corner; an inner-corner
+    // tile there would double the cut.
+    expect(resolveDawnLikeShoreName('sand shore', { ...ALL_LAND, n: 0, nw: 0 }, byName).name)
+      .toBe('sand shore n');
+  });
+
+  it('resolves multiple water diagonals deterministically', () => {
+    const res = resolveDawnLikeShoreName('sand shore', { ...ALL_LAND, ne: 0, sw: 0 }, byName);
+    expect(res.name).toBe('sand shore dne');
+  });
+
+  it('degrades to a real sprite for an unknown family', () => {
+    const res = resolveDawnLikeShoreName('no such shore', { ...ALL_LAND, n: 0 }, byName);
+    expect(res.name).toBe('no such shore');
+  });
+
+  it.each(SHORE_FAMILIES)('%s resolves all 16 cardinal patterns to real sprites', (family) => {
+    const holes = ALL_NEIGHBORS
+      .map((nb) => ({ nb, name: resolveDawnLikeShoreName(family, nb, byName).name }))
+      .filter(({ name }) => !byName[name])
+      .map(({ nb, name }) => `${describeNeighbors(nb)} → ${name}`);
+    expect(holes).toEqual([]);
+  });
+
+  it.each(SHORE_FAMILIES)('%s resolves all 256 neighbourhoods to real sprites', (family) => {
+    const holes = [];
+    for (let bits = 0; bits < 256; bits++) {
+      const nb = {
+        n: !!(bits & 1), s: !!(bits & 2), e: !!(bits & 4), w: !!(bits & 8),
+        nw: !!(bits & 16), ne: !!(bits & 32), sw: !!(bits & 64), se: !!(bits & 128),
+      };
+      const { name } = resolveDawnLikeShoreName(family, nb, byName);
+      if (!byName[name]) holes.push(`${bits} → ${name}`);
+    }
+    expect(holes).toEqual([]);
+  });
+
+  it.each(SHORE_FAMILIES)('%s ships all 20 variants', (family) => {
+    const missing = [
+      'c', 'n', 's', 'w', 'e', 'ns', 'nw', 'ne', 'sw', 'se', 'we',
+      'nsw', 'nse', 'nwe', 'swe', 'nswe', 'dnw', 'dne', 'dsw', 'dse',
+    ].filter((suffix) => !byName[`${family} ${suffix}`]);
+    expect(missing).toEqual([]);
+  });
+
+  it('leaves the water region transparent so any water tile shows through', () => {
+    // The whole point of the set: a shore tile composites over water.
+    // `c` is the only fully opaque one.
+    expect(byName['sand shore nswe']).toBeDefined();
+    expect(byName['sand shore c']).toBeDefined();
+  });
+
+  it('marks shore tiles animated so the surf tracks DawnLike water', () => {
+    for (const family of SHORE_FAMILIES) {
+      expect(byName[`${family} n`].isAnimated).toBe(true);
+    }
+  });
 });
