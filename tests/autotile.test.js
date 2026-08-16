@@ -352,16 +352,20 @@ describe('resolveDawnLikeShoreName', () => {
       .toBe('sand shore dse');
   });
 
-  it('ignores diagonals whenever a cardinal is already water', () => {
-    // The cardinal band already covers that corner; an inner-corner
-    // tile there would double the cut.
+  it('ignores a diagonal whose flanking cardinal is already water', () => {
+    // The north band has already cut the NW corner, so the NW diagonal
+    // cannot change anything — this is the collapse that takes 256
+    // neighbourhoods down to 47.
     expect(resolveDawnLikeShoreName('sand shore', { ...ALL_LAND, n: 0, nw: 0 }, byName).name)
+      .toBe('sand shore n');
+    expect(resolveDawnLikeShoreName('sand shore', { ...ALL_LAND, n: 0, nw: 0, ne: 0 }, byName).name)
       .toBe('sand shore n');
   });
 
-  it('resolves multiple water diagonals deterministically', () => {
+  it('cuts every water diagonal, not just the first', () => {
+    // Before the full blob set this approximated to a single corner.
     const res = resolveDawnLikeShoreName('sand shore', { ...ALL_LAND, ne: 0, sw: 0 }, byName);
-    expect(res.name).toBe('sand shore dne');
+    expect(res.name).toBe('sand shore dne dsw');
   });
 
   it('degrades to a real sprite for an unknown family', () => {
@@ -390,12 +394,66 @@ describe('resolveDawnLikeShoreName', () => {
     expect(holes).toEqual([]);
   });
 
-  it.each(SHORE_FAMILIES)('%s ships all 20 variants', (family) => {
-    const missing = [
-      'c', 'n', 's', 'w', 'e', 'ns', 'nw', 'ne', 'sw', 'se', 'we',
-      'nsw', 'nse', 'nwe', 'swe', 'nswe', 'dnw', 'dne', 'dsw', 'dse',
-    ].filter((suffix) => !byName[`${family} ${suffix}`]);
+  // Independently re-derive the 47-tile blob set here rather than
+  // importing the generator's list, so a bug in the enumeration cannot
+  // agree with itself.
+  const CORNER_CARDINALS = { nw: ['n', 'w'], ne: ['n', 'e'], sw: ['s', 'w'], se: ['s', 'e'] };
+  const subsetsOf = (xs) => xs.reduce((acc, x) => acc.concat(acc.map((a) => [...a, x])), [[]]);
+  const EXPECTED_VARIANTS = (() => {
+    const out = [];
+    for (const water of subsetsOf(['n', 's', 'w', 'e'])) {
+      const eligible = Object.keys(CORNER_CARDINALS)
+        .filter((c) => CORNER_CARDINALS[c].every((d) => !water.includes(d)));
+      for (const cut of subsetsOf(eligible)) {
+        const card = ['n', 's', 'w', 'e'].filter((d) => water.includes(d)).join('');
+        const corners = ['nw', 'ne', 'sw', 'se'].filter((c) => cut.includes(c)).map((c) => `d${c}`);
+        out.push([card, ...corners].filter(Boolean).join(' ') || 'c');
+      }
+    }
+    return out;
+  })();
+
+  it('the blob set collapses 256 neighbourhoods to exactly 47 tiles', () => {
+    expect(EXPECTED_VARIANTS).toHaveLength(47);
+    expect(new Set(EXPECTED_VARIANTS).size).toBe(47);
+  });
+
+  it.each(SHORE_FAMILIES)('%s ships all 47 variants', (family) => {
+    const missing = EXPECTED_VARIANTS.filter((suffix) => !byName[`${family} ${suffix}`]);
     expect(missing).toEqual([]);
+  });
+
+  it('every one of the 256 neighbourhoods maps onto a set member', () => {
+    // The collapse must be exhaustive: no neighbourhood may resolve to a
+    // name outside the 47.
+    const seen = new Set();
+    for (let bits = 0; bits < 256; bits++) {
+      const nb = {
+        n: !!(bits & 1), s: !!(bits & 2), e: !!(bits & 4), w: !!(bits & 8),
+        nw: !!(bits & 16), ne: !!(bits & 32), sw: !!(bits & 64), se: !!(bits & 128),
+      };
+      seen.add(resolveDawnLikeShoreName('sand shore', nb, byName).name.replace('sand shore ', ''));
+    }
+    expect([...seen].filter((s) => !EXPECTED_VARIANTS.includes(s))).toEqual([]);
+    // And every tile in the set must be reachable, or we drew dead art.
+    expect(EXPECTED_VARIANTS.filter((v) => !seen.has(v))).toEqual([]);
+  });
+
+  it('spells the suffix as water cardinals then d-prefixed cut corners', () => {
+    expect(resolveDawnLikeShoreName('sand shore', { ...ALL_LAND, n: 0, se: 0 }, byName).name)
+      .toBe('sand shore n dse');
+    expect(resolveDawnLikeShoreName('sand shore', { ...ALL_LAND, nw: 0, se: 0 }, byName).name)
+      .toBe('sand shore dnw dse');
+    expect(resolveDawnLikeShoreName('sand shore', { ...ALL_LAND, nw: 0, ne: 0, sw: 0, se: 0 }, byName).name)
+      .toBe('sand shore dnw dne dsw dse');
+  });
+
+  it('drops corner detail rather than returning a hole when a piece is absent', () => {
+    // A family shipping only the cardinal subset must still resolve.
+    const sparse = { 'lite shore n': {}, 'lite shore c': {} };
+    const res = resolveDawnLikeShoreName('lite shore', { ...ALL_LAND, n: 0, se: 0 }, sparse);
+    expect(res.name).toBe('lite shore n');
+    expect(res.reason).toMatch(/no corner piece/);
   });
 
   it('leaves the water region transparent so any water tile shows through', () => {

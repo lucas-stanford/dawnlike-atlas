@@ -419,6 +419,13 @@ export function resolveDawnLikeMountainName(baseName, { n, s, e, w }, byName = {
  * goes, so you render it on top of whatever water tile you like and the
  * water always matches.
  *
+ * This is a full **47-tile blob set**. A tile's look depends on all 8
+ * neighbours (2^8 = 256 states), but a diagonal only matters when both
+ * of its flanking cardinals are land — if the north side is already
+ * water, the north band has cut the NW corner away regardless of what
+ * the NW diagonal does. Collapsing on that rule leaves 47 distinct
+ * tiles, which is what the pack ships.
+ *
  * Neighbour flags follow the same convention as `resolveDawnLikeFloorName`:
  * **true means that neighbour is more land**, and the suffix names the
  * sides that are MISSING (i.e. water). Pass the same `isLand` predicate
@@ -430,18 +437,18 @@ export function resolveDawnLikeMountainName(baseName, { n, s, e, w }, byName = {
  *     nw: isLand(x - 1, y - 1), ne: isLand(x + 1, y - 1),
  *     sw: isLand(x - 1, y + 1), se: isLand(x + 1, y + 1),
  *   }, atlas.byName);
+ *   // → { name: 'sand shore n dse', reason: 'Shore: water n · cut se' }
  *
- * When every cardinal is land the diagonals decide: a single water
- * diagonal picks the matching inner-corner tile (`dnw`/`dne`/`dsw`/`dse`),
- * which is the piece the floor families lack — without it a diagonal
- * inlet renders as a hard square corner.
+ * Suffix grammar: the water cardinals in n-s-w-e order, then one
+ * `d<corner>` token per corner cut by a water diagonal — `'c'` when
+ * there is no water at all.
  *
- * LIMITATION: the set has no combined-diagonal pieces, so a tile with
- * two or more water diagonals resolves to the first in n-w, n-e, s-w,
- * s-e order. That case is rare on generated maps and the single-corner
- * approximation reads fine; a full 47-tile blob set would be needed to
- * cover it exactly.
+ * Missing variants degrade rather than returning a hole: a family that
+ * only ships the 20-tile subset (cardinals plus single corners) still
+ * resolves, dropping the corner detail it cannot draw.
  */
+const SHORE_CORNER_CARDINALS = { nw: ['n', 'w'], ne: ['n', 'e'], sw: ['s', 'w'], se: ['s', 'e'] };
+
 export function resolveDawnLikeShoreName(
   baseName,
   { n, s, e, w, nw, ne, sw, se } = {},
@@ -452,30 +459,31 @@ export function resolveDawnLikeShoreName(
     return byName[name] ? name : null;
   };
 
+  const land = { n, s, w, e };
+  const diagonal = { nw, ne, sw, se };
+
   // Cardinal water sides, in the floor families' n-s-w-e spelling.
-  const water = [];
-  if (!n) water.push('n');
-  if (!s) water.push('s');
-  if (!w) water.push('w');
-  if (!e) water.push('e');
+  const water = ['n', 's', 'w', 'e'].filter((d) => !land[d]);
+  // A corner is cut when its diagonal is water AND both flanking
+  // cardinals are land — otherwise a band has already removed it.
+  const cut = ['nw', 'ne', 'sw', 'se'].filter(
+    (c) => SHORE_CORNER_CARDINALS[c].every((d) => land[d]) && !diagonal[c],
+  );
 
-  if (water.length) {
-    const suffix = water.join('');
-    const hit = get(suffix);
-    if (hit) return { name: hit, reason: `Shore: water ${water.join('/')}` };
-    // Degrade to the islet, then to plain land, rather than a hole.
-    return {
-      name: get('nswe') || get('c') || baseName,
-      reason: 'Shore: fallback',
-    };
-  }
+  const cardinalToken = water.join('');
+  const full = [cardinalToken, ...cut.map((c) => `d${c}`)].filter(Boolean).join(' ') || 'c';
 
-  // Every cardinal is land — a water diagonal means an inner corner.
-  const corner = (!nw && 'nw') || (!ne && 'ne') || (!sw && 'sw') || (!se && 'se') || null;
-  if (corner) {
-    const hit = get(`d${corner}`);
-    if (hit) return { name: hit, reason: `Shore: inner corner ${corner}` };
-  }
+  const describe = () =>
+    [water.length ? `water ${water.join('/')}` : null, cut.length ? `cut ${cut.join('/')}` : null]
+      .filter(Boolean).join(' · ') || 'inland';
 
-  return { name: get('c') || baseName, reason: 'Shore: inland' };
+  const exact = get(full);
+  if (exact) return { name: exact, reason: `Shore: ${describe()}` };
+
+  // Degrade by dropping corner detail first, then onto the islet, then
+  // plain land — anything but a name the atlas does not have.
+  const cardinalOnly = get(cardinalToken || 'c');
+  if (cardinalOnly) return { name: cardinalOnly, reason: `Shore: ${describe()} (no corner piece)` };
+
+  return { name: get('nswe') || get('c') || baseName, reason: 'Shore: fallback' };
 }

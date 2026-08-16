@@ -91,9 +91,14 @@ The package entry is `react/index.js`. If you add an export:
 
 ## The shore tiles
 
-`scripts/generate-shore.mjs` draws the `* shore` coastline families. They are
-the only sprites in the atlas that are **not** original DawnLike art — the pack
-ships no land↔water transitions.
+`scripts/generate-shore.mjs` draws the `* shore` coastline families — five full
+47-tile blob sets. They are the only sprites in the atlas that are **not**
+original DawnLike art, because the pack ships no land↔water transitions.
+
+The 47 comes from collapsing 2⁸ neighbourhoods: a diagonal only changes the tile
+when both of its flanking cardinals are land. `VARIANTS` in the generator derives
+that enumeration, and `tests/autotile.test.js` re-derives it independently so a
+bug in one cannot agree with the other.
 
 ```bash
 node scripts/generate-shore.mjs            # preview sheet only, no writes

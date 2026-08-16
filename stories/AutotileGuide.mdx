@@ -169,23 +169,41 @@ the entire land → water transition in one cell, and is **transparent where the
 water goes**, so a flat water tile painted underneath shows through. One set
 works over clear water, toxic water or lava.
 
+This is a full **47-tile blob set** — the only family in the pack that is one.
+A tile's look depends on all 8 neighbours (2⁸ = 256 states), but a diagonal only
+matters when **both of its flanking cardinals are land**: if the north side is
+already water, the north band has cut the whole NW corner away and the NW
+diagonal cannot change anything. Collapsing on that rule:
+
+| Cardinals that are land | Eligible corners | Tiles |
+| --- | --- | --- |
+| 4 | 4 | 16 |
+| 3 | 2 | 4 × 4 = 16 |
+| 2 adjacent | 1 | 4 × 2 = 8 |
+| 2 opposite | 0 | 2 |
+| 1 | 0 | 4 |
+| 0 | 0 | 1 |
+| | | **47** |
+
 Flags mean **"this neighbour is more land"** — the same predicate the floor
-resolver takes — and the suffix names the sides that are water:
+resolver takes. The suffix is the water cardinals in n-s-w-e order, then one
+`d<corner>` token per corner cut by a water diagonal:
 
-| Neighbours (land) | Name |
+| Neighbours | Name |
 | --- | --- |
-| all eight | `sand shore c` |
+| all eight land | `sand shore c` |
 | all but N | `sand shore n` |
-| all but N and W | `sand shore nw` |
+| all but N and W | `sand shore nw` *(cardinals — not a corner)* |
+| all cardinals land, NW diagonal water | `sand shore dnw` |
+| N water, SE diagonal water | `sand shore n dse` |
+| all cardinals land, every diagonal water | `sand shore dnw dne dsw dse` |
 | none | `sand shore nswe` |
-| all cardinals, NW diagonal is water | `sand shore dnw` |
 
-That last row is the piece the floor families lack. When every cardinal is land,
-the diagonals decide: a single water diagonal picks an **inner corner**. Without
-it, a diagonal inlet renders as a hard square notch.
+The `d` tiles are what the floor families lack entirely — without them a
+diagonal inlet or spit renders as a staircase of hard square corners.
 
 Five families ship — `sand shore`, `grass shore`, `snow shore`, `mud shore`,
-`ash shore` — 20 variants each.
+`ash shore` — 47 variants each.
 
 ```js
 resolveDawnLikeShoreName('sand shore', {
@@ -199,10 +217,8 @@ resolveDawnLikeShoreName('sand shore', {
 Render order is the whole trick: **water first, everywhere**, then the shore
 tile on each land cell.
 
-> One limitation: there are no combined-diagonal pieces, so a tile with two
-> water diagonals resolves to the first in n-w, n-e, s-w, s-e order. Rare on
-> generated maps, and the single-corner approximation reads fine — covering it
-> exactly would need a full 47-tile blob set.
+If a family ships only part of the set, the resolver drops corner detail rather
+than returning a name the atlas lacks — so a reduced set still renders.
 
 ### `resolveDawnLikeMountainName` — peaks
 

@@ -98,32 +98,76 @@ const THEMES = {
 };
 
 /**
- * The 16 cardinal suffixes, named by the sides that are WATER — the same
- * convention (and the same spelling, n-s-w-e order) the floor families
- * use for their missing neighbours, so `resolveDawnLikeFloorName` drives
- * this set unchanged.
+ * THE 47-TILE BLOB SET
+ *
+ * A tile's appearance depends on all 8 neighbours, which is 2^8 = 256
+ * configurations — but most collapse. A diagonal only changes anything
+ * when BOTH of its adjacent cardinals are land: if the north side is
+ * already water, the north band has cut the whole NW corner away and the
+ * NW diagonal cannot matter. Collapsing on that rule leaves exactly 47
+ * distinct tiles, the classic "blob" set:
+ *
+ *   4 cardinals land  → 4 eligible corners  → 16
+ *   3 cardinals land  → 2 eligible corners  → 4 × 4 = 16
+ *   2 adjacent land   → 1 eligible corner   → 4 × 2 = 8
+ *   2 opposite land   → 0 eligible corners  → 2
+ *   1 cardinal land   → 0 eligible corners  → 4
+ *   0 cardinals land  → 0 eligible corners  → 1
+ *                                             ------
+ *                                               47
+ *
+ * NAMING. The suffix is the water cardinals (n-s-w-e order, the same
+ * spelling the floor families use for their missing neighbours), then one
+ * `d<corner>` token per corner cut by a water diagonal:
+ *
+ *   'c'            no water at all
+ *   'n'            water to the north
+ *   'nw'           water north AND west  (cardinals — not a corner)
+ *   'dnw'          all cardinals land, NW diagonal is water
+ *   'n dse'        water north, and the SE diagonal is water too
+ *   'dnw dse'      all cardinals land, two opposite diagonals are water
+ *
+ * The 20 tiles this generator originally shipped are exactly the subset
+ * with no `d` token, plus the four single-corner tiles — so growing to
+ * the full set renamed nothing and moved no cell.
  */
-const CARDINAL_SUFFIXES = [
-  'c',
-  'n', 's', 'w', 'e',
-  'ns', 'nw', 'ne', 'sw', 'se', 'we',
-  'nsw', 'nse', 'nwe', 'swe',
-  'nswe',
-];
+const CARDINALS = ['n', 's', 'w', 'e'];
 
-/**
- * Four inner corners the floor families do not have: every cardinal is
- * land and a single DIAGONAL is water. Without these, a diagonal inlet
- * renders as a hard square corner.
- */
-const DIAGONAL_SUFFIXES = ['dnw', 'dne', 'dsw', 'dse'];
+/** Which two cardinals flank each corner. */
+const CORNER_CARDINALS = { nw: ['n', 'w'], ne: ['n', 'e'], sw: ['s', 'w'], se: ['s', 'e'] };
+const CORNERS = Object.keys(CORNER_CARDINALS);
 
-const ALL_SUFFIXES = [...CARDINAL_SUFFIXES, ...DIAGONAL_SUFFIXES];
+const subsetsOf = (items) =>
+  items.reduce((acc, item) => acc.concat(acc.map((s) => [...s, item])), [[]]);
+
+/** Build the suffix for a given water-cardinal / cut-corner pair. */
+export function shoreSuffix(water, cut) {
+  const cardinalToken = CARDINALS.filter((d) => water.includes(d)).join('');
+  const cornerTokens = CORNERS.filter((c) => cut.includes(c)).map((c) => `d${c}`);
+  return [cardinalToken, ...cornerTokens].filter(Boolean).join(' ') || 'c';
+}
+
+/** All 47 variants, each as { suffix, water, cut }. */
+export const VARIANTS = (() => {
+  const out = [];
+  for (const water of subsetsOf(CARDINALS)) {
+    // A corner is only eligible to be cut when neither flanking cardinal
+    // is already water — otherwise the band has removed it anyway.
+    const eligible = CORNERS.filter((c) => CORNER_CARDINALS[c].every((d) => !water.includes(d)));
+    for (const cut of subsetsOf(eligible)) {
+      out.push({ suffix: shoreSuffix(water, cut), water, cut });
+    }
+  }
+  return out;
+})();
+
+const ALL_SUFFIXES = VARIANTS.map((v) => v.suffix);
+const VARIANT_BY_SUFFIX = new Map(VARIANTS.map((v) => [v.suffix, v]));
 
 const N = 16;          // logical authoring resolution
 const SCALE = 2;       // → 32×32, matching the pack
 const BAND = 5;        // water band depth, logical px
-const DIAG = 6;        // diagonal cove reach, logical px
+const DIAG = 5;        // corner notch reach — matches BAND so seams line up
 
 /** Deterministic small hash → the art is identical on every run. */
 function hash(x, y, salt = 0) {
@@ -133,38 +177,34 @@ function hash(x, y, salt = 0) {
 }
 
 /**
- * Water mask for one suffix.
+ * Water mask for one variant.
  *
  * Cardinal sides get a band whose depth wobbles by ±1 along its length,
  * so a long coast does not read as a ruled line. The wobble is a pure
  * function of the coordinate running along the edge, so two adjacent
  * tiles of the same family always meet cleanly at the seam.
+ *
+ * Cut corners add a 45° notch anchored at that corner, which is what a
+ * water diagonal looks like when both flanking cardinals are land. Its
+ * reach along each edge matches the band depth, so a notch lines up with
+ * the neighbouring tile's band.
  */
-function waterMask(suffix) {
+function waterMask({ water, cut }) {
   const mask = Array.from({ length: N }, () => new Array(N).fill(false));
-
-  if (DIAGONAL_SUFFIXES.includes(suffix)) {
-    const corner = suffix.slice(1); // nw | ne | sw | se
-    for (let y = 0; y < N; y++) {
-      for (let x = 0; x < N; x++) {
-        const dx = corner.includes('w') ? x : N - 1 - x;
-        const dy = corner.includes('n') ? y : N - 1 - y;
-        const wobble = Math.round(hash(dx, dy, 7) * 1.4);
-        if (dx + dy < DIAG + wobble) mask[y][x] = true;
-      }
-    }
-    return mask;
-  }
-
-  const sides = suffix === 'c' ? [] : suffix.split('');
   const depth = (t, salt) => BAND + Math.round(hash(t, 0, salt) * 2) - 1;
 
   for (let y = 0; y < N; y++) {
     for (let x = 0; x < N; x++) {
-      if (sides.includes('n') && y < depth(x, 1)) mask[y][x] = true;
-      if (sides.includes('s') && y >= N - depth(x, 2)) mask[y][x] = true;
-      if (sides.includes('w') && x < depth(y, 3)) mask[y][x] = true;
-      if (sides.includes('e') && x >= N - depth(y, 4)) mask[y][x] = true;
+      if (water.includes('n') && y < depth(x, 1)) mask[y][x] = true;
+      if (water.includes('s') && y >= N - depth(x, 2)) mask[y][x] = true;
+      if (water.includes('w') && x < depth(y, 3)) mask[y][x] = true;
+      if (water.includes('e') && x >= N - depth(y, 4)) mask[y][x] = true;
+
+      for (const corner of cut) {
+        const dx = corner.includes('w') ? x : N - 1 - x;
+        const dy = corner.includes('n') ? y : N - 1 - y;
+        if (dx + dy < DIAG + Math.round(hash(dx, dy, 7) * 1.4)) mask[y][x] = true;
+      }
     }
   }
 
@@ -189,12 +229,14 @@ function waterMask(suffix) {
  * Render one 32×32 RGBA tile.
  *
  * @param {string} theme   key into THEMES
- * @param {string} suffix  key into ALL_SUFFIXES
+ * @param {string} suffix  one of the 47 variant suffixes
  * @param {0|1} frame      which animation frame (shifts the foam)
  */
 function renderTile(theme, suffix, frame) {
   const spec = THEMES[theme];
-  const mask = waterMask(suffix);
+  const variant = VARIANT_BY_SUFFIX.get(suffix);
+  if (!variant) throw new Error(`Unknown shore variant: "${suffix}"`);
+  const mask = waterMask(variant);
   const png = new PNG({ width: N * SCALE, height: N * SCALE });
 
   const at = (x, y) => (x < 0 || y < 0 || x >= N || y >= N ? null : mask[y][x]);
@@ -264,30 +306,28 @@ function shoreSprites() {
 
 function writePreview(dir) {
   fs.mkdirSync(dir, { recursive: true });
-  const themes = Object.keys(THEMES);
-  const SC = 4, TILE = N * SCALE * SC, PAD = 10;
-  const cols = ALL_SUFFIXES.length;
-  const png = new PNG({ width: cols * TILE, height: themes.length * (TILE + PAD) });
+  const SC = 4, TILE = N * SCALE * SC, COLS = 8;
+  const rows = Math.ceil(VARIANTS.length / COLS);
 
-  // Mid-blue backdrop stands in for the water tile these sit on top of,
-  // so the transparent region reads correctly in the preview.
-  for (let i = 0; i < png.data.length; i += 4) {
-    png.data[i] = PALETTE.cyan[0]; png.data[i + 1] = PALETTE.cyan[1];
-    png.data[i + 2] = PALETTE.cyan[2]; png.data[i + 3] = 255;
-  }
+  for (const theme of Object.keys(THEMES)) {
+    const png = new PNG({ width: COLS * TILE, height: rows * TILE });
+    // Water backdrop: these tiles are transparent where their water goes,
+    // so a preview on anything else shows the wrong thing.
+    for (let i = 0; i < png.data.length; i += 4) {
+      png.data[i] = PALETTE.cyan[0]; png.data[i + 1] = PALETTE.cyan[1];
+      png.data[i + 2] = PALETTE.cyan[2]; png.data[i + 3] = 255;
+    }
 
-  themes.forEach((theme, ti) => {
-    ALL_SUFFIXES.forEach((suffix, si) => {
-      const tile = renderTile(theme, suffix, 0);
+    VARIANTS.forEach((variant, vi) => {
+      const cx = (vi % COLS) * TILE, cy = Math.floor(vi / COLS) * TILE;
+      const tile = renderTile(theme, variant.suffix, 0);
       for (let y = 0; y < tile.height; y++) {
         for (let x = 0; x < tile.width; x++) {
           const i = (tile.width * y + x) << 2;
           if (tile.data[i + 3] === 0) continue;
           for (let sy = 0; sy < SC; sy++) {
             for (let sx = 0; sx < SC; sx++) {
-              const ox = si * TILE + x * SC + sx;
-              const oy = ti * (TILE + PAD) + y * SC + sy;
-              const j = (png.width * oy + ox) << 2;
+              const j = (png.width * (cy + y * SC + sy) + cx + x * SC + sx) << 2;
               png.data[j] = tile.data[i]; png.data[j + 1] = tile.data[i + 1];
               png.data[j + 2] = tile.data[i + 2]; png.data[j + 3] = 255;
             }
@@ -295,14 +335,13 @@ function writePreview(dir) {
         }
       }
     });
-  });
 
-  const dst = path.join(dir, 'shore-sheet.png');
-  fs.writeFileSync(dst, PNG.sync.write(png));
-  console.log(`preview  ${dst}`);
-  console.log(`         rows = ${themes.join(', ')}`);
-  console.log(`         cols = ${ALL_SUFFIXES.join(' ')}`);
-  return dst;
+    const dst = path.join(dir, `shore-${theme.replace(/\s+/g, '-')}.png`);
+    fs.writeFileSync(dst, PNG.sync.write(png));
+  }
+
+  console.log(`preview  ${dir}/shore-<theme>.png — ${VARIANTS.length} variants, ${COLS} per row`);
+  console.log(`         order: ${ALL_SUFFIXES.join(' · ')}`);
 }
 
 // ---------------------------------------------------------------------
@@ -410,4 +449,4 @@ writePreview(outDir);
 if (args.includes('--apply')) apply();
 else console.log('\n(dry run — pass --apply to write into the atlas)');
 
-export { THEMES, ALL_SUFFIXES, CARDINAL_SUFFIXES, DIAGONAL_SUFFIXES, renderTile, shoreSprites };
+export { THEMES, ALL_SUFFIXES, renderTile, shoreSprites };

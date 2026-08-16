@@ -211,14 +211,29 @@ resolveDawnLikeShoreName('sand shore', {
   nw: isLand(x - 1, y - 1), ne: isLand(x + 1, y - 1),
   sw: isLand(x - 1, y + 1), se: isLand(x + 1, y + 1),
 }, atlas.byName);
-// → { name: 'sand shore nw', reason: 'Shore: water n/w' }
+// → { name: 'sand shore n dse', reason: 'Shore: water n · cut se' }
 ```
 
 Five families — `sand shore`, `grass shore`, `snow shore`, `mud shore`,
-`ash shore` — each with 20 variants: the floor family's 16 cardinal pieces plus
-four **inner corners** (`dnw` `dne` `dsw` `dse`) for when all four cardinals are
-land but a diagonal is water. Without those four a diagonal inlet renders as a
-hard square corner.
+`ash shore` — each a full **47-tile blob set**.
+
+A tile's look depends on all 8 neighbours, which is 2⁸ = 256 configurations, but
+most collapse: a diagonal only matters when both of its flanking cardinals are
+land, because otherwise that cardinal's water band has already cut the corner
+away. Collapsing on that rule leaves exactly 47 distinct tiles — so a coastline
+is correct at every angle, including diagonal spits and inlets.
+
+The suffix is the water cardinals (n-s-w-e order), then one `d<corner>` token per
+corner cut by a water diagonal:
+
+| Suffix | Meaning |
+| --- | --- |
+| `c` | no water at all |
+| `n` | water to the north |
+| `nw` | water north **and** west (cardinals, not a corner) |
+| `dnw` | all cardinals land, NW diagonal is water |
+| `n dse` | water north, and the SE diagonal too |
+| `dnw dne dsw dse` | all cardinals land, every diagonal water |
 
 The art is authored at 16×16 and upscaled 2× like the rest of the pack, using
 only the DawnBringer 16 palette, and is 2-frame animated so the surf tracks
