@@ -1,0 +1,353 @@
+/* SpriteBrowserExample — catalogue chrome. */
+
+.browser-root {
+  --br-bg: #0f1113;
+  --br-panel: #1a1d20;
+  --br-line: #2c3136;
+  --br-accent: #4caf50;
+  --br-text: #e8eaed;
+  --br-muted: #9aa2aa;
+
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+  padding: 16px 20px;
+  background: var(--br-bg);
+  color: var(--br-text);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.browser-root *,
+.browser-root *::before,
+.browser-root *::after {
+  box-sizing: border-box;
+}
+
+/* ---- header ------------------------------------------------------ */
+
+.browser-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+}
+
+.browser-header h1 {
+  margin: 0 0 4px;
+  font-size: 19px;
+}
+
+.browser-header p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--br-muted);
+}
+
+.browser-search {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex: 1 1 360px;
+  justify-content: flex-end;
+}
+
+.browser-search input[type='search'] {
+  flex: 1 1 auto;
+  max-width: 460px;
+  padding: 9px 12px;
+  font-size: 13px;
+  color: var(--br-text);
+  background: var(--br-panel);
+  border: 1px solid var(--br-line);
+  border-radius: 8px;
+  outline: none;
+}
+
+.browser-search input[type='search']:focus {
+  border-color: var(--br-accent);
+}
+
+.browser-check {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--br-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* ---- tag rail ---------------------------------------------------- */
+
+.browser-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 0 12px;
+  border-bottom: 1px solid var(--br-line);
+}
+
+.browser-tag {
+  padding: 3px 9px;
+  font-size: 11.5px;
+  color: var(--br-muted);
+  background: var(--br-panel);
+  border: 1px solid var(--br-line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+
+.browser-tag span {
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
+}
+
+.browser-tag:hover {
+  color: var(--br-text);
+  border-color: var(--br-accent);
+}
+
+.browser-tag.on {
+  color: #0f1113;
+  background: var(--br-accent);
+  border-color: var(--br-accent);
+  font-weight: 600;
+}
+
+.browser-tag-clear {
+  color: #d98b4a;
+  border-color: #6b4a2c;
+}
+
+/* ---- body -------------------------------------------------------- */
+
+.browser-body {
+  display: flex;
+  gap: 20px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-top: 14px;
+}
+
+.browser-results {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.browser-count {
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--br-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.browser-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+}
+
+.browser-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px 8px;
+  background: var(--br-panel);
+  border: 1px solid var(--br-line);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.browser-cell:hover {
+  border-color: var(--br-accent);
+}
+
+.browser-cell.selected {
+  background: #16241a;
+  border-color: var(--br-accent);
+}
+
+.browser-cell > span {
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+.browser-cell em {
+  font-style: normal;
+  font-size: 10.5px;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--br-muted);
+  overflow-wrap: anywhere;
+}
+
+.browser-more {
+  display: block;
+  width: 100%;
+  margin: 14px 0 4px;
+  padding: 10px;
+  font-size: 12.5px;
+  color: var(--br-text);
+  background: var(--br-panel);
+  border: 1px solid var(--br-line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.browser-more:hover {
+  border-color: var(--br-accent);
+}
+
+.browser-empty {
+  padding: 24px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--br-muted);
+}
+
+/* ---- detail pane ------------------------------------------------- */
+
+.browser-detail {
+  flex: 0 0 320px;
+  overflow-y: auto;
+  background: var(--br-panel);
+  border: 1px solid var(--br-line);
+  border-radius: 12px;
+}
+
+.browser-detail-inner {
+  padding: 18px;
+}
+
+.browser-preview {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  padding: 14px;
+  margin-bottom: 14px;
+  background: #000;
+  border-radius: 8px;
+}
+
+.browser-preview figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.browser-preview figure > span {
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+.browser-preview figcaption {
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--br-muted);
+}
+
+.browser-detail h2 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.browser-detail h3 {
+  margin: 18px 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--br-accent);
+}
+
+.browser-copy {
+  width: 100%;
+  padding: 8px;
+  font-size: 12px;
+  color: var(--br-text);
+  background: #1c2124;
+  border: 1px solid var(--br-line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.browser-copy:hover {
+  border-color: var(--br-accent);
+}
+
+.browser-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 5px 12px;
+  margin: 16px 0 0;
+  font-size: 12px;
+}
+
+.browser-facts dt {
+  color: var(--br-muted);
+}
+
+.browser-facts dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.browser-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.browser-snippet {
+  margin-bottom: 10px;
+}
+
+.browser-snippet-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 10px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--br-muted);
+}
+
+.browser-snippet pre {
+  margin: 0;
+  padding: 9px 11px;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #cfd6dc;
+  background: #101315;
+  border: 1px solid var(--br-line);
+  border-radius: 6px;
+  cursor: copy;
+}
+
+.browser-snippet pre:hover {
+  border-color: var(--br-accent);
+}
+
+/* Narrow viewports: stack the detail pane under the results. */
+@media (max-width: 900px) {
+  .browser-body {
+    flex-direction: column;
+  }
+
+  .browser-detail {
+    flex: 0 0 auto;
+    max-height: 45vh;
+  }
+}

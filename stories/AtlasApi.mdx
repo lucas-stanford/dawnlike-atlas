@@ -1,0 +1,232 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Dawnlike/Docs/Atlas API" />
+
+# Atlas API
+
+`dawnlike-atlas/atlas-api` is plain JavaScript over the parsed atlas JSON — no
+React, no DOM, no bundler assumptions. It runs in a Node script, a Web Worker,
+a Vite app, or a `<script type="module">` tag. Everything is also re-exported
+from the package root.
+
+Source:
+[`src/utils/atlasApi.js`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/utils/atlasApi.js) ·
+Types:
+[`src/utils/atlasApi.d.ts`](https://github.com/lucas-stanford/dawnlike-atlas/blob/master/src/utils/atlasApi.d.ts)
+
+```js
+import { loadAtlas, searchSprites, spriteStyle } from 'dawnlike-atlas/atlas-api';
+
+const atlas = await loadAtlas('/atlas/DawnlikeAtlas.json');
+```
+
+## The JSON shape
+
+```
+{
+  meta:   { size:{w,h}, tile:{w,h}, columns, rows, spriteCount, animatedCount, … },
+  frames: { '<name>': { frame:{x,y,w,h} } },   // Phaser-compatible texture atlas
+  byName: { '<name>': { x, y, w, h, tags[], isAnimated? } },
+  legacyFrames: { '<index>': '<name>' }        // packed-grid index → name
+}
+```
+
+`frames` and `byName` describe the same placements in two shapes: hand `frames`
+to Phaser's loader, and use `byName` for everything else.
+
+---
+
+## Loading
+
+### `loadAtlas(url?, { fetchImpl? })`
+
+Fetches and parses the atlas, caching by URL. Concurrent callers share one
+in-flight promise, so every component can call it without coordinating a
+provider. Failures are **not** cached, so a transient network error doesn't
+poison the page.
+
+```js
+const atlas = await loadAtlas('/atlas/DawnlikeAtlas.json');
+```
+
+`clearAtlasCache()` drops the cache — mostly useful in tests.
+
+---
+
+## Lookup
+
+| Call | Returns |
+| --- | --- |
+| `getSprite(atlas, name)` | `{ x, y, w, h, tags, isAnimated }` or `null` |
+| `hasSprite(atlas, name)` | `boolean` |
+| `isAnimated(atlas, name)` | `boolean` — does a second frame exist |
+| `spriteNames(atlas)` | every name, in packing order |
+| `spriteTags(atlas, name)` | the sprite's tags, `[]` when unknown |
+
+All of these tolerate a `null` atlas and an unknown name, returning empty rather
+than throwing — so a typo shows up as a missing sprite, not a crash mid-render.
+
+---
+
+## Searching
+
+### `searchSprites(atlas, opts)`
+
+Returns `Array<{ name, sprite }>`.
+
+| Option | Effect |
+| --- | --- |
+| `query` | Every space-separated word must appear in the name **or** the tags, in any order. Case-insensitive. |
+| `tags` | Tags the sprite must carry. |
+| `tagMode` | `'all'` (default) or `'any'`. |
+| `animated` | `true` / `false` to restrict by animation state. |
+| `prefix` | Name must start with this string. |
+| `limit` | Cap the result count. |
+
+```js
+searchSprites(atlas, { query: 'rat' });
+searchSprites(atlas, { query: 'brick wall' });          // → bright brick wall …
+searchSprites(atlas, { tags: ['creature', 'aquatic'] });// must have both
+searchSprites(atlas, { tags: ['undead'], tagMode: 'any' });
+searchSprites(atlas, { animated: true, limit: 20 });
+searchSprites(atlas, { prefix: 'bright brick wall' });  // one family
+```
+
+Word-matching across names *and* tags is why `"glowing sword"` works even
+though no sprite is literally called that.
+
+### `tagIndex(atlas)` and `spritesByTag(atlas, tag)`
+
+```js
+tagIndex(atlas).slice(0, 5);
+// → [ { tag: 'nature', count: 943 }, { tag: 'wall', count: 681 }, … ]
+
+spritesByTag(atlas, 'creature');  // → ['fighting fish', 'red snapper', …]
+```
+
+Sorted by descending count, so the head of the list is the useful set of filter
+chips — that is exactly what
+[Sprite Browser](?path=/story/dawnlike-sprite-browser--browser) renders.
+
+### `autotileFamilies(atlas, suffixes, minVariants?)`
+
+Discovers autotile base names present in the pack, so your style dropdowns can
+never drift from a repack.
+
+```js
+autotileFamilies(atlas, ['center', 'flat', 'left right', 'up down'], 4);
+// → ['bright brick wall', 'bright fort wall', 'bright mine wall', …]
+```
+
+A base name counts once per suffix it has; families below `minVariants` are
+dropped. Several families share corner suffixes (walls and pools both have
+`left up`), so pair it with a "must have" check on a discriminating suffix —
+`flat` for walls, `divider` for pools, `dense` for forests, `alone` for
+mountains, `nswe` for floors, `up down left right` for rivers and roads.
+
+---
+
+## Rendering
+
+### `spriteStyle(atlas, name, opts?)`
+
+Builds a CSS-in-JS bag. Works with React `style={...}`,
+`Object.assign(el.style, …)`, or any framework that takes a style object.
+
+```js
+spriteStyle(atlas, 'wizard', { scale: 2 });
+// → { width: '64px', height: '64px',
+//     backgroundImage: 'url("DawnlikeAtlas0.png")',
+//     backgroundPosition: '-4032px -384px',
+//     backgroundSize: '4096px 4160px',
+//     backgroundRepeat: 'no-repeat',
+//     imageRendering: 'pixelated' }
+```
+
+| Option | Effect |
+| --- | --- |
+| `scale` | Integer render scale. Position **and** sheet size scale together. |
+| `frame` | `0` (primary) or `1` (alternate). |
+| `basePath` | Prefix for the sheet filename, e.g. `'/atlas/'`. |
+| `sheetUrl` | Explicit URL, overriding `frame` and `basePath`. |
+
+Returns `null` for an unknown sprite so a typo renders as nothing rather than an
+empty box in the wrong place.
+
+### `drawSprite(ctx, sheet, atlas, name, dx, dy, scale?)`
+
+Blits to a 2D canvas, disabling image smoothing first — one bilinear pass turns
+DawnLike's hard 2×2 blocks to mush. Returns `false` when the name is unknown.
+
+```js
+const sheet = new Image();
+sheet.src = '/atlas/DawnlikeAtlas0.png';
+sheet.onload = () => drawSprite(ctx, sheet, atlas, 'wizard', 64, 64, 2);
+```
+
+### `animationFrames(atlas, name, { basePath? })`
+
+The 1- or 2-frame sequence with its sheet URLs. Static sprites return a single
+frame, so callers can treat both cases uniformly.
+
+---
+
+## Generation
+
+### `pickSprite(atlas, candidates, rng?)`
+
+Random pick, **filtered to names the atlas actually has**, returning `null` when
+nothing matches. Pass a seeded RNG for deterministic generation:
+
+```js
+import * as ROT from 'rot-js';
+ROT.RNG.setSeed(seed);
+
+pickSprite(atlas, ['luminous mushroom', 'pebble', 'bones'],
+           ROT.RNG.getUniform.bind(ROT.RNG));
+```
+
+This is how every zone example scatters decor: a candidate list that may contain
+names a future repack removes, filtered before the dice roll.
+
+### `spriteCell(atlas, name)` and `nameAtIndex(atlas, index)`
+
+Convert between a sprite and its position in the 64×65 packed grid.
+
+```js
+spriteCell(atlas, 'wizard');   // → { col: 63, row: 6, index: 447 }
+nameAtIndex(atlas, 447);       // → 'wizard'
+```
+
+Useful for grid-addressed renderers and for the Mega Atlas tooltips.
+
+---
+
+## React
+
+```jsx
+import { useAtlas, AtlasSprite, AtlasTileMap } from 'dawnlike-atlas';
+
+function Scene() {
+  const { atlas, loading, error } = useAtlas('/atlas/DawnlikeAtlas.json');
+  if (loading) return <Spinner />;
+  if (error) return <p>{error.message}</p>;
+
+  return (
+    <>
+      <AtlasSprite atlas={atlas} name="wizard" scale={3} animated />
+      <AtlasTileMap atlas={atlas} scale={2} tiles={[
+        ['dark brick wall left right', 'dark brick wall left right'],
+        ['dusk brick floor c',         ['dusk brick floor c', 'wizard']],
+      ]} />
+    </>
+  );
+}
+```
+
+`useAtlas` is backed by the same module-level cache as `loadAtlas`, so fifty
+`<AtlasSprite>`s issue one request. `<AtlasTileMap>` cells accept a name, an
+array of names drawn bottom-to-top as layers, or `null`.
+
+`<AtlasSprite>` only animates when the sprite is flagged `isAnimated`, so
+setting `animated` on a whole scene is safe.

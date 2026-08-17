@@ -10,7 +10,14 @@
       "import": "./react/index.js",
       "default": "./react/index.js"
     },
-    "./autotile": "./src/utils/autotile.js",
+    "./autotile": {
+      "types": "./src/utils/autotile.d.ts",
+      "default": "./src/utils/autotile.js"
+    },
+    "./atlas-api": {
+      "types": "./src/utils/atlasApi.d.ts",
+      "default": "./src/utils/atlasApi.js"
+    },
     "./utils/tactical": "./src/utils/tactical/index.js",
     "./atlas/DawnlikeAtlas.json": "./atlas/DawnlikeAtlas.json",
     "./atlas/DawnlikeAtlas0.png": "./atlas/DawnlikeAtlas0.png",
@@ -20,6 +27,9 @@
   "files": [
     "react",
     "src/utils/autotile.js",
+    "src/utils/autotile.d.ts",
+    "src/utils/atlasApi.js",
+    "src/utils/atlasApi.d.ts",
     "src/utils/paths.js",
     "src/utils/tactical",
     "atlas/DawnlikeAtlas.json",
@@ -31,6 +41,11 @@
     "dev": "bun run storybook",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:storybook": "vitest run --config vitest.storybook.config.ts",
+    "check-package": "node scripts/check-package-exports.mjs",
     "tag-animated": "node scripts/tag-animated.js"
   },
   "repository": {

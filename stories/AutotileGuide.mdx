@@ -1,0 +1,310 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Dawnlike/Docs/Autotile Guide" />
+
+# Autotile Guide
+
+Autotiling is the trick that turns "this cell is a wall" into "this cell is the
+north-east corner piece of a wall". You give a resolver the family you want and
+which neighbours are the same type; it gives you back a sprite name.
+
+```js
+import { resolveDawnLikeBuildingWallName } from 'dawnlike-atlas/autotile';
+
+resolveDawnLikeBuildingWallName(
+  'bright brick wall',                   // family
+  { n: true, s: true, e: false, w: true },// neighbours
+  atlas.byName,                           // what the pack actually has
+);
+// → 'bright brick wall left up down'
+```
+
+**The whole guide in one sentence:** DawnLike's families do not agree on how
+they name their variants, so use the resolver that matches the family rather
+than building names by hand.
+
+> Everything below is explorable in
+> [Autotile Lab](?path=/story/dawnlike-autotile-lab--lab) — toggle neighbours,
+> browse a family's full variant sheet, or paint a shape and watch it tile.
+
+## Why `atlas.byName` is a parameter
+
+Every resolver takes the lookup as its last argument, and it is not optional in
+spirit. DawnLike's families are not uniformly complete — some are missing an
+endcap, a T-junction, or a bottom edge. The resolver consults the lookup, and
+when the ideal variant is absent it walks a **fallback chain** to the closest
+piece that exists.
+
+Pass an empty object and you get plausible names that render as holes. Pass the
+real lookup and a sparse family degrades gracefully instead.
+
+## The six resolvers
+
+### `resolveDawnLikeBuildingWallName` — Objects/Wall
+
+Cardinal neighbours, suffix tokens in the order **left → right → up → down**.
+
+| Neighbours | Name |
+| --- | --- |
+| none | `bright brick wall center` |
+| N + E | `bright brick wall right up` |
+| N + S + W | `bright brick wall left up down` |
+| all four | `bright brick wall left right up down` |
+
+A north-east corner is `right up`, **not** `up right`. Isolated tiles fall back
+to `center`, and endcaps degrade onto the matching straight.
+
+### `resolveDawnLikeDungeonWallName` — walls with real geometry
+
+Same family, but instead of a neighbour table you hand it `isWall(x, y)` and a
+coordinate. It does two extra things that matter for maps rather than tile
+sheets:
+
+- **Buried rock returns `null`.** A wall tile with no open cell anywhere in its
+  8-neighbourhood is invisible, so the resolver tells you not to draw it. In a
+  cave that skips most of the map.
+- **Neighbours only connect when the perpendicular axis is open.** This stops
+  the autotiler drawing a T-junction across a diagonal pinch — the thing that
+  makes naive resolvers look broken on cellular caves.
+
+Treat out-of-bounds as wall so the map border closes cleanly.
+
+```js
+resolveDawnLikeDungeonWallName(
+  'dark mine wall', x, y,
+  (nx, ny) => !inBounds(nx, ny) || isRock(nx, ny),
+  atlas.byName,
+);
+```
+
+See it working on the hardest geometry in
+[Cave › Raw noise](?path=/story/dawnlike-zone-examples-cave--raw-noise).
+
+### `resolveDawnLikeRiverName` / `resolveDawnLikeWallName` — Objects/Map
+
+Rivers, roads, trails, castle walls, fences. Cardinal neighbours, suffix tokens
+in the order **up → down → left → right** — the *opposite* convention from the
+wall sheet.
+
+And one genuine trap: **vertical T-junctions are east/west inverted.**
+
+| Neighbours | Name |
+| --- | --- |
+| N + S + E | `clear river up down left` |
+| N + S + W | `clear river up down right` |
+| N + E + W | `clear river up left right` |
+| S + E + W | `clear river down left right` |
+
+The top two look wrong and are correct — that is how the art is drawn. The
+horizontal T's are literal. An isolated segment renders as a vertical straight.
+
+The two function names are the same resolver; `resolveDawnLikeWallName` is the
+historical alias that returns a bare string, `resolveDawnLikeRiverName` returns
+`{ name }`.
+
+### `resolveDawnLikeFloorName` — floors
+
+Cardinal neighbours, but inverted: **variants are named by the neighbours that
+are MISSING.**
+
+| Neighbours | Missing | Name |
+| --- | --- | --- |
+| all four | — | `dusk brick floor c` |
+| S + E + W | N | `dusk brick floor n` |
+| S + E | N, W | `dusk brick floor nw` |
+| none | all | `dusk brick floor nswe` |
+
+Suffix letters are ordered `n s w e`.
+
+This inversion is why floor layers look right when you stack them: a tile
+surrounded by its own floor is the plain interior, and edges appear exactly
+where the floor stops.
+
+**The technique worth learning here** is choosing the same-type predicate.
+In [Island](?path=/story/dawnlike-zone-examples-island--island), the beach layer
+counts *grass* as same-type, so sand only draws an edge against water — never
+against the meadow it flows into. Nest your predicates and the seams disappear.
+
+### `resolveDawnLikePoolName` — water
+
+Cardinal neighbours over the pool families (`stone clear pool`,
+`metal toxic pool`, `lava pool`, …). Interior is `center`, a vertical channel is
+`divider`.
+
+DawnLike ships **no bottom-edge piece**, so the resolver returns the top edge
+with `flipY: true`. Honour it:
+
+```jsx
+const pool = resolveDawnLikePoolName('stone murky pool', nb, atlas.byName);
+<div style={{ ...spriteStyle(atlas, pool.name),
+              ...(pool.flipY ? { transform: 'scaleY(-1)' } : null) }} />
+```
+
+### `resolveDawnLikeForestName` — canopies
+
+The only **8-way** resolver. Corners are what varies, and the rule is the
+standard blob rule:
+
+> A corner is filled if — and only if — its diagonal **and both adjacent
+> cardinals** are all trees. Otherwise the canopy curves away there.
+
+The suffix lists the corners that curve, in the order `nw ne sw se`. All four
+filled → `dense`. An isolated tree → `light oak nw ne sw se`.
+
+Because corners depend on diagonals, canopies only look good on *contiguous
+blobs*. Generate forests from a second noise field masked to your terrain band,
+not from a per-tile dice roll — a uniform speckle makes every tile an isolated
+tree.
+
+### `resolveDawnLikeShoreName` — coastlines
+
+**These are not original DawnLike sprites.** The pack has no coastline art, so
+`scripts/generate-shore.mjs` draws the `* shore` families. Everything else in
+this guide describes art that shipped with DawnLike; this one is ours.
+
+Why it exists: put a pool sprite next to a floor sprite and you get two borders
+fighting — the pool family's dark blue rocky rim (drawn for a pool set into a
+dungeon floor) against the floor family's pale rim. A shore tile instead holds
+the entire land → water transition in one cell, and is **transparent where the
+water goes**, so a flat water tile painted underneath shows through. One set
+works over clear water, toxic water or lava.
+
+This is a full **47-tile blob set** — the only family in the pack that is one.
+A tile's look depends on all 8 neighbours (2⁸ = 256 states), but a diagonal only
+matters when **both of its flanking cardinals are land**: if the north side is
+already water, the north band has cut the whole NW corner away and the NW
+diagonal cannot change anything. Collapsing on that rule:
+
+| Cardinals that are land | Eligible corners | Tiles |
+| --- | --- | --- |
+| 4 | 4 | 16 |
+| 3 | 2 | 4 × 4 = 16 |
+| 2 adjacent | 1 | 4 × 2 = 8 |
+| 2 opposite | 0 | 2 |
+| 1 | 0 | 4 |
+| 0 | 0 | 1 |
+| | | **47** |
+
+Flags mean **"this neighbour is more land"** — the same predicate the floor
+resolver takes. The suffix is the water cardinals in n-s-w-e order, then one
+`d<corner>` token per corner cut by a water diagonal:
+
+| Neighbours | Name |
+| --- | --- |
+| all eight land | `sand shore c` |
+| all but N | `sand shore n` |
+| all but N and W | `sand shore nw` *(cardinals — not a corner)* |
+| all cardinals land, NW diagonal water | `sand shore dnw` |
+| N water, SE diagonal water | `sand shore n dse` |
+| all cardinals land, every diagonal water | `sand shore dnw dne dsw dse` |
+| none | `sand shore nswe` |
+
+The `d` tiles are what the floor families lack entirely — without them a
+diagonal inlet or spit renders as a staircase of hard square corners.
+
+Five families ship — `sand shore`, `grass shore`, `snow shore`, `mud shore`,
+`ash shore` — 47 variants each.
+
+```js
+resolveDawnLikeShoreName('sand shore', {
+  n: isLand(x, y - 1),      s:  isLand(x, y + 1),
+  w: isLand(x - 1, y),      e:  isLand(x + 1, y),
+  nw: isLand(x - 1, y - 1), ne: isLand(x + 1, y - 1),
+  sw: isLand(x - 1, y + 1), se: isLand(x + 1, y + 1),
+}, atlas.byName);
+```
+
+Render order is the whole trick: **water first, everywhere**, then the shore
+tile on each land cell.
+
+If a family ships only part of the set, the resolver drops corner detail rather
+than returning a name the atlas lacks — so a reduced set still renders.
+
+### `resolveDawnLikeMountainName` — peaks
+
+Cardinal neighbours over the 10-sprite blob set (`blue peak`, `green snowcap`,
+`red volcano`, `yellow mound`, …). No T-junctions, no thin straights.
+
+The convention catches people out: **the suffix names the edge the tile sits
+on**, not the directions it connects to.
+
+| Neighbours | Name | Reading |
+| --- | --- | --- |
+| all four | `blue peak c` | interior |
+| S + E + W | `blue peak n` | the northern edge |
+| S + E | `blue peak nw` | the north-west outer corner |
+| none | `blue peak alone` | a lone summit |
+
+Non-blob shapes (a one-tile-wide ridge) have no exact piece, so they degrade to
+the closest cap.
+
+## Recipe: autotiling a map
+
+The pattern every zone example follows.
+
+```js
+// 1. Decide the type of every cell first — all of them, before rendering.
+const kindAt = (x, y) => inBounds(x, y) ? tiles[`${x},${y}`].kind : 'rock';
+
+// 2. Render in layers, lowest first. Each layer has its own same-type
+//    predicate; that predicate is the whole design decision.
+function layersFor(x, y) {
+  const layers = [];
+
+  // Ground under everything walkable — including under water, so banks
+  // have something to read against.
+  if (kindAt(x, y) !== 'rock') {
+    const isOpen = (nx, ny) => kindAt(nx, ny) !== 'rock';
+    layers.push(resolveDawnLikeFloorName(floorStyle, {
+      n: isOpen(x, y - 1), s: isOpen(x, y + 1),
+      e: isOpen(x + 1, y), w: isOpen(x - 1, y),
+    }, atlas.byName).name);
+  }
+
+  // Water counts only water, so it banks against every other type.
+  if (kindAt(x, y) === 'water') {
+    const isWater = (nx, ny) => kindAt(nx, ny) === 'water';
+    const pool = resolveDawnLikePoolName(waterStyle, {
+      n: isWater(x, y - 1), s: isWater(x, y + 1),
+      e: isWater(x + 1, y), w: isWater(x - 1, y),
+    }, atlas.byName);
+    layers.push(pool.name);   // remember pool.flipY
+  }
+
+  // Walls last, and skip the buried ones.
+  if (kindAt(x, y) === 'rock') {
+    const name = resolveDawnLikeDungeonWallName(
+      wallStyle, x, y, (nx, ny) => kindAt(nx, ny) === 'rock', atlas.byName,
+    );
+    if (name) layers.push(name);
+  }
+
+  return layers;
+}
+```
+
+Three rules that cover most mistakes:
+
+1. **Off-map must have a type.** Return `'rock'` (or `'ocean'`) for
+   out-of-bounds so the border closes instead of fraying.
+2. **Buried tiles need a backdrop.** The dungeon resolver draws nothing for
+   deep rock, so paint the grid a stone colour or those cells read as holes in
+   the world.
+3. **Decide all cell types before resolving any of them.** Resolvers read
+   neighbours, so a single pass that generates and renders together gives
+   different answers depending on iteration order.
+
+## Discovering families at runtime
+
+Hard-coded family lists drift when the pack is repacked. Ask the atlas instead:
+
+```js
+import { autotileFamilies } from 'dawnlike-atlas/atlas-api';
+
+// Every wall family in the pack — `flat` only exists on the wall sheet,
+// which is what separates walls from pools that share corner suffixes.
+autotileFamilies(atlas, ['center', 'flat', 'left right', 'up down'], 3)
+  .filter((base) => atlas.byName[`${base} flat`]);
+```
+
+That is exactly how Autotile Lab builds its dropdowns.
