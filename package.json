@@ -18,6 +18,7 @@
       "types": "./src/utils/atlasApi.d.ts",
       "default": "./src/utils/atlasApi.js"
     },
+    "./utils/farm": "./src/utils/farm.js",
     "./utils/tactical": "./src/utils/tactical/index.js",
     "./atlas/DawnlikeAtlas.json": "./atlas/DawnlikeAtlas.json",
     "./atlas/DawnlikeAtlas0.png": "./atlas/DawnlikeAtlas0.png",
@@ -31,6 +32,7 @@
     "src/utils/atlasApi.js",
     "src/utils/atlasApi.d.ts",
     "src/utils/paths.js",
+    "src/utils/farm.js",
     "src/utils/tactical",
     "atlas/DawnlikeAtlas.json",
     "atlas/DawnlikeAtlas0.png",
@@ -46,7 +48,8 @@
     "test:coverage": "vitest run --coverage",
     "test:storybook": "vitest run --config vitest.storybook.config.ts",
     "check-package": "node scripts/check-package-exports.mjs",
-    "tag-animated": "node scripts/tag-animated.js"
+    "tag-animated": "node scripts/tag-animated.js",
+    "generate-watered-field": "node scripts/generate-watered-field.mjs"
   },
   "repository": {
     "type": "git",
