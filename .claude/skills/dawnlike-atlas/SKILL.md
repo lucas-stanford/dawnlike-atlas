@@ -7,7 +7,7 @@ description: Use the `dawnlike-atlas` repo — a bin-packed 32×32 mega-atlas of
 
 A semantic mega-atlas for the [DawnLike](https://dragondeplatino.itch.io/dawnlike) tileset (CC-BY 4.0). Sprites are stored at **32×32** (a strict 2× nearest-neighbour upscale of the original 16×16 art, so every source pixel becomes a clean 2×2 block).
 
-- **4,157 sprites** packed into a single `2048×2080` PNG (`64×65` grid).
+- **4,456 sprites** packed into a single `2048×2240` PNG (`64×70` grid). 4,157 are original DawnLike art; the remaining 299 are generated — 235 `* shore` coastline tiles and 64 `* watered field` soil tiles.
 - Companion `DawnlikeAtlas1.png` provides the alt frame for the 1,258 animated sprites.
 - `DawnlikeAtlas.json` gives semantic name lookup + tags + a legacy index map.
 - Pure JS autotile resolvers for walls, floors, rivers, pools, forests, mountains.
@@ -39,7 +39,7 @@ Files you actually need at runtime (raw URLs are from the `master` branch — pi
 | File | URL | Description |
 |---|---|---|
 | `atlas/DawnlikeAtlas.json` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas.json> | Atlas metadata. Top-level keys: `meta` (size `2048×2080`, `tile {w:32,h:32}`, `scale:2`, `columns:64`, `rows:65`), `frames` (Phaser-min texture atlas, `{ "<name>": { frame: {x,y,w,h} } }`), `byName` (flat lookup keyed by lowercase human-readable sprite name → `{x,y,w,h,tags[]}`), and `legacyFrames` (legacy numeric index → name, useful when iterating the sheet as a grid). |
-| `atlas/DawnlikeAtlas0.png` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas0.png> | Primary mega-atlas spritesheet. `2048×2080` PNG packing all **4,157 sprites** at 32×32 each (a strict 2× nearest-neighbour upscale of the original 16×16 DawnLike art — every source pixel is a clean 2×2 block). This is the sheet you draw from for static sprites. |
+| `atlas/DawnlikeAtlas0.png` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas0.png> | Primary mega-atlas spritesheet. `2048×2240` PNG packing all **4,456 sprites** at 32×32 each (a strict 2× nearest-neighbour upscale of the original 16×16 DawnLike art — every source pixel is a clean 2×2 block). This is the sheet you draw from for static sprites. |
 | `atlas/DawnlikeAtlas1.png` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/atlas/DawnlikeAtlas1.png> | Alt-frame spritesheet for the **1,258 animated sprites** (creatures, torches, etc.). Same dimensions and per-sprite coordinates as `DawnlikeAtlas0.png`, so a 2-frame walk animation is just `[atlas0.frame(name), atlas1.frame(name)]` at ~2 fps. Sprites that aren't animated leave their cell blank here. |
 | `src/utils/autotile.js` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/src/utils/autotile.js> | Pure-JS autotile resolvers. Exports `resolveDawnLikeWallName`, `resolveDawnLikeBuildingWallName`, `resolveDawnLikeDungeonWallName`, `resolveDawnLikeFloorName`, `resolveDawnLikeRiverName`, `resolveDawnLikePoolName`, `resolveDawnLikeForestName` (8-way), `resolveDawnLikeMountainName` (blob), the generic manifest-driven `resolveAutotile`, and the `AUTOTILE_MANIFESTS` registry. Maps a `{n,s,e,w}` neighbour mask to the correct atlas sprite name. No runtime deps. |
 | `src/utils/atlasApi.js` | <https://raw.githubusercontent.com/lucas-stanford/dawnlike-atlas/master/src/utils/atlasApi.js> | Framework-agnostic helpers over the atlas JSON. Exports `loadAtlas` (fetch + dedupe + cache), `getSprite`, `hasSprite`, `isAnimated`, `spriteNames`, `spriteTags`, `tagIndex`, `searchSprites`, `spritesByTag`, `autotileFamilies`, `spriteCell`, `nameAtIndex`, `spriteStyle` (CSS bag), `drawSprite` (canvas blit), `pickSprite` (random pick filtered to names that exist), `animationFrames`. No runtime deps. |
@@ -197,7 +197,7 @@ These conventions are baked into the atlas; trust the resolvers over hand-rolled
 Working integrations live under `src/` and `stories/`:
 
 - `src/AutotileLabExample.jsx` — interactive playground for every resolver: neighbour pad, full variant sheet, live paint canvas. **Read this first** to understand the resolvers.
-- `src/SpriteBrowserExample.jsx` — search all 4,157 sprites by name and tag; also the reference usage of `src/utils/atlasApi.js`.
+- `src/SpriteBrowserExample.jsx` — search all 4,456 sprites by name and tag; also the reference usage of `src/utils/atlasApi.js`.
 - `src/DungeonExample.jsx` — rot.js rooms-and-corridors, autotiled walls.
 - `src/CaveExample.jsx` — cellular-automata caverns, largest-region flood fill, distance-transform lakes.
 - `src/OutdoorExample.jsx` — overworld with biome floors, river, road, bridge, forest canopy.

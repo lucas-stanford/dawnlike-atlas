@@ -26,12 +26,13 @@ function Wizard() {
 
 | Path | What's in it |
 | --- | --- |
-| `atlas/DawnlikeAtlas0.png` | Primary frames — 4,157 sprites, 2048×2080 |
+| `atlas/DawnlikeAtlas0.png` | Primary frames — 4,456 sprites, 2048×2240 |
 | `atlas/DawnlikeAtlas1.png` | Alternate frames for the 1,258 animated sprites |
 | `atlas/DawnlikeAtlas.json` | `byName` lookup, Phaser `frames`, AI-generated tags |
 | `src/utils/atlasApi.js` | Framework-agnostic helpers over the atlas JSON |
 | `src/utils/autotile.js` | The six autotile resolvers + their manifests |
 | `src/utils/tactical/` | XCOM-style AP / LOS / cover / combat toolkit |
+| `src/utils/farm.js` | Farming-sim rules engine — crops, watering, day cycle, economy |
 | `src/*Example.jsx` | The example components |
 | `src/phaser/` | A complete Phaser 4 roguelike |
 | `stories/` | Storybook stories wrapping each example |
@@ -247,6 +248,45 @@ node scripts/generate-shore.mjs --apply   # write into the atlas
 See [Island](https://lucas-stanford.github.io/dawnlike-atlas/?path=/story/dawnlike-zone-examples-island--island)
 for them in use.
 
+### Watered soil, and the daylight tint as a mechanic
+
+DawnLike draws each floor family in **four daylight tints** — `morning`, `day`,
+`dusk`, `night` — and they are palette rotations, not lighting passes. That
+makes the time of day a *sprite family swap* rather than a CSS filter, so you can
+re-tint a whole map and every pixel stays on the DawnBringer 16 palette:
+
+```js
+// The only thing that changes is the family name.
+const phase = 'dusk';                         // morning | day | dusk | night
+resolveDawnLikeFloorName(`${phase} grass floor`, neighbours, atlas.byName);
+```
+
+`plowed field` ships in all four tints too, which covers tilled earth — but there
+is no **wet** variant, and watering is the mechanic a farming game is built
+around. `scripts/generate-watered-field.mjs` derives a `<tint> watered field`
+family from the plowed field by remapping its palette, so wet and dry soil share
+pixel-identical furrows and only the colour distinguishes them.
+
+The remap is a small explicit table rather than a formula, and that is the
+interesting part. "Just darken it" produces `day plowed field` when applied to
+morning, and produces *nothing at all* at night, where the tile has already
+bottomed out at navy and black — an automatic blend-toward-navy pass was tried
+first and collapsed exactly there. What reads as wet across all four tints is a
+hue move: **replace the warm highlight with a cool sheen and deepen the shadow**.
+At night, with no room left to darken, the rule inverts and the sheen brightens
+to blue — moonlight on standing water.
+
+```bash
+node scripts/generate-watered-field.mjs           # preview PNG only
+node scripts/generate-watered-field.mjs --apply   # write into the atlas
+```
+
+Both generators are additive and idempotent: existing sprites never move, and
+re-running rewrites the generated tiles in the cells they already occupy.
+
+See [Farm](https://lucas-stanford.github.io/dawnlike-atlas/?path=/story/dawnlike-games-and-systems-farm--playable)
+for the whole thing driving a game loop.
+
 ---
 
 ## Examples
@@ -259,8 +299,8 @@ self-contained component under `src/`.
 | Story | Source | What it shows |
 | --- | --- | --- |
 | **Autotile Lab** | `src/AutotileLabExample.jsx` | Interactive playground for all six resolvers: neighbour pad, full variant sheet, and a live paint canvas. |
-| **Sprite Browser** | `src/SpriteBrowserExample.jsx` | Search all 4,157 sprites by name and tag, inspect any record, copy React/CSS/Phaser snippets. |
-| **Mega Atlas** | `src/components/SpriteSheet.jsx` | The packed sheet itself, in its 64×65 grid, with hover names and animation toggle. |
+| **Sprite Browser** | `src/SpriteBrowserExample.jsx` | Search all 4,456 sprites by name and tag, inspect any record, copy React/CSS/Phaser snippets. |
+| **Mega Atlas** | `src/components/SpriteSheet.jsx` | The packed sheet itself, in its 64×70 grid, with hover names and animation toggle. |
 | **Components** | `src/ComponentsExample.jsx` | Live gallery of every component the npm package exports, each with the props beside it — plus a HUD built only from GUI sprites inside the mega-atlas. |
 
 ### Zone generators
@@ -284,10 +324,38 @@ lifting the generator into your own project.
 | Story | Source | What it shows |
 | --- | --- | --- |
 | **Phaser Roguelike** | `src/phaser/` | An explorable overworld + town + 3-level dungeon on [Phaser 4](https://phaser.io/), with working exits, a chrome HUD, hold-to-walk movement, sprite animation, and `localStorage` save/resume keyed off one seed. |
+| **Farm** | `src/FarmExample.jsx` + `src/utils/farm.js` | A complete farming loop — till, sow, water, harvest, sell — with livestock, an orchard and a stamina-driven day cycle that re-tints the whole map through the four daylight sprite families. Rules are a pure state machine with no React or atlas dependency. |
 | **Tactical Combat** | `src/TacticalCombatExample.jsx` | XCOM-style squad tactics on `src/utils/tactical/` — action points, fog of war, cover, flanking, overwatch. |
 | **Arena Combat** | `src/ArenaCombatExample.jsx` | Real-time arena fighting with movable, collapsible HUD panels. |
 | **Menu HUD** | `src/MenuExample.jsx` | Inventory, equipment and dialogue built from the GUI sprites. |
 | **Character Gallery** | `src/CharacterGallery.jsx` | AI-generated portrait and JRPG-style sprite variants. |
+
+### The farming toolkit
+
+`src/utils/farm.js` is the rules engine behind the Farm example — a pure state
+machine with no React, no DOM and no atlas dependency, published as
+`dawnlike-atlas/utils/farm`:
+
+```js
+import {
+  createFarm, act, actionFor,   // build a farm, decide and apply the next action
+  advanceDay,                   // crops drink, grow, ripen, wither; soil goes to weed
+  soilFamily, cropSprite,       // sprite names for the current tile state
+  dayPhase,                     // 'morning' | 'day' | 'dusk' | 'night', from stamina
+  CROPS, sellStock, stockValue, // the catalogue and the economy
+} from 'dawnlike-atlas/utils/farm';
+
+let farm = createFarm({ width: 22, height: 16, rng: ROT.RNG.getUniform });
+farm = act(farm, x, y, { farmerX, farmerY, selectedCrop: 'turnip' }).state;
+farm = advanceDay(farm).state;
+```
+
+Every action returns `{ ok, state, message }` and a failed action returns the
+**same state reference**, so React can skip the re-render. Two of DawnLike's
+quirks shaped the design and both became mechanics: crops have exactly two drawn
+stages, so growth *time* varies per crop instead of inventing intermediate art;
+and the four daylight tints are driven by the farmer's remaining stamina, so the
+working day visibly runs out.
 
 ### The tactical toolkit
 

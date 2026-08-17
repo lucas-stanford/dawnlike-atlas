@@ -19,7 +19,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Autotile Lab** example and story — an interactive playground for all six
   resolvers: a neighbour pad with the exact call printed underneath, the full
   variant sheet for any family, and a paint canvas that autotiles live.
-- **Sprite Browser** example and story — search all 4,157 sprites by name and
+- **Sprite Browser** example and story — search all 4,456 sprites by name and
   tag, inspect any atlas record, and copy React / CSS / Phaser snippets.
 - **Components** gallery example and story — every component the package
   exports, rendered live with its props, including a HUD assembled from the GUI
@@ -39,6 +39,29 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   animated so the surf tracks DawnLike's water. The atlas grew from 65 to 69
   rows (2048×2208); existing sprites did not move.
 - **`resolveDawnLikeShoreName`** — 8-way coastline resolver for the above.
+- **Watered-soil tiles** — 64 new sprites (`morning|day|dusk|night watered field`,
+  all 16 floor suffixes), derived by `scripts/generate-watered-field.mjs`.
+  DawnLike ships `* plowed field` in all four daylight tints but no wet variant,
+  and watering is the mechanic a farming game is built around. Each watered tile
+  is the corresponding plowed tile with its palette remapped, so wet and dry soil
+  share pixel-identical furrows. The remap is an explicit per-tint table, not a
+  formula: darkening produces `day plowed field` when applied to morning and
+  produces nothing at all at night, where the tile has already bottomed out at
+  navy and black. What reads as wet across all four tints is a hue move —
+  replace the warm highlight with a cool sheen and deepen the shadow — and at
+  night, with no room to darken, the sheen brightens to blue instead. The atlas
+  grew from 69 to 70 rows (2048×2240); existing sprites did not move.
+- **Farm** example, story and rules engine (`dawnlike-atlas/utils/farm`) — a
+  complete farming loop: till, sow, water, harvest, sell, plus livestock, an
+  orchard, a watering can that only refills at the pond, crops that wither after
+  two dry days and tilled soil that goes back to weed after three. The rules are
+  a pure state machine with no React, DOM or atlas dependency, unit tested in
+  `tests/farm.test.js` — including a check that every sprite name the engine can
+  ever ask for exists in the packed atlas.
+  The farmer's remaining stamina selects the daylight tint, so the whole map is
+  redrawn from a different sprite family as the working day burns down. Because
+  the tints are palette rotations rather than lighting passes, that stays exactly
+  on the DawnBringer 16 palette — which no CSS filter could do.
 - **Island** zone example — radial-falloff landmass exercising the pool, floor,
   forest and mountain resolvers together. The first example to use
   `resolveDawnLikeMountainName`.
