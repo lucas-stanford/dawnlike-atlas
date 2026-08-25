@@ -145,204 +145,329 @@ export const RAIL_SUFFIXES = [
 export const BOW_SUFFIXES = ['nw', 'ne', 'sw', 'se'];
 
 /**
- * A one-cell boat, in the four headings.
+ * ONE-CELL VESSELS, AND WHY THEY ARE NOT ONE SPRITE ROTATED
  *
- * The six-cell ship is a tile map, which is the right shape for a vessel
- * you stand on and walk around. It is the wrong shape for a ship's boat,
- * a fishing skiff, a ferry, or anything a map wants to place the way it
- * places a creature — those need to be a single sprite you can drop on
- * one cell, and DawnLike has no boat of any size.
+ * The first version of these drew a single boat and rotated it 90 degrees
+ * three times. It was wrong, and obviously wrong once anyone looked at
+ * the four headings side by side: it read as one paper cut-out being spun
+ * on a table rather than as a boat seen from four directions.
  *
- * Drawn as a rowboat seen from directly overhead: pointed bow, widest a
- * little abaft midships, squared transom, two thwarts across it. The
- * outline is closed so it reads at 32px, and everything outside the hull
- * is transparent so it composites straight onto water.
+ * Two things cause that, and both are well documented in the pixel-art
+ * literature on directional sprites:
+ *
+ * 1. **The light rotates with the sprite.** Shading is baked into pixel
+ *    art — a lit rim on the upper left and a shadow on the lower right is
+ *    what makes a flat shape read as a solid. Rotate the finished tile
+ *    and the lit rim marches round with it, so the sun appears to orbit
+ *    the boat as it turns. The fix is to build the SHAPE in boat space,
+ *    rotate that, and only then light it in SCREEN space. Every heading
+ *    then shares one fixed light, here from the north-west, which is the
+ *    direction DawnLike's own wall tiles are lit from.
+ *
+ * 2. **Nothing foreshortens.** A top-down tile game is not a true
+ *    orthographic plan; the camera is tilted a little, which is why
+ *    DawnLike's walls show a face at all. Under a tilted camera a sail
+ *    seen from ahead or astern is narrower than the same sail seen
+ *    broadside, and a hull seen end-on shows less of its side. A pure
+ *    rotation keeps every dimension identical and the effect disappears.
+ *    So the sail has two profiles, one for the north/south headings and a
+ *    wider one for east/west.
+ *
+ * What still rotates is the boat's own geometry — which end is pointed,
+ * which side the sail is set. That is a property of the boat, not of the
+ * camera, and it is correct for it to turn.
  */
 export const BOAT_HEADINGS = ['n', 'e', 's', 'w'];
 
+/** Quarter turns clockwise from bow-north, per heading. */
+const TURNS = { n: 0, e: 1, s: 2, w: 3 };
+
 /**
  * A one-cell fore-and-aft rigged sailing boat — a sloop, the small
- * working craft of the 1790s–1850s: one mast stepped well forward, a
- * boomed mainsail aft of it and a jib on the forestay.
+ * working craft of the 1790s–1850s: one mast stepped well forward with a
+ * boomed mainsail abaft it.
  *
  * Two liveries. `sloop` carries working canvas; `black sloop` is the same
- * hull under a black mainsail with a white device on it and a pennant at
- * the masthead — a Jolly Roger, which is the one piece of pirate iconography
- * that survives being drawn at sixteen logical pixels.
+ * hull under a black mainsail with a white device on it — a Jolly Roger,
+ * which is the one piece of pirate iconography that survives being drawn
+ * at sixteen logical pixels.
  *
- * The rowboat stays exactly what it was. It is the boat you row ashore in;
- * this is the boat you arrive in.
+ * The rowboat stays exactly what it was. It is the boat you row ashore
+ * in; this is the boat you arrive in.
  */
 export const SLOOP_LIVERIES = ['sloop', 'black sloop'];
 
-/**
- * Hull for the sloop: an almond, fine at both ends, a little narrower
- * than the rowboat's.
- */
-const SLOOP_HULL = [2, 4, 6, 8, 8, 8, 8, 8, 8, 8, 8, 6, 4, 2];
+// ---------------------------------------------------------------------
+// shapes, in boat space: bow to the north
+// ---------------------------------------------------------------------
+
+/** Rowboat hull, widths per row from the bow. */
+const BOAT_HULL = [2, 4, 4, 6, 6, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8];
+
+/** Rows carrying a thwart, and how far in from the gunwale it reaches. */
+const BOAT_THWARTS = [6, 10];
+
+/** Sloop hull: an almond, fine at both ends, and SHORT — see below. */
+const SLOOP_HULL = [2, 4, 6, 6, 6, 6, 6, 6, 6, 4, 2];
 
 /**
- * The mainsail, as spans of x per row: a triangle with its apex at the
- * mast, forward, widening aft and leaning to starboard.
+ * The mainsail, drawn per heading in SCREEN space rather than in boat
+ * space, and this is the part that a rotation can never get right.
  *
- * This is a cheat, and a deliberate one. Seen from directly overhead a
- * sail is edge-on — a line — and a boat drawn honestly that way is a hull
- * with a scratch on it. Two earlier attempts drew it honestly-ish: a
- * round sail over the middle ate the hull and read as a dumpling; a slim
- * sail set entirely outboard read as a fin. What reads as a sailing boat
- * is the sail laid over the hull as if seen from up and astern, which is
- * how every top-down game has drawn one since the 8-bit era.
+ * A hull lies flat on the water, so it turns with the boat. A mast does
+ * not: it is vertical, and under a tilted top-down camera anything
+ * vertical projects UP THE SCREEN whichever way its base is pointing —
+ * the same reason a tree or a tower in a game like this leans up the
+ * tile rather than lying flat on it. Rotating the finished boat sent the
+ * sail orbiting the hull instead, so a north-bound sloop and an
+ * east-bound one were the same picture turned, and the rig appeared to
+ * fall over as she came about.
  *
- * Rotating the tile rotates the wind with it, which is a lie a top-down
- * game tells anyway: the alternative is eight sprites per livery and a
- * rig that flips as you tack.
+ * So the sail is always above the hull, and what changes with the heading
+ * is its shape:
+ *
+ *   e / w   broadside — the full chord of the canvas, leaning aft, with
+ *           the luff on the bow side, so the two are mirror images and
+ *           the boat visibly trails her sail behind her.
+ *   n / s   foreshortened — the same sail seen end-on, compressed to
+ *           roughly half its chord.
+ *
+ * The hull is short (eleven pixels, not fourteen) purely to make room:
+ * an upright sail needs the top of the tile, and a hull that ran the full
+ * length left nowhere for it to go.
  */
 const MAINSAIL = {
-  2: [9, 10], 3: [9, 11], 4: [9, 12], 5: [9, 13], 6: [9, 14],
-  7: [9, 14], 8: [9, 14], 9: [9, 13], 10: [9, 12], 11: [9, 11], 12: [9, 10],
+  // North and south are not the same sail. Sailing away she is further
+  // off, so the canvas is a shade smaller; sailing at the camera it is
+  // nearer, so it is a shade larger and reaches a row lower.
+  n: { 2: [8, 8], 3: [7, 9], 4: [7, 9], 5: [6, 10], 6: [6, 10], 7: [6, 10] },
+  s: { 1: [8, 8], 2: [7, 9], 3: [7, 10], 4: [6, 10], 5: [6, 11], 6: [5, 11], 7: [5, 11], 8: [5, 11] },
+  e: {
+    1: [10, 10], 2: [8, 11], 3: [7, 11], 4: [6, 11],
+    5: [5, 11], 6: [4, 11], 7: [3, 11], 8: [3, 11],
+  },
+  w: {
+    1: [5, 5], 2: [4, 7], 3: [4, 8], 4: [4, 9],
+    5: [4, 10], 6: [4, 11], 7: [4, 12], 8: [4, 12],
+  },
 };
 
-/** Rows the mast runs down — the sail's luff is bent to it. */
-const MAST_ROW = 2;
-const MAST_END = 12;
+/** The column the mast stands in, per heading — the sail's luff. */
+const MAST_COLUMN = { n: 8, s: 8, e: 11, w: 4 };
 
-/**
- * One sloop, bow to the north.
- *
- * `dark` swaps the canvas for the pirate's. A black mainsail needs its
- * outline in a tone that is NOT black, or it merges with the hull's own
- * outline and reads as a hole punched in the boat.
- */
-function drawSloop(dark) {
-  const px = Array.from({ length: N }, () => Array(N).fill(null));
-  const top = 1;
-  const last = SLOOP_HULL.length - 1;
+// ---------------------------------------------------------------------
+// mask plumbing
+// ---------------------------------------------------------------------
 
-  // ---- hull ----
-  for (let i = 0; i <= last; i += 1) {
-    const y = top + i;
-    const w = SLOOP_HULL[i];
-    const x0 = 8 - w / 2;
-    const x1 = 7 + w / 2;
-    for (let x = x0; x <= x1; x += 1) {
-      const depth = Math.min(x - x0, x1 - x, i, last - i);
-      px[y][x] = depth === 0 ? 'black' : depth === 1 ? 'orange' : 'brown';
-    }
-  }
+const blankGrid = () => Array.from({ length: N }, () => Array(N).fill(false));
 
-  // ---- canvas ----
-  const body = dark ? 'black' : 'white';
-  const luff = dark ? 'grey' : 'blueGrey';
-  const edge = dark ? 'darkGrey' : 'black';
-
-  // Outline the LEECH only — the aft, outboard edge. Outlining the whole
-  // boundary was the obvious thing and it was wrong: a sail this narrow
-  // is five pixels across at its widest, so "every pixel touching a
-  // non-sail neighbour" is almost every pixel, and the canvas came out as
-  // a black scribble with three white pixels trapped inside it. The luff
-  // needs no outline anyway — it is bent to the mast, which is already a
-  // dark line.
-  for (const [row, [a, b]] of Object.entries(MAINSAIL)) {
-    const y = top + Number(row);
-    for (let x = a; x <= b; x += 1) {
-      px[y][x] = x === b ? edge : x === a ? luff : body;
-    }
-  }
-
-  // The mast head only. A full mast line down the deck sat immediately
-  // beside the sail's shaded luff and the two together read as one thick
-  // dark band splitting the boat in half; the luff shade already implies
-  // the spar the sail is bent to.
-  px[top + MAST_ROW][8] = 'black';
-
-  if (dark) {
-    // The device. Three pale pixels is all there is room for, and a pale
-    // mark on a black sail is unmistakably a flag with something on it.
-    px[top + 6][11] = 'white';
-    px[top + 6][12] = 'white';
-    px[top + 7][11] = 'white';
-    px[top + 7][12] = 'white';
-    // A pennant streaming to port from the masthead.
-    px[top + MAST_ROW - 1][8] = 'black';
-    px[top + MAST_ROW - 1][9] = 'white';
-    px[top + MAST_ROW - 1][10] = 'white';
-  }
-
-  return px;
-}
-
-function sloopFor(livery, heading) {
-  let sail = drawSloop(livery === 'black sloop');
-  const turns = { n: 0, e: 1, s: 2, w: 3 }[heading];
-  for (let i = 0; i < turns; i += 1) sail = rotateCW(sail);
-  return sail;
-}
-
-/**
- * Hull width per row, bow first, in logical pixels.
- *
- * Even numbers so the hull stays centred on the seam between x=7 and
- * x=8; hand-tuned rather than computed, because every formula that looks
- * right amidships ends up either blunting the bow or fattening the
- * transom, and at sixteen logical pixels there are few enough rows to
- * simply choose them. Fifteen rows of at most eight gives a hull about
- * two to one, which is what stops it reading as a crate.
- */
-const HULL = [2, 4, 4, 6, 6, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8];
-
-/** Rowboat, bow to the north. The other three headings are rotations. */
-function drawBoat() {
-  const px = Array.from({ length: N }, () => Array(N).fill(null));
-  const top = 1;
-  const last = HULL.length - 1;
-
-  for (let i = 0; i <= last; i += 1) {
-    const y = top + i;
-    const w = HULL[i];
-    const x0 = 8 - w / 2;
-    const x1 = 7 + w / 2;
-    for (let x = x0; x <= x1; x += 1) {
-      // How far inboard this pixel is, measured from whichever edge is
-      // nearest. Taper is applied at the BOW only — a rowboat's stern is
-      // a flat transom board, and tapering both ends gives a canoe.
-      const fromSide = Math.min(x - x0, x1 - x);
-      const depth = i === last ? 0 : Math.min(fromSide, i);
-      px[y][x] = depth === 0 ? 'black' : depth === 1 ? 'orange' : 'maroon';
-    }
-  }
-
-  // The transom board, one row in from the stern outline. Without it the
-  // stern is a flat black slab and the boat reads as open at the back.
-  {
-    const y = top + last - 1;
-    const w = HULL[last - 1];
-    for (let x = 8 - w / 2 + 1; x <= 7 + w / 2 - 1; x += 1) {
-      if (px[y][x] === 'maroon') px[y][x] = 'brown';
-    }
-  }
-
-  // Two thwarts. They are what stops the hull reading as a leaf, and
-  // they are the only pale thing aboard, so they carry at 32px.
-  for (const i of [6, 10]) {
-    const y = top + i;
-    const w = HULL[i];
-    for (let x = 8 - w / 2 + 2; x <= 7 + w / 2 - 2; x += 1) {
-      if (px[y][x] === 'maroon') px[y][x] = 'tan';
-    }
-  }
-
-  return px;
-}
-
-/** Rotate a logical tile a quarter turn clockwise. */
+/** Rotate any grid a quarter turn clockwise. */
 function rotateCW(px) {
   return Array.from({ length: N }, (_, y) => Array.from({ length: N }, (_, x) => px[N - 1 - x][y]));
 }
 
+function rotateTimes(px, turns) {
+  let out = px;
+  for (let i = 0; i < turns; i += 1) out = rotateCW(out);
+  return out;
+}
+
+/** A mask from per-row hull widths, centred on the seam between x 7 and 8. */
+function maskFromWidths(widths, top = 1) {
+  const g = blankGrid();
+  widths.forEach((w, i) => {
+    for (let x = 8 - w / 2; x <= 7 + w / 2; x += 1) g[top + i][x] = true;
+  });
+  return g;
+}
+
+/** A mask from explicit per-row x spans. */
+function maskFromSpans(spans, top = 1) {
+  const g = blankGrid();
+  for (const [row, [a, b]] of Object.entries(spans)) {
+    for (let x = a; x <= b; x += 1) g[top + Number(row)][x] = true;
+  }
+  return g;
+}
+
+/** Rows the mask occupies, or null when it is empty. */
+function maskRows(mask) {
+  let min = null;
+  let max = null;
+  for (let y = 0; y < N; y += 1) {
+    if (mask[y].some(Boolean)) { if (min === null) min = y; max = y; }
+  }
+  return min === null ? null : { min, max };
+}
+
+/** Translate a mask vertically, dropping anything pushed off the tile. */
+function shiftDown(mask, dy) {
+  const g = blankGrid();
+  for (let y = 0; y < N; y += 1) {
+    const ty = y + dy;
+    if (ty < 0 || ty >= N) continue;
+    for (let x = 0; x < N; x += 1) if (mask[y][x]) g[ty][x] = true;
+  }
+  return g;
+}
+
+/**
+ * How many steps it takes to leave the mask travelling one way. A pixel
+ * on the very edge answers 1.
+ */
+function runTo(mask, x, y, dx, dy) {
+  let n = 0;
+  let cx = x;
+  let cy = y;
+  while (cx >= 0 && cy >= 0 && cx < N && cy < N && mask[cy][cx]) {
+    n += 1; cx += dx; cy += dy;
+  }
+  return n;
+}
+
+/**
+ * Light a mask in SCREEN space, from the north-west.
+ *
+ * This is the whole point of the rewrite: it runs AFTER the shape has
+ * been turned to its heading, so the lit rim stays on the upper left of
+ * every sprite in the set instead of orbiting the boat as it comes about.
+ *
+ * `tones` is [outline, lit, shadow, body]; `bias` nudges an interior that
+ * is neither rim toward the lit or the shadowed tone, which is how the
+ * same sail reads as front-lit sailing towards the camera and backlit
+ * sailing away from it.
+ */
+function shadeMask(px, mask, [outline, lit, shadow, body], bias = 0) {
+  for (let y = 0; y < N; y += 1) {
+    for (let x = 0; x < N; x += 1) {
+      if (!mask[y][x]) continue;
+      const up = runTo(mask, x, y, 0, -1);
+      const left = runTo(mask, x, y, -1, 0);
+      const down = runTo(mask, x, y, 0, 1);
+      const right = runTo(mask, x, y, 1, 0);
+      if (up === 1 || left === 1 || down === 1 || right === 1) px[y][x] = outline;
+      else if (up === 2 || left === 2) px[y][x] = lit;
+      else if (down === 2 || right === 2) px[y][x] = shadow;
+      else px[y][x] = bias > 0 ? lit : bias < 0 ? shadow : body;
+    }
+  }
+}
+
+/** Paint a mask flat, ignoring the light. Used for spars and devices. */
+function stamp(px, mask, tone) {
+  for (let y = 0; y < N; y += 1) {
+    for (let x = 0; x < N; x += 1) if (mask[y][x]) px[y][x] = tone;
+  }
+}
+
+// ---------------------------------------------------------------------
+// the vessels
+// ---------------------------------------------------------------------
+
+/**
+ * The rowboat. Hull, two thwarts, a transom board at the stern.
+ *
+ * The features are built in boat space and turned with the boat — which
+ * end is pointed really is a property of the boat. Only the light is held
+ * still.
+ */
 function boatFor(heading) {
-  let px = drawBoat();
-  const turns = { n: 0, e: 1, s: 2, w: 3 }[heading];
-  for (let i = 0; i < turns; i += 1) px = rotateCW(px);
+  const turns = TURNS[heading];
+  const hull = rotateTimes(maskFromWidths(BOAT_HULL), turns);
+
+  const inner = blankGrid();
+  const last = BOAT_HULL.length - 1;
+  for (const i of BOAT_THWARTS) {
+    const w = BOAT_HULL[i] - 4;
+    for (let x = 8 - w / 2; x <= 7 + w / 2; x += 1) inner[1 + i][x] = true;
+  }
+  const thwarts = rotateTimes(inner, turns);
+
+  const transomGrid = blankGrid();
+  const tw = BOAT_HULL[last - 1] - 2;
+  for (let x = 8 - tw / 2; x <= 7 + tw / 2; x += 1) transomGrid[1 + last - 1][x] = true;
+  const transom = rotateTimes(transomGrid, turns);
+
+  const px = Array.from({ length: N }, () => Array(N).fill(null));
+  shadeMask(px, hull, ['black', 'orange', 'maroon', 'maroon']);
+  stamp(px, transom, 'brown');
+  stamp(px, thwarts, 'tan');
+  return px;
+}
+
+/**
+ * The sloop, in either livery.
+ *
+ * The hull turns with the boat; the sail does not. The hull is pushed
+ * down to sit on the bottom of the tile so the rig has the top of it,
+ * and the sail is then drawn straight into screen space from the table
+ * above — broadside for the east and west headings, foreshortened for
+ * north and south.
+ *
+ * The canvas also takes its shading bias from the heading: sailing south
+ * is sailing at the camera, so the sun behind the viewer falls on the
+ * front of the sail; sailing north shows its shaded back.
+ */
+function sloopFor(livery, heading) {
+  const dark = livery === 'black sloop';
+
+  // Hull: turned with the boat, then dropped to the foot of the tile.
+  let hull = rotateTimes(maskFromWidths(SLOOP_HULL, 0), TURNS[heading]);
+  const rows = maskRows(hull);
+  hull = shiftDown(hull, (N - 2) - rows.max);
+  const hullTop = maskRows(hull).min;
+
+  // Sail: straight into screen space, never turned.
+  const sail = maskFromSpans(MAINSAIL[heading], 0);
+
+  // Mast: from the masthead down into the hull, so the rig is visibly
+  // stepped in the boat rather than floating above it.
+  const mast = blankGrid();
+  const col = MAST_COLUMN[heading];
+  for (let y = 1; y <= hullTop + 1; y += 1) mast[y][col] = true;
+
+  const px = Array.from({ length: N }, () => Array(N).fill(null));
+  shadeMask(px, hull, ['black', 'orange', 'maroon', 'brown']);
+  stamp(px, mast, 'black');
+
+  /**
+   * Canvas tones per heading, as [outline, lit rim, shadow rim, body].
+   *
+   * The sun in a game like this sits behind the viewer, so a sail coming
+   * AT the camera shows its lit face and one going away shows its shaded
+   * back. Broadside is modelled properly, lit on the upper left. Biasing
+   * only the interior was not enough: a sail this narrow is nearly all
+   * rim, so the tones themselves have to change or north and south come
+   * out as the same picture.
+   */
+  const CANVAS = {
+    white: {
+      s: ['black', 'white', 'white', 'white'],
+      n: ['black', 'blueGrey', 'blueGrey', 'blueGrey'],
+      side: ['black', 'white', 'blueGrey', 'white'],
+    },
+    black: {
+      s: ['darkGrey', 'grey', 'grey', 'grey'],
+      n: ['darkGrey', 'black', 'black', 'black'],
+      side: ['darkGrey', 'grey', 'black', 'black'],
+    },
+  }[dark ? 'black' : 'white'];
+
+  shadeMask(px, sail, CANVAS[heading === 's' || heading === 'n' ? heading : 'side']);
+
+  if (dark) {
+    // The device, placed relative to the sail it sits on so it never
+    // hangs off a foreshortened one into open water.
+    const at = maskRows(sail);
+    const mid = Math.floor((at.min + at.max) / 2);
+    for (const y of [mid, mid + 1]) {
+      const span = MAINSAIL[heading][y];
+      if (!span) continue;
+      const cx = Math.floor((span[0] + span[1]) / 2);
+      for (const x of [cx, cx + 1]) if (sail[y][x]) px[y][x] = 'white';
+    }
+  }
+
   return px;
 }
 

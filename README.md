@@ -455,13 +455,33 @@ Hull size is not cosmetic: a smaller vessel draws less, so it works lagoons a
 The black sloop **is** cosmetic, deliberately — same hull, same rig, different
 flag.
 
-Drawing a sail from directly overhead is the one place this set cheats, and it
-cheats knowingly. Seen truly from above a sail is edge-on — a line — and a boat
-drawn honestly that way is a hull with a scratch on it. Two attempts proved it:
-a round sail laid over the middle ate the hull and read as a dumpling, and a
-slim sail set entirely outboard read as a fin. What reads as a sailing boat is
-the canvas bellied out to one side with its luff bent to the mast, which is how
-every top-down game has drawn one since the 8-bit era.
+### Four headings, not one sprite turned four ways
+
+The first version of the one-cell vessels drew a single boat and rotated it 90°
+three times, and it was obviously wrong the moment the four sat side by side: it
+read as one paper cut-out being spun on a table. Two things cause that, and both
+are standard ground in the literature on directional sprites:
+
+**The light rotates with the sprite.** Shading is baked into pixel art — a lit
+rim on the upper left and a shadow on the lower right is what makes a flat shape
+read as solid. Rotate the finished tile and the lit rim marches round with it,
+so the sun appears to orbit the boat as she turns. The fix is to build the
+*shape* in boat space, rotate that, and only then light it in **screen** space,
+so every heading shares one fixed light — here from the north-west, the
+direction DawnLike's own wall tiles are lit from.
+
+**A mast is vertical.** A hull lies flat on the water and turns with the boat. A
+mast does not: under the slightly-tilted camera every top-down tile game uses,
+anything vertical projects **up the screen** whichever way its base points — the
+same reason a tree leans up its tile rather than lying flat on it. So the sail
+is always above the hull, and what changes with the heading is its *shape*:
+broadside and trailing aft for east and west (mirror images of each other),
+foreshortened to about half its chord for north and south.
+
+The sun in a game like this sits behind the viewer, so the last cue is free:
+sailing south is sailing at the camera and shows the sail's lit face, sailing
+north shows its shaded back, and the same canvas comes out bright one way and
+grey the other.
 
 ```bash
 node scripts/generate-ship-deck.mjs           # preview PNG only
