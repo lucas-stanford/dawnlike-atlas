@@ -14,7 +14,8 @@ import {
   HULL_MAX, HOLD_CAPACITY, BEASTS, LOOT, LOOT_IDS, FLOTSAM,
   SHIP_DECK_SPRITES, CAPTAIN_SPRITE, SHORE_FAMILY,
   CANOPY_FAMILY, DEEP_SPRITE, SHALLOW_SPRITE, COVE_SPRITE, DIG_SPRITE,
-  MAST_SPRITE, MAST_INDEX,
+  MAST_SPRITE, MAST_INDEX, VESSELS, VESSEL_IDS, vesselOf, boatSprite,
+  hullMax, holdCapacity,
   makeRng, createSea, shipCells, bowCells, hullNeighbours, hullSuffix, bowSprite,
   HULL_FAMILY,
   sailCost, pointOfSail, cellAt, isWater, isSand, isShipCell,
@@ -130,6 +131,92 @@ describe('the hull outline', () => {
       if (!byName[name] || name === HULL_FAMILY) missing.push(`${hullSuffix(nb)} → ${name}`);
     }
     expect(missing).toEqual([]);
+  });
+});
+
+describe('the one-cell boat', () => {
+  const boat = (over = {}) => createSea({ seed: SEED, vessel: 'boat', ...over });
+
+  it('occupies exactly one cell, whatever the heading', () => {
+    for (const heading of HEADINGS) {
+      const cells = shipCells({ x: 6, y: 6, heading, vessel: 'boat' });
+      expect(cells, heading).toEqual([{ x: 6, y: 6 }]);
+    }
+  });
+
+  it('is its own bow', () => {
+    for (const heading of HEADINGS) {
+      expect(bowCells({ x: 6, y: 6, heading, vessel: 'boat' })).toEqual([{ x: 6, y: 6 }]);
+    }
+  });
+
+  it('resolves to the islet piece — open on all four sides', () => {
+    const cells = hullNeighbours({ x: 6, y: 6, heading: 'n', vessel: 'boat' });
+    expect(cells).toHaveLength(1);
+    expect(hullSuffix(cells[0])).toBe('nswe');
+    expect(cells[0].bow).toBe(true);
+  });
+
+  it('names a sprite the atlas has, in every heading', () => {
+    for (const heading of HEADINGS) expect(byName[boatSprite(heading)], heading).toBeTruthy();
+  });
+
+  it('carries less and takes less than the ship', () => {
+    expect(VESSELS.boat.hull).toBeLessThan(VESSELS.ship.hull);
+    expect(VESSELS.boat.hold).toBeLessThan(VESSELS.ship.hold);
+    const b = boat();
+    expect(hullMax(b)).toBe(VESSELS.boat.hull);
+    expect(holdCapacity(b)).toBe(VESSELS.boat.hold);
+    expect(b.hull).toBe(VESSELS.boat.hull);
+  });
+
+  it('fills its smaller hold sooner', () => {
+    const b = boat();
+    const cache = b.caches[0];
+    const full = { ...b, ashore: { x: cache.x, y: cache.y }, hold: ['coins', 'coins'] };
+    expect(holdWeight(full)).toBe(VESSELS.boat.hold);
+    expect(dig(full).ok).toBe(false);
+  });
+
+  it('mends to its own hull maximum, not the ship\'s', () => {
+    const b = boat();
+    const cells = new Map(b.cells);
+    const ship = { ...b.ship, x: b.cove.x, y: b.cove.y - 2, heading: 'n' };
+    for (const c of shipCells(ship)) cells.set(`${c.x},${c.y}`, SHALLOW);
+    const holed = { ...b, cells, ship, hull: 1, hold: ['coins'] };
+    const landed = bank(holed);
+    expect(landed.ok).toBe(true);
+    expect(landed.state.hull).toBe(VESSELS.boat.hull);
+  });
+
+  it('sails, turns and ends the day like the ship', () => {
+    const b = boat();
+    expect(turn(b, 'port').ok).toBe(true);
+    expect(turn(b, 'starboard').ok).toBe(true);
+    const { state } = endDay(b, makeRng(2));
+    expect(state.day).toBe(b.day + 1);
+  });
+
+  it('moors somewhere it floats, on every seed', () => {
+    for (const seed of [1, 7, 42, 999, SEED]) {
+      const b = createSea({ seed, vessel: 'boat' });
+      for (const { x, y } of shipCells(b.ship)) {
+        expect(isWater(b, x, y), `seed ${seed}`).toBe(true);
+      }
+    }
+  });
+
+  it('an unknown vessel name falls back to the ship rather than throwing', () => {
+    const odd = createSea({ seed: SEED, vessel: 'raft' });
+    expect(shipCells(odd.ship)).toHaveLength(6);
+    expect(vesselOf(odd.ship).id).toBe('ship');
+  });
+
+  it('every vessel in the table is buildable', () => {
+    for (const id of VESSEL_IDS) {
+      const sea = createSea({ seed: SEED, vessel: id });
+      expect(shipCells(sea.ship).length, id).toBe(VESSELS[id].along * VESSELS[id].abeam);
+    }
   });
 });
 

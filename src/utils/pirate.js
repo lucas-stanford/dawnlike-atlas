@@ -107,11 +107,41 @@ export const COST = {
   loot: 1,      // break open a chest
 };
 
+/**
+ * The two vessels.
+ *
+ * The ship is a six-cell tile map — the right shape for something you
+ * stand on, and the reason the hull autotiles. The boat is a single cell
+ * and a single sprite, which is the right shape for anything a map wants
+ * to place the way it places a creature.
+ *
+ * They are not cosmetic alternatives. A boat draws less, so it can work
+ * lagoons and pinches a 3x2 hull cannot come about in; it carries a third
+ * of the loot and takes a third of the punishment, so the same crossing
+ * is a different problem in each.
+ */
+export const VESSELS = {
+  ship: { id: 'ship', label: 'Ship',  along: 3, abeam: 2, hull: 12, hold: 6 },
+  boat: { id: 'boat', label: 'Boat',  along: 1, abeam: 1, hull: 5,  hold: 2 },
+};
+
+export const VESSEL_IDS = Object.keys(VESSELS);
+
+/** The vessel spec for a ship record, defaulting to the full ship. */
+export const vesselOf = (ship) => VESSELS[ship?.vessel] ?? VESSELS.ship;
+
 /** Hull points. Nothing repairs at sea; the cove repairs everything. */
-export const HULL_MAX = 12;
+export const HULL_MAX = VESSELS.ship.hull;
 
 /** How much loot the hold takes before the crew refuses to carry more. */
-export const HOLD_CAPACITY = 6;
+export const HOLD_CAPACITY = VESSELS.ship.hold;
+
+/** The limits for the vessel actually in play. */
+export const hullMax = (state) => vesselOf(state.ship).hull;
+export const holdCapacity = (state) => vesselOf(state.ship).hold;
+
+/** Sprite for a one-cell boat, which is drawn rather than assembled. */
+export const boatSprite = (heading) => `boat ${heading}`;
 
 // ---------------------------------------------------------------------
 // catalogue
@@ -256,12 +286,13 @@ const key = (x, y) => `${x},${y}`;
  */
 export function shipCells(ship) {
   const { x, y, heading } = ship;
+  const { along: LONG, abeam: WIDE } = vesselOf(ship);
   const { dx, dy } = STEP[heading];
   // Abeam is the heading turned 90° clockwise.
   const beam = STEP[HEADINGS[(HEADINGS.indexOf(heading) + 1) % 4]];
   const cells = [];
-  for (let along = 0; along < 3; along += 1) {
-    for (let across = 0; across < 2; across += 1) {
+  for (let along = 0; along < LONG; along += 1) {
+    for (let across = 0; across < WIDE; across += 1) {
       cells.push({
         x: x + dx * along + beam.dx * across,
         y: y + dy * along + beam.dy * across,
@@ -273,7 +304,11 @@ export function shipCells(ship) {
 
 /** The two cells at the bow — where the ship touches whatever is ahead. */
 export function bowCells(ship) {
-  return shipCells(ship).filter((_, i) => i >= 4);
+  const { abeam } = vesselOf(ship);
+  const cells = shipCells(ship);
+  // Cells come back stern-first in rows `abeam` wide, so the bow is
+  // always the last row — one cell for a boat, two for the ship.
+  return cells.slice(cells.length - abeam);
 }
 
 /**
@@ -372,6 +407,7 @@ export function createSea({
   width = 34,
   height = 24,
   islands = 5,
+  vessel = 'ship',
   seed = 1,
   rng = makeRng(seed),
 } = {}) {
@@ -474,9 +510,12 @@ export function createSea({
     ? home.cells.reduce((best, c) => (c.y > best.y ? c : best), home.cells[0])
     : { x: 2, y: height - 3 };
 
-  // Anchor the ship in open water just off the cove, pointing out to sea.
-  const ship = findMooring(cells, width, height, cove) ?? {
-    x: Math.floor(width / 2), y: Math.floor(height / 2), heading: 'n',
+  // The vessel has to be decided BEFORE the mooring is looked for: the
+  // footprint is what `findMooring` measures, and a boat fits in water a
+  // ship cannot reach.
+  const hullKind = VESSELS[vessel] ? vessel : 'ship';
+  const ship = findMooring(cells, width, height, cove, hullKind) ?? {
+    x: Math.floor(width / 2), y: Math.floor(height / 2), heading: 'n', vessel: hullKind,
   };
 
   const beasts = [];
@@ -503,7 +542,7 @@ export function createSea({
     wind: HEADINGS[Math.floor(rng() * 4)],
     watches: WATCHES_PER_DAY,
     day: 1,
-    hull: HULL_MAX,
+    hull: VESSELS[hullKind].hull,
     hold: [],
     banked: 0,
     wrecked: false,
@@ -520,14 +559,14 @@ export function createSea({
  * rotated footprint would leave the map. A ship moored there starts the
  * game able to do nothing but sail straight ahead.
  */
-function findMooring(cells, width, height, cove) {
+function findMooring(cells, width, height, cove, vessel = 'ship') {
   const at = (x, y) => cells.get(key(x, y)) ?? DEEP;
   const MARGIN = 1;
   for (let radius = 2; radius <= 10; radius += 1) {
     for (const heading of HEADINGS) {
       for (let dy = -radius; dy <= radius; dy += 1) {
         for (let dx = -radius; dx <= radius; dx += 1) {
-          const probe = { x: cove.x + dx, y: cove.y + dy, heading };
+          const probe = { x: cove.x + dx, y: cove.y + dy, heading, vessel };
           const fits = HEADINGS.every((h) => shipCells({ ...probe, heading: h }).every(({ x, y }) =>
             x >= MARGIN && y >= MARGIN && x < width - MARGIN && y < height - MARGIN
             && at(x, y) !== SAND));
@@ -796,7 +835,7 @@ export function dig(state) {
   const { x, y } = state.ashore;
   const here = cacheAt(state, x, y);
   if (here && !here.dug) {
-    if (holdWeight(state) + LOOT.hoard.weight > HOLD_CAPACITY) {
+    if (holdWeight(state) + LOOT.hoard.weight > holdCapacity(state)) {
       return fail(state, 'The hold is full — bank what you have before you dig this up.');
     }
     let next = spend(state, COST.dig);
@@ -835,7 +874,7 @@ export function loot(state) {
   const prop = propAt(state, state.ashore.x, state.ashore.y);
   if (!prop || prop.kind !== 'chest') return fail(state, 'Nothing here worth prising open.');
   const item = LOOT[prop.loot];
-  if (holdWeight(state) + item.weight > HOLD_CAPACITY) {
+  if (holdWeight(state) + item.weight > holdCapacity(state)) {
     return fail(state, 'The hold will not take it — sail home and bank first.');
   }
 
@@ -862,13 +901,14 @@ export function loot(state) {
 export function bank(state) {
   if (state.ashore) return fail(state, 'Get back aboard and bring her into the cove.');
   if (!atCove(state)) return fail(state, 'Not in the cove — the hoard goes ashore at home.');
-  if (!state.hold.length && state.hull === HULL_MAX) {
+  const full = hullMax(state);
+  if (!state.hold.length && state.hull === full) {
     return fail(state, 'Nothing to land and nothing to mend.');
   }
 
   const value = holdValue(state);
-  const mended = HULL_MAX - state.hull;
-  let next = { ...state, hold: [], banked: state.banked + value, hull: HULL_MAX };
+  const mended = full - state.hull;
+  let next = { ...state, hold: [], banked: state.banked + value, hull: full };
   const parts = [];
   if (value) parts.push(`Landed ${value} in the cove`);
   if (mended) parts.push(`${mended} hull mended`);
@@ -1020,7 +1060,7 @@ export function primaryAction(state) {
   if (state.beasts.some((b) => reach.has(key(b.x, b.y)))) {
     return { action: 'strike', label: 'Strike at it' };
   }
-  if (atCove(state) && (state.hold.length || state.hull < HULL_MAX)) {
+  if (atCove(state) && (state.hold.length || state.hull < hullMax(state))) {
     return { action: 'bank', label: 'Land the hoard' };
   }
   if (canLand(state)) return { action: 'land', label: 'Row ashore' };

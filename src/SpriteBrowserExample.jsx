@@ -1,5 +1,5 @@
 /**
- * SpriteBrowserExample — searchable, filterable catalogue of all 4,487
+ * SpriteBrowserExample — searchable, filterable catalogue of all 4,491
  * named sprites.
  *
  * The Mega Atlas story shows the packed sheet as a grid; this one is
@@ -56,7 +56,7 @@ export default function SpriteBrowserExample({
     return () => { cancelled = true; };
   }, []);
 
-  // Typing stays responsive: the input updates immediately, the 4,487-row
+  // Typing stays responsive: the input updates immediately, the 4,491-row
   // filter runs against the deferred value.
   const deferredQuery = useDeferredValue(query);
 

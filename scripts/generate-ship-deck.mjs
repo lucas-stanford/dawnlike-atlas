@@ -65,6 +65,7 @@ const PALETTE = {
   darkGrey: [0x4d, 0x49, 0x4d],
   brown:    [0x86, 0x4d, 0x30],
   orange:   [0xd3, 0x7d, 0x2c],
+  tan:      [0xd3, 0xaa, 0x9a],
 };
 
 const N = 16;      // logical authoring resolution
@@ -140,6 +141,90 @@ export const RAIL_SUFFIXES = [
  */
 export const BOW_SUFFIXES = ['nw', 'ne', 'sw', 'se'];
 
+/**
+ * A one-cell boat, in the four headings.
+ *
+ * The six-cell ship is a tile map, which is the right shape for a vessel
+ * you stand on and walk around. It is the wrong shape for a ship's boat,
+ * a fishing skiff, a ferry, or anything a map wants to place the way it
+ * places a creature — those need to be a single sprite you can drop on
+ * one cell, and DawnLike has no boat of any size.
+ *
+ * Drawn as a rowboat seen from directly overhead: pointed bow, widest a
+ * little abaft midships, squared transom, two thwarts across it. The
+ * outline is closed so it reads at 32px, and everything outside the hull
+ * is transparent so it composites straight onto water.
+ */
+export const BOAT_HEADINGS = ['n', 'e', 's', 'w'];
+
+/**
+ * Hull width per row, bow first, in logical pixels.
+ *
+ * Even numbers so the hull stays centred on the seam between x=7 and
+ * x=8; hand-tuned rather than computed, because every formula that looks
+ * right amidships ends up either blunting the bow or fattening the
+ * transom, and at sixteen logical pixels there are few enough rows to
+ * simply choose them. Fifteen rows of at most eight gives a hull about
+ * two to one, which is what stops it reading as a crate.
+ */
+const HULL = [2, 4, 4, 6, 6, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8];
+
+/** Rowboat, bow to the north. The other three headings are rotations. */
+function drawBoat() {
+  const px = Array.from({ length: N }, () => Array(N).fill(null));
+  const top = 1;
+  const last = HULL.length - 1;
+
+  for (let i = 0; i <= last; i += 1) {
+    const y = top + i;
+    const w = HULL[i];
+    const x0 = 8 - w / 2;
+    const x1 = 7 + w / 2;
+    for (let x = x0; x <= x1; x += 1) {
+      // How far inboard this pixel is, measured from whichever edge is
+      // nearest. Taper is applied at the BOW only — a rowboat's stern is
+      // a flat transom board, and tapering both ends gives a canoe.
+      const fromSide = Math.min(x - x0, x1 - x);
+      const depth = i === last ? 0 : Math.min(fromSide, i);
+      px[y][x] = depth === 0 ? 'black' : depth === 1 ? 'orange' : 'maroon';
+    }
+  }
+
+  // The transom board, one row in from the stern outline. Without it the
+  // stern is a flat black slab and the boat reads as open at the back.
+  {
+    const y = top + last - 1;
+    const w = HULL[last - 1];
+    for (let x = 8 - w / 2 + 1; x <= 7 + w / 2 - 1; x += 1) {
+      if (px[y][x] === 'maroon') px[y][x] = 'brown';
+    }
+  }
+
+  // Two thwarts. They are what stops the hull reading as a leaf, and
+  // they are the only pale thing aboard, so they carry at 32px.
+  for (const i of [6, 10]) {
+    const y = top + i;
+    const w = HULL[i];
+    for (let x = 8 - w / 2 + 2; x <= 7 + w / 2 - 2; x += 1) {
+      if (px[y][x] === 'maroon') px[y][x] = 'tan';
+    }
+  }
+
+  return px;
+}
+
+/** Rotate a logical tile a quarter turn clockwise. */
+function rotateCW(px) {
+  return Array.from({ length: N }, (_, y) => Array.from({ length: N }, (_, x) => px[N - 1 - x][y]));
+}
+
+function boatFor(heading) {
+  let px = drawBoat();
+  const turns = { n: 0, e: 1, s: 2, w: 3 }[heading];
+  for (let i = 0; i < turns; i += 1) px = rotateCW(px);
+  return px;
+}
+
 /** Every sprite this script owns. */
 export function deckSprites() {
   const out = [];
@@ -155,6 +240,9 @@ export function deckSprites() {
     for (const suffix of BOW_SUFFIXES) {
       out.push({ name: `ship bow ${orientation} ${suffix}`, rail: suffix, bow: orientation });
     }
+  }
+  for (const heading of BOAT_HEADINGS) {
+    out.push({ name: `boat ${heading}`, boat: heading });
   }
   // The mast is what stops six planked cells reading as a raft. Drawn
   // over transparency so it composites onto whichever deck tile it
@@ -304,6 +392,7 @@ function transpose(px) {
 /** Render one named sprite to a 32×32 PNG. */
 export function renderTile(sprite) {
   const logical = sprite.mast ? drawMast()
+    : sprite.boat ? boatFor(sprite.boat)
     : sprite.rail ? drawRail(sprite.rail, sprite.bow)
     : (sprite.orientation === 'ns'
       ? drawVertical(sprite.variant)
@@ -436,7 +525,8 @@ function apply() {
 
     atlas.byName[sprite.name] = {
       x: cx, y: cy, w: tile, h: tile,
-      tags: sprite.mast ? ['structure', 'wooden', 'mast', 'ship', 'decoration']
+      tags: sprite.boat ? ['vehicle', 'wooden', 'boat', 'ship', 'water', sprite.boat]
+        : sprite.mast ? ['structure', 'wooden', 'mast', 'ship', 'decoration']
         : sprite.bow ? ['structure', 'wooden', 'bow', 'ship', 'edge']
         : sprite.rail ? ['structure', 'wooden', 'rail', 'ship', 'edge']
         : ['structure', 'wooden', 'deck', 'ship', 'floor', sprite.orientation],

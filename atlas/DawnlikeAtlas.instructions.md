@@ -5,7 +5,7 @@ Bin-packed from the original DawnLike sprite source, then upscaled
 clean 2×2 block. The packed atlas is therefore stored at 32×32 per
 tile while preserving the original pixelated DawnLike look exactly.
 
-**4487 named sprites** across 4 categories plus generated shore and
+**4491 named sprites** across 4 categories plus generated shore and
 watered-soil tiles, bin-packed into 2048×2272px (64×71 grid, 32px tiles).
 
 The last 235 sprites are the `* shore` coastline families (five 47-tile blob sets) — see

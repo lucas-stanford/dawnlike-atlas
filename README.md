@@ -26,7 +26,7 @@ function Wizard() {
 
 | Path | What's in it |
 | --- | --- |
-| `atlas/DawnlikeAtlas0.png` | Primary frames — 4,487 sprites, 2048×2272 |
+| `atlas/DawnlikeAtlas0.png` | Primary frames — 4,491 sprites, 2048×2272 |
 | `atlas/DawnlikeAtlas1.png` | Alternate frames for the 1,493 animated sprites |
 | `atlas/DawnlikeAtlas.json` | `byName` lookup, Phaser `frames`, AI-generated tags |
 | `src/utils/atlasApi.js` | Framework-agnostic helpers over the atlas JSON |
@@ -345,7 +345,7 @@ self-contained component under `src/`.
 | Story | Source | What it shows |
 | --- | --- | --- |
 | **Autotile Lab** | `src/AutotileLabExample.jsx` | Interactive playground for all six resolvers: neighbour pad, full variant sheet, and a live paint canvas. |
-| **Sprite Browser** | `src/SpriteBrowserExample.jsx` | Search all 4,487 sprites by name and tag, inspect any record, copy React/CSS/Phaser snippets. |
+| **Sprite Browser** | `src/SpriteBrowserExample.jsx` | Search all 4,491 sprites by name and tag, inspect any record, copy React/CSS/Phaser snippets. |
 | **Mega Atlas** | `src/components/SpriteSheet.jsx` | The packed sheet itself, in its 64×71 grid, with hover names and animation toggle. |
 | **Components** | `src/ComponentsExample.jsx` | Live gallery of every component the npm package exports, each with the props beside it — plus a HUD built only from GUI sprites inside the mega-atlas. |
 
@@ -432,9 +432,17 @@ DawnLike has no boat anywhere in it — no hull, no deck, no sail. The nearest
 wood in the pack is `board a/b/c`, which are trestle tables, and six of those
 side by side read as a bookcase floating on the sea.
 
-So `scripts/generate-ship-deck.mjs` draws one: 31 tiles of planking, gunwale,
+So `scripts/generate-ship-deck.mjs` draws one: 35 tiles of planking, gunwale,
 prow and mast, in the five DawnBringer 16 entries DawnLike uses for its own
 wooden doors (counted off `closed wooden door front` rather than guessed).
+
+Four of those are a **one-cell boat**, `boat n|e|s|w`. The six-cell ship is a
+tile map, which is the right shape for something you stand on and the reason the
+hull autotiles at all; a ship's boat, a skiff or a ferry wants the opposite —
+one sprite you drop on one cell, the way you place a creature. Both are vessels
+the Pirate example can sail, and they are not cosmetic alternatives: the boat
+draws less, so it works lagoons a 3×2 hull cannot come about in, and it carries
+a third of the loot and takes a third of the punishment.
 
 ```bash
 node scripts/generate-ship-deck.mjs           # preview PNG only

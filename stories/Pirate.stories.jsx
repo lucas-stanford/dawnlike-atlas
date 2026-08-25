@@ -73,6 +73,16 @@ export default {
         + 'one that looks like it belongs on sand, which is exactly why the pack '
         + 'ships it.',
     },
+    vessel: {
+      table: { category: 'Voyage' },
+      control: { type: 'inline-radio' },
+      options: ['ship', 'boat'],
+      description:
+        'The six-cell ship, whose hull autotiles, or the one-cell boat, which is a '
+        + 'single generated sprite. Not just cosmetic: the boat draws less, so it works '
+        + 'lagoons a 3x2 hull cannot come about in, and it carries a third of the loot '
+        + 'and takes a third of the punishment.',
+    },
     captainSprite: {
       table: { category: 'Sprites' },
       control: { type: 'select' },
@@ -84,6 +94,7 @@ export default {
     width: 34,
     height: 22,
     islands: 5,
+    vessel: 'ship',
     canopyStyle: 'palm',
     captainSprite: 'captain',
   },
@@ -96,6 +107,29 @@ export const Playable = { render: (args) => <PirateExample {...args} /> };
  * bites, which is the useful comparison: it shows how much of the
  * difficulty in the default map is distance rather than danger.
  */
+/**
+ * The one-cell boat. Same sea, same wind rule, a third of the hull and a
+ * third of the hold — and it fits places the ship cannot turn around in.
+ */
+export const ShipsBoat = {
+  name: "Ship's boat (one cell)",
+  args: { vessel: 'boat' },
+  render: (args) => <PirateExample {...args} />,
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'DawnLike has no boat of any size, so this one is generated too — but unlike '
+          + 'the ship it is a single sprite rather than a tile map, drawn the way a '
+          + 'creature is drawn, in four headings. Five hull points and two units of hold '
+          + 'against the ship\'s twelve and six, so the same crossing is a different '
+          + 'problem: you can slip into lagoons the ship would ground in, and you cannot '
+          + 'take a hit on the way home.',
+      },
+    },
+  },
+};
+
 export const NarrowStraits = {
   name: 'Narrow straits',
   args: { seed: 771204, width: 24, height: 16, islands: 6 },
