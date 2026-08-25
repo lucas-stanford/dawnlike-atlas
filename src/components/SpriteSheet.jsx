@@ -228,7 +228,7 @@ export const SpriteSheet = ({
     ctx.imageSmoothingEnabled = false;
 
     // Fill with a background pattern
-    ctx.fillStyle = '#1a1a1a';
+    ctx.fillStyle = '#0a0710';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Calculate source position from active frame
@@ -253,7 +253,7 @@ export const SpriteSheet = ({
     );
 
     // Subtle border
-    ctx.strokeStyle = '#444';
+    ctx.strokeStyle = '#3a2b41';
     ctx.lineWidth = 1;
     ctx.strokeRect(0, 0, canvas.width, canvas.height);
   }, [activeFrame, loadedImage, loadedImageAlt, tileSize, columns, currentFrame, isAnimating, activeInfo]);
@@ -444,8 +444,8 @@ export const SpriteSheet = ({
                       height: '100%',
                       backgroundSize: `${tileSize * scale}px ${tileSize * scale}px`,
                       backgroundImage: `
-                        linear-gradient(to right, rgba(255,255,0,0.3) 1px, transparent 1px),
-                        linear-gradient(to bottom, rgba(255,255,0,0.3) 1px, transparent 1px)
+                        linear-gradient(to right, rgba(109,195,203,0.28) 1px, transparent 1px),
+                        linear-gradient(to bottom, rgba(109,195,203,0.28) 1px, transparent 1px)
                       `,
                       pointerEvents: 'none',
                     }}

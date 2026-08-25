@@ -1,3 +1,25 @@
+@import './theme.css';
+
+/* The menu/HUD example keeps its own warm "carved wood and parchment" look
+   — that is the point of the story — but the look is now built from DB16
+   entries instead of near-misses, so the frame and the sprites inside it
+   are literally the same browns and golds.
+
+   Two roles come out of what used to be a single colour (var(--menu-wood)): the
+   wood the frame is cut from, and the ink written on the parchment. They
+   had been the same value, which is why the ink was too light wherever
+   the parchment was bright. */
+:root {
+  --menu-wood:      var(--db-brown);
+  --menu-wood-dark: var(--db-maroon);
+  --menu-ink:       var(--db-maroon);
+  --menu-ink-dark:  var(--dl-bg);
+  --menu-gold:      var(--db-yellow);
+  --menu-gold-deep: var(--db-orange);
+  --menu-parchment: var(--db-white);
+  --menu-parchment-dim: var(--db-tan);
+}
+
 /* Menu example styles. Inherits pixel fonts from .storybook/preview-head.html.
    Two pixel fonts in play:
      var(--font-pixel)       — Press Start 2P (chunky, headings/labels)
@@ -9,10 +31,18 @@
   width: 1120px;
   height: 700px;
   margin: 0 auto;
+  /* Lit from above, and never all the way down to the page ground: the
+     surround is `--dl-void`, so a vignette that reached it would leave
+     the title screen with no edge at all and the whole panel would
+     dissolve into the page. It bottoms out one step up, at `--dl-bg`,
+     and the border and shadow finish the job. */
   background:
-    radial-gradient(ellipse at 50% 30%, #2a3a4a 0%, #131820 60%, #06080c 100%);
+    radial-gradient(ellipse at 50% 28%, var(--dl-surface-3) 0%, var(--dl-surface) 55%, var(--dl-bg) 100%);
+  border: 1px solid var(--dl-line);
+  border-radius: var(--dl-r);
+  box-shadow: inset 0 1px 0 0 var(--dl-bevel-lip), var(--dl-shadow-lg);
   font-family: var(--font-pixel);
-  color: #f1ecd6;
+  color: var(--menu-parchment);
   overflow: hidden;
   image-rendering: pixelated;
   user-select: none;
@@ -88,9 +118,9 @@ button {
   font-family: var(--font-pixel-small);
   font-size: 16px;
   letter-spacing: 1px;
-  text-shadow: 2px 2px 0 #000;
+  text-shadow: 2px 2px 0 var(--dl-void);
   min-width: 36px;
-  color: #f1ecd6;
+  color: var(--menu-parchment);
 }
 
 /* ---------- Title block ---------- */
@@ -115,16 +145,16 @@ button {
   font-size: 36px;
   letter-spacing: 4px;
   margin: 0;
-  color: #f7d36b;
-  text-shadow: 3px 3px 0 #000, 0 0 16px #f7a04030;
+  color: var(--menu-gold);
+  text-shadow: 3px 3px 0 var(--dl-void), 0 0 16px rgba(211, 125, 44, 0.19);
 }
 
 .menu-subtitle {
   font-size: 13px;
   letter-spacing: 1px;
   margin: 14px 0 0;
-  color: #c1bba3;
-  text-shadow: 1px 1px 0 #000;
+  color: var(--db-blue-grey);
+  text-shadow: 1px 1px 0 var(--dl-void);
   font-style: italic;
 }
 
@@ -173,12 +203,12 @@ button {
   font-size: 12px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: #d8d2bd;
-  text-shadow: 2px 2px 0 #000;
+  color: var(--menu-parchment-dim);
+  text-shadow: 2px 2px 0 var(--dl-void);
 }
 
 .menu-option.is-selected .menu-option-label {
-  color: #f7d36b;
+  color: var(--menu-gold);
 }
 
 .menu-hint {
@@ -187,7 +217,7 @@ button {
   left: 50%;
   transform: translateX(-50%);
   font-size: 11px;
-  color: #6b6757;
+  color: var(--db-grey);
   letter-spacing: 1px;
   z-index: 2;
 }
@@ -215,9 +245,9 @@ button {
   font-family: var(--font-pixel);
   font-size: 12px;
   letter-spacing: 3px;
-  color: #f1ecd6;
+  color: var(--menu-parchment);
   text-transform: uppercase;
-  text-shadow: 1px 1px 0 #000;
+  text-shadow: 1px 1px 0 var(--dl-void);
   pointer-events: none;
 }
 
@@ -227,7 +257,7 @@ button {
   padding: 44px 28px 24px;
   display: flex;
   flex-direction: column;
-  color: #2a2230;
+  color: var(--menu-ink-dark);
 }
 
 .menu-modal-close {
@@ -259,8 +289,8 @@ button {
   font-family: var(--font-pixel);
   font-size: 12px;
   letter-spacing: 1px;
-  color: #f1ecd6;
-  text-shadow: 1px 1px 0 #000;
+  color: var(--menu-parchment);
+  text-shadow: 1px 1px 0 var(--dl-void);
   text-transform: uppercase;
   pointer-events: none;
 }
@@ -281,9 +311,9 @@ button {
   width: 128px;
   height: 128px;
   flex-shrink: 0;
-  border: 4px solid #6a3a1a;
+  border: 4px solid var(--menu-wood);
   border-radius: 4px;
-  background: #000;
+  background: var(--dl-void);
   overflow: hidden;
   box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
 }
@@ -306,7 +336,7 @@ button {
   flex: 1;
   font-size: 18px;
   line-height: 1.5;
-  color: #2a2230;
+  color: var(--menu-ink-dark);
   min-height: 80px;
 }
 
@@ -315,7 +345,7 @@ button {
   width: 1px;
   margin-left: 2px;
   animation: blink 600ms steps(2, end) infinite;
-  color: #6a3a1a;
+  color: var(--menu-ink);
 }
 @keyframes blink {
   0%, 100% { opacity: 1; }
@@ -348,7 +378,7 @@ button {
   border-radius: 4px;
   transition: background 80ms ease, transform 80ms ease;
   font-size: 14px;
-  color: #2a2230;
+  color: var(--menu-ink-dark);
 }
 .menu-choice:hover { background: rgba(106, 58, 26, 0.08); }
 .menu-choice.is-selected {
@@ -413,14 +443,14 @@ button {
   position: absolute;
   right: -6px;
   bottom: -4px;
-  background: #6a3a1a;
-  color: #f7d36b;
-  border: 1px solid #f7d36b;
+  background: var(--menu-wood);
+  color: var(--menu-gold);
+  border: 1px solid var(--menu-gold);
   font-family: var(--font-pixel);
   font-size: 8px;
   padding: 2px 4px;
   letter-spacing: 1px;
-  text-shadow: 1px 1px 0 #000;
+  text-shadow: 1px 1px 0 var(--dl-void);
   text-transform: uppercase;
 }
 
@@ -434,13 +464,13 @@ button {
 .menu-party-card-name {
   font-family: var(--font-pixel);
   font-size: 12px;
-  color: #6a3a1a;
+  color: var(--menu-ink);
   letter-spacing: 2px;
   text-transform: uppercase;
 }
 .menu-party-card-class {
   font-size: 10px;
-  color: #6a3a1a;
+  color: var(--menu-ink);
   opacity: 0.85;
   margin-top: 2px;
   overflow-wrap: anywhere;
@@ -462,13 +492,13 @@ button {
 .menu-party-bar-label {
   font-family: var(--font-pixel);
   font-size: 8px;
-  color: #6a3a1a;
+  color: var(--menu-ink);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 .menu-party-bar-value {
   font-size: 10px;
-  color: #2a2230;
+  color: var(--menu-ink-dark);
   text-align: right;
   min-width: 38px;
 }
@@ -493,20 +523,20 @@ button {
 .menu-party-attr-label {
   font-family: var(--font-pixel);
   font-size: 8px;
-  color: #6a3a1a;
+  color: var(--menu-ink);
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 .menu-party-attr-value {
   font-size: 14px;
-  color: #2a2230;
+  color: var(--menu-ink-dark);
   font-weight: bold;
 }
 
 .menu-party-card-section {
   font-family: var(--font-pixel);
   font-size: 9px;
-  color: #6a3a1a;
+  color: var(--menu-ink);
   letter-spacing: 1px;
   text-transform: uppercase;
   opacity: 0.8;
@@ -522,7 +552,7 @@ button {
   align-items: center;
   gap: 2px;
   font-size: 10px;
-  color: #2a2230;
+  color: var(--menu-ink-dark);
 }
 
 .menu-party-card-abilities {
@@ -560,8 +590,8 @@ button {
   font-family: var(--font-pixel);
   font-size: 11px;
   letter-spacing: 1px;
-  color: #f7d36b;
-  text-shadow: 1px 1px 0 #000;
+  color: var(--menu-gold);
+  text-shadow: 1px 1px 0 var(--dl-void);
   z-index: 25;
   pointer-events: none;
 }
@@ -591,8 +621,8 @@ button {
 }
 .menu-inv-tab.is-selected {
   background: rgba(247,211,107,0.45);
-  border-color: #6a3a1a;
-  box-shadow: inset 0 0 0 1px #f7d36b;
+  border-color: var(--menu-ink);
+  box-shadow: inset 0 0 0 1px var(--menu-gold);
 }
 
 .menu-inv-body {
@@ -630,7 +660,7 @@ button {
 }
 .menu-paperdoll-char-tab:hover { transform: translateY(-1px); filter: brightness(1.15); }
 .menu-paperdoll-char-tab.is-selected {
-  filter: brightness(1.25) drop-shadow(0 0 4px #f7d36bcc);
+  filter: brightness(1.25) drop-shadow(0 0 4px rgba(219, 215, 93, 0.8));
 }
 .menu-paperdoll-char-tab.is-selected::after {
   content: '';
@@ -639,7 +669,7 @@ button {
   bottom: -4px;
   width: 5px;
   height: 5px;
-  background: #f7d36b;
+  background: var(--menu-gold);
   transform: translateX(-50%) rotate(45deg);
 }
 .menu-paperdoll-char-tab-icon {
@@ -687,10 +717,10 @@ button {
   justify-content: center;
   font-family: var(--font-pixel);
   font-size: 10px;
-  color: #2a2230;
-  background: radial-gradient(circle, #f7d36b 0%, #c08a2a 100%);
+  color: var(--menu-ink-dark);
+  background: radial-gradient(circle, var(--menu-gold) 0%, var(--menu-gold-deep) 100%);
   border-radius: 50%;
-  border: 2px solid #6a3a1a;
+  border: 2px solid var(--menu-wood);
   box-shadow: 0 1px 0 rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.4);
   letter-spacing: 1px;
 }
@@ -698,7 +728,7 @@ button {
   grid-column: 2;
   font-family: var(--font-pixel);
   font-size: 11px;
-  color: #6a3a1a;
+  color: var(--menu-ink);
   letter-spacing: 1px;
   text-transform: uppercase;
   text-align: left;
@@ -706,7 +736,7 @@ button {
 .menu-paperdoll-class {
   grid-column: 2;
   font-size: 10px;
-  color: #6a3a1a;
+  color: var(--menu-ink);
   opacity: 0.8;
   text-align: left;
 }
@@ -775,7 +805,7 @@ button {
 .menu-paperdoll-slot.is-empty { cursor: default; }
 .menu-paperdoll-slot.is-empty:hover { transform: none; filter: brightness(1); }
 .menu-paperdoll-slot.is-highlight {
-  filter: brightness(1.3) drop-shadow(0 0 4px #f7d36bcc);
+  filter: brightness(1.3) drop-shadow(0 0 4px rgba(219, 215, 93, 0.8));
 }
 
 /* Drag-and-drop visual states */
@@ -783,16 +813,16 @@ button {
   animation: pd-pulse-eligible 1.2s ease-in-out infinite;
 }
 .menu-paperdoll-slot.is-droptarget {
-  filter: brightness(1.35) drop-shadow(0 0 8px #66ff66dd);
+  filter: brightness(1.35) drop-shadow(0 0 8px rgba(109, 170, 44, 0.87));
   transform: scale(1.05);
 }
 .menu-paperdoll-slot.is-droptarget-invalid {
-  filter: brightness(1.05) drop-shadow(0 0 8px #ff5555cc);
+  filter: brightness(1.05) drop-shadow(0 0 8px rgba(211, 69, 73, 0.8));
   cursor: not-allowed;
 }
 @keyframes pd-pulse-eligible {
-  0%, 100% { filter: brightness(1.05) drop-shadow(0 0 2px #f7d36b88); }
-  50%      { filter: brightness(1.2)  drop-shadow(0 0 7px #f7d36bcc); }
+  0%, 100% { filter: brightness(1.05) drop-shadow(0 0 2px rgba(219, 215, 93, 0.53)); }
+  50%      { filter: brightness(1.2)  drop-shadow(0 0 7px rgba(219, 215, 93, 0.8)); }
 }
 .menu-paperdoll-slot-icon {
   position: absolute;
@@ -820,7 +850,7 @@ button {
   font-family: var(--font-pixel);
   font-size: 7px;
   letter-spacing: 1px;
-  color: #6a3a1a;
+  color: var(--menu-ink);
   text-transform: uppercase;
   pointer-events: none;
   opacity: 0.75;
@@ -853,19 +883,19 @@ button {
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #6a3a1a;
+  color: var(--menu-ink);
   font-family: var(--font-pixel);
 }
 .menu-pd-stat-label {
   font-size: 8px;
   letter-spacing: 1px;
-  color: #6a3a1a;
+  color: var(--menu-ink);
   opacity: 0.85;
 }
 .menu-pd-stat-value {
   font-size: 12px;
   letter-spacing: 1px;
-  color: #2a2230;
+  color: var(--menu-ink-dark);
   text-shadow: 1px 1px 0 rgba(247,211,107,0.4);
   min-width: 18px;
   text-align: right;
@@ -879,7 +909,7 @@ button {
   text-align: center;
   font-size: 9px;
   letter-spacing: 1px;
-  color: #6a3a1a;
+  color: var(--menu-ink);
   opacity: 0.65;
   text-transform: uppercase;
 }
@@ -900,7 +930,7 @@ button {
 }
 .menu-inventory-slot:hover { filter: brightness(1.25); }
 .menu-inventory-slot.is-selected {
-  filter: brightness(1.3) drop-shadow(0 0 4px #f7d36bcc);
+  filter: brightness(1.3) drop-shadow(0 0 4px rgba(219, 215, 93, 0.8));
   transform: scale(1.05);
 }
 .menu-inventory-slot.is-empty {
@@ -924,8 +954,8 @@ button {
   left: 0;
   font-family: var(--font-pixel-small);
   font-size: 12px;
-  color: #6fcf73;
-  text-shadow: 1px 1px 0 #000;
+  color: var(--db-green);
+  text-shadow: 1px 1px 0 var(--dl-void);
   pointer-events: none;
 }
 .menu-inventory-slot-item {
@@ -941,9 +971,9 @@ button {
   bottom: -3px;
   font-family: var(--font-pixel-small);
   font-size: 12px;
-  color: #2a2230;
+  color: var(--menu-ink-dark);
   font-weight: bold;
-  text-shadow: 1px 1px 0 #f1ecd6, -1px -1px 0 #f1ecd6, 1px -1px 0 #f1ecd6, -1px 1px 0 #f1ecd6;
+  text-shadow: 1px 1px 0 var(--menu-parchment), -1px -1px 0 var(--menu-parchment), 1px -1px 0 var(--menu-parchment), -1px 1px 0 var(--menu-parchment);
 }
 
 .menu-inv-detail {
@@ -982,26 +1012,26 @@ button {
 .menu-inv-detail-name {
   font-family: var(--font-pixel);
   font-size: 11px;
-  color: #6a3a1a;
+  color: var(--menu-ink);
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 .menu-inv-detail-type {
   font-size: 12px;
-  color: #6a3a1a;
+  color: var(--menu-ink);
   opacity: 0.75;
 }
 .menu-inv-detail-desc {
   font-size: 14px;
   line-height: 1.45;
-  color: #2a2230;
+  color: var(--menu-ink-dark);
   font-style: italic;
 }
 .menu-inv-detail-stats {
   display: flex;
   gap: 8px;
   font-size: 13px;
-  color: #2a2230;
+  color: var(--menu-ink-dark);
   padding-top: 4px;
   border-top: 1px dashed rgba(106,58,26,0.35);
 }
@@ -1014,7 +1044,7 @@ button {
 .menu-inv-empty {
   text-align: center;
   font-size: 14px;
-  color: #6a3a1a;
+  color: var(--menu-ink);
   opacity: 0.6;
   margin: auto;
 }
@@ -1028,7 +1058,7 @@ button {
   font-size: 9px;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #2a2230;
+  color: var(--menu-ink-dark);
   transition: transform 100ms ease, color 100ms ease;
 }
-.menu-action-btn:hover { transform: translateY(-2px); color: #6a3a1a; }
+.menu-action-btn:hover { transform: translateY(-2px); color: var(--menu-ink); }

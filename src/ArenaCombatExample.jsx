@@ -574,31 +574,19 @@ export default function ArenaCombatExample({
         defaultAnchor={{ top: 8, left: 8 }}
         title="Arena"
         icon={Swords}
-        accent="#5dd4d4"
+        accent="#6dc3cb"
         bodyPadding="8px 10px"
       >
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button onClick={restart} style={{ padding: '6px 12px', cursor: 'pointer' }}>🔄 Restart</button>
+          <button className="dl-btn" onClick={restart}>🔄 Restart</button>
           <HudPanel atlas={atlas} player={player} gaugeName={gaugeName} cstats={cstats} />
-          <div style={{
-            padding: '6px 10px',
-            background: 'rgba(0,0,0,0.6)',
-            color: '#fff',
-            fontFamily: 'system-ui, sans-serif',
-            fontSize: 12,
-            borderRadius: 4,
-          }}>
-            turn {state.turn} · monsters {aliveMonsters} · cd {player.cooldown}
+          <div className="dl-readout boxed">
+            turn <b>{state.turn}</b> · monsters <b>{aliveMonsters}</b> · cd <b>{player.cooldown}</b>
           </div>
-          <div style={{
-            padding: '6px 10px',
-            background: 'rgba(0,0,0,0.6)',
-            color: '#aef',
-            fontFamily: 'system-ui, sans-serif',
-            fontSize: 11,
-            borderRadius: 4,
-          }}>
-            WASD / arrows move · F = {cstats.actionName.toLowerCase()} · . wait
+          <div className="dl-readout boxed">
+            <span><kbd className="dl-kbd">WASD</kbd> move</span>
+            <span><kbd className="dl-kbd">F</kbd> {cstats.actionName.toLowerCase()}</span>
+            <span><kbd className="dl-kbd">.</kbd> wait</span>
           </div>
         </div>
       </MovablePanel>
@@ -620,7 +608,7 @@ export default function ArenaCombatExample({
                       position: 'absolute',
                       left: x * TILE_SIZE, top: y * TILE_SIZE,
                       width: TILE_SIZE, height: TILE_SIZE,
-                      background: '#0a0a0c',
+                      background: '#0a0710',
                     }}
                   />
                 );
@@ -686,13 +674,13 @@ export default function ArenaCombatExample({
         defaultAnchor={{ left: 8, bottom: 8 }}
         title="Combat Log"
         icon={ScrollText}
-        accent="#aef"
+        accent="#8696a2"
         width={360}
         defaultCollapsed={false}
         bodyPadding="8px 10px"
       >
         <div style={{
-          color: '#fff',
+          color: 'var(--dl-ink)',
           fontFamily: 'ui-monospace, Menlo, monospace', fontSize: 11,
           lineHeight: 1.35,
           maxHeight: 160, overflowY: 'auto',
@@ -703,24 +691,11 @@ export default function ArenaCombatExample({
 
       {/* Game-over modal. */}
       {state.gameOver && (
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 100,
-          background: 'rgba(0,0,0,0.7)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <div style={{
-            padding: 24,
-            background: '#181818', color: '#fff',
-            borderRadius: 8, border: '1px solid #444',
-            fontFamily: 'system-ui, sans-serif',
-            textAlign: 'center',
-            minWidth: 280,
-          }}>
-            <h2 style={{ marginTop: 0 }}>You died.</h2>
+        <div className="dl-scrim">
+          <div className="dl-modal">
+            <h2>You died.</h2>
             <p>Turn {state.turn}. Monsters alive: {aliveMonsters}.</p>
-            <button onClick={restart} style={{ padding: '8px 16px', cursor: 'pointer', fontSize: 13 }}>
-              Try again
-            </button>
+            <button className="dl-btn primary" onClick={restart}>Try again</button>
           </div>
         </div>
       )}
@@ -758,19 +733,14 @@ function ActorSprite({ atlas, sprite, x, y, z = 5 }) {
 
 function HudPanel({ atlas, player, gaugeName, cstats }) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 8,
-      padding: '4px 8px',
-      background: 'rgba(0,0,0,0.6)',
-      borderRadius: 4,
-    }}>
+    <div className="dl-readout boxed" style={{ alignItems: 'center' }}>
       <div style={{ width: TILE_SIZE, height: TILE_SIZE, position: 'relative' }}>
         <SpriteFrame atlas={atlas} sprite={player.sprite} />
       </div>
       <div style={{ width: TILE_SIZE, height: TILE_SIZE, position: 'relative' }}>
         <SpriteFrame atlas={atlas} sprite={gaugeName} />
       </div>
-      <div style={{ color: '#fff', fontSize: 12, fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ color: 'var(--dl-ink)', fontSize: 12, fontFamily: 'system-ui, sans-serif' }}>
         <div><strong>{cstats.actionName}</strong></div>
         <div>HP {Math.max(0, player.hp)} / {player.maxHp}</div>
       </div>

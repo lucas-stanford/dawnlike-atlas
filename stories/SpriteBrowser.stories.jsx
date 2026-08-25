@@ -9,7 +9,7 @@ export default {
     docs: {
       description: {
         component:
-          'Searchable catalogue of all 4,157 named sprites. Type to match on ' +
+          'Searchable catalogue of all 4,487 named sprites. Type to match on ' +
           'names *and* AI-generated tags, stack tag filters, then click a result ' +
           'for its atlas record plus ready-to-paste React / CSS / Phaser snippets. ' +
           'Double-click any cell to copy its name. This is also the reference ' +
@@ -29,7 +29,7 @@ export default {
     },
     animatedOnly: {
       control: { type: 'boolean' },
-      description: 'Restrict to the 1,258 sprites with a second frame.',
+      description: 'Restrict to the 1,493 sprites with a second frame.',
     },
     scale: {
       control: { type: 'range', min: 1, max: 4, step: 1 },

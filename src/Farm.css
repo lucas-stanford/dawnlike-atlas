@@ -1,3 +1,5 @@
+@import './theme.css';
+
 /* FarmExample — HUD, side panel and grid chrome.
    The map itself is drawn entirely from atlas sprites; nothing in here
    tints or filters the tiles, because the time of day is a real sprite
@@ -10,12 +12,17 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  font-family: system-ui, -apple-system, sans-serif;
-  color: #e8e4dc;
-  background: #1b1a21;
+  font-family: var(--dl-font);
+  color: var(--dl-ink);
+  background: var(--dl-bg);
   transition: background 400ms ease;
 }
 
+/* The letterbox around the map, one per daylight phase. These four are
+   deliberately NOT palette entries: they sit behind the art rather than in
+   it, and each is a shade darker than the darkest tile of its phase so the
+   map reads as lit and the surround as unlit. Using DB16 black for all
+   four made dusk and night look like the map had simply been switched off. */
 .farm-phase-morning { background: #3a2b1f; }
 .farm-phase-day     { background: #2a2419; }
 .farm-phase-dusk    { background: #201d26; }
@@ -28,8 +35,8 @@
   align-items: center;
   gap: 18px;
   padding: 8px 14px;
-  background: rgba(0, 0, 0, 0.45);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(10, 7, 16, 0.45);
+  border-bottom: 1px solid rgba(223, 239, 215, 0.09);
   flex: 0 0 auto;
 }
 
@@ -40,6 +47,7 @@
 }
 
 .farm-stat span {
+  font-family: var(--dl-ui);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.09em;
@@ -47,6 +55,7 @@
 }
 
 .farm-stat strong {
+  font-family: var(--dl-ui);
   font-size: 16px;
   font-variant-numeric: tabular-nums;
 }
@@ -59,6 +68,7 @@
 }
 
 .farm-energy > span {
+  font-family: var(--dl-ui);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.11em;
@@ -71,13 +81,13 @@
   width: 160px;
   height: 8px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(223, 239, 215, 0.12);
   overflow: hidden;
 }
 
 .farm-energy-bar > div {
   height: 100%;
-  background: linear-gradient(90deg, #6daa2c, #dbd75d);
+  background: linear-gradient(90deg, var(--db-dark-green), var(--db-green) 60%, var(--db-yellow));
   transition: width 220ms ease;
 }
 
@@ -89,15 +99,25 @@
   min-height: 0;
 }
 
+/* `margin: auto` on the child, NOT `justify-content: center` on the
+   scroller. They look identical until the content is wider than the
+   viewport: a centred flex item overflows equally in both directions and
+   the leading edge ends up at a negative scroll offset, which no browser
+   will let you scroll back to. So a map bigger than the stage loses its
+   left and top edges permanently. Auto margins centre when there is room
+   and collapse to zero when there is not, which keeps the whole map
+   reachable. */
 .farm-viewport {
   flex: 1 1 auto;
   overflow: auto;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
   padding: 16px;
   outline: none;
 }
+
+.farm-viewport > .farm-grid { margin: auto; }
 
 .farm-grid {
   position: relative;
@@ -121,8 +141,8 @@
   content: '';
   position: absolute;
   inset: 0;
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(223, 239, 215, 0.85);
+  box-shadow: inset 0 0 0 1px rgba(10, 7, 16, 0.6);
   /* Above every sprite layer the tile can push (max z is 7). */
   z-index: 20;
   pointer-events: none;
@@ -134,14 +154,15 @@
   flex: 0 0 290px;
   overflow-y: auto;
   padding: 12px 14px 20px;
-  background: rgba(0, 0, 0, 0.42);
-  border-left: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(10, 7, 16, 0.42);
+  border-left: 1px solid rgba(223, 239, 215, 0.09);
   font-size: 12px;
 }
 
 .farm-panel h3 {
   margin: 16px 0 7px;
-  font-size: 10px;
+  font-family: var(--dl-ui);
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   opacity: 0.5;
@@ -166,20 +187,20 @@
   gap: 0 8px;
   text-align: left;
   padding: 6px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(223, 239, 215, 0.12);
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(223, 239, 215, 0.04);
   color: inherit;
   font: inherit;
   cursor: pointer;
 }
 
-.farm-seeds button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+.farm-seeds button:hover:not(:disabled) { background: rgba(223, 239, 215, 0.1); }
 .farm-seeds button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .farm-seeds button.selected {
-  border-color: #dbd75d;
-  background: rgba(219, 215, 93, 0.14);
+  border-color: var(--dl-gold);
+  background: var(--dl-gold-wash);
 }
 
 .farm-seed-key {
@@ -188,7 +209,7 @@
   text-align: center;
   font-size: 10px;
   opacity: 0.6;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(223, 239, 215, 0.2);
   border-radius: 3px;
   padding: 1px 0;
 }
@@ -210,21 +231,21 @@
 .farm-buttons button {
   flex: 1;
   padding: 7px 6px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(223, 239, 215, 0.16);
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(223, 239, 215, 0.06);
   color: inherit;
   font: inherit;
   font-size: 11px;
   cursor: pointer;
 }
 
-.farm-buttons button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.13); }
+.farm-buttons button:hover:not(:disabled) { background: rgba(223, 239, 215, 0.13); }
 .farm-buttons button:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .farm-buttons button.primary {
-  background: #34652450;
-  border-color: #6daa2c;
+  background: var(--dl-accent-wash);
+  border-color: var(--dl-accent);
 }
 
 .farm-target,
@@ -239,9 +260,9 @@
 .farm-help kbd {
   display: inline-block;
   padding: 0 4px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(223, 239, 215, 0.22);
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgba(223, 239, 215, 0.07);
   font: inherit;
   font-size: 10px;
 }
@@ -257,7 +278,7 @@
 
 .farm-log li {
   padding: 2px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(223, 239, 215, 0.05);
 }
 
 /* ---- transient message ---- */
@@ -270,13 +291,13 @@
   padding: 7px 14px;
   border-radius: 4px;
   background: rgba(20, 12, 28, 0.9);
-  border: 1px solid #6daa2c;
+  border: 1px solid var(--dl-accent);
   font-size: 12px;
   pointer-events: none;
   animation: farm-flash-fade 2.6s ease forwards;
 }
 
-.farm-flash.bad { border-color: #d34549; }
+.farm-flash.bad { border-color: var(--dl-danger); }
 
 @keyframes farm-flash-fade {
   0%   { opacity: 0; transform: translate(-50%, 6px); }

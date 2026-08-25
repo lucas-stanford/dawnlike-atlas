@@ -1,0 +1,636 @@
+/* ============================================================================
+   dawnlike-atlas — shared UI theme
+   ----------------------------------------------------------------------------
+   Every sprite in this pack is drawn in DawnBringer 16. The UI around the
+   sprites was not: it had accumulated 98 distinct hex colours across eight
+   stylesheets, including Material Design green (#4CAF50), Material blue and a
+   spread of neutral greys, so the chrome and the art looked like they came
+   from different projects.
+
+   This file is the single source of truth for that chrome. The rule it
+   enforces:
+
+     Anything that carries MEANING — text, accents, borders, state — is an
+     exact DB16 entry. Only the dead surfaces underneath (page ground, panel
+     fills) are interpolations, and they interpolate between DB16 `black`
+     (#140c1c) and DB16 `maroon` (#452434), which is the same warm violet
+     cast DawnLike's own shadows are painted in.
+
+   So the palette below is not decoration. `--db-*` are the sixteen colours
+   verbatim; `--dl-*` are the roles they play. Reach for a role, not a hex.
+   ========================================================================= */
+
+:root {
+  /* ---- DawnBringer 16, verbatim. Do not edit; the sprites use these. ---- */
+  --db-black:      #140c1c;
+  --db-maroon:     #452434;
+  --db-navy:       #30346d;
+  --db-dark-grey:  #4d494d;
+  --db-brown:      #864d30;
+  --db-dark-green: #346524;
+  --db-red:        #d34549;
+  --db-grey:       #757161;
+  --db-green:      #6daa2c;
+  --db-orange:     #d37d2c;
+  --db-blue:       #597dcf;
+  --db-yellow:     #dbd75d;
+  --db-cyan:       #6dc3cb;
+  --db-tan:        #d3aa9a;
+  --db-white:      #dfefd7;
+  --db-blue-grey:  #8696a2;
+
+  /* ---- Surfaces. Interpolated black → maroon, darkest first. ----
+     `--dl-void` sits BELOW DB16 black on purpose: it is the letterbox
+     around a map, and it has to read as "not part of the picture" even
+     when the map's own darkest tile is #140c1c. */
+  --dl-void:      #0a0710;
+  --dl-bg:        #140c1c;
+  --dl-surface:   #1b1220;
+  --dl-surface-2: #241a2b;
+  --dl-surface-3: #2f2337;
+
+  /* ---- Lines. The 2-tone pair is the pixel-UI bevel: dark outside,
+     a thin light lip inside, which is how a raised panel is drawn in
+     every 16-bit menu. ---- */
+  --dl-line:        #3a2b41;
+  --dl-line-strong: #55405d;
+  --dl-bevel-dark:  #0a0710;
+  --dl-bevel-lip:   rgba(223, 239, 215, 0.07);
+
+  /* ---- Ink ---- */
+  --dl-ink:       var(--db-white);
+  --dl-ink-dim:   var(--db-blue-grey);
+  --dl-ink-faint: var(--db-grey);
+
+  /* ---- Roles ---- */
+  --dl-accent:  var(--db-green);
+  --dl-gold:    var(--db-yellow);
+  --dl-warn:    var(--db-orange);
+  --dl-danger:  var(--db-red);
+  --dl-info:    var(--db-blue);
+  --dl-link:    var(--db-cyan);
+
+  /* Tinted washes. Kept as rgba of the role colour so a highlighted row
+     reads as "the accent, quietly" rather than as a new colour. */
+  --dl-accent-wash: rgba(109, 170, 44, 0.16);
+  --dl-gold-wash:   rgba(219, 215, 93, 0.14);
+  --dl-danger-wash: rgba(211, 69, 73, 0.16);
+  --dl-info-wash:   rgba(89, 125, 207, 0.16);
+
+  /* ---- Geometry. Small radii: a 16px round corner next to a 32px
+     hard-edged pixel tile looks like a rendering mistake. ---- */
+  --dl-r-sm: 3px;
+  --dl-r:    5px;
+  --dl-r-lg: 8px;
+
+  --dl-s-1: 4px;
+  --dl-s-2: 8px;
+  --dl-s-3: 12px;
+  --dl-s-4: 16px;
+  --dl-s-5: 24px;
+  --dl-s-6: 32px;
+
+  /* ---- Type ----
+     Three faces, each with a job, because one face cannot do all three.
+
+     `--dl-display` (Press Start 2P) is a 5x7 bitmap face. It is gorgeous
+     at a title and illegible at anything else, so it is capped at titles
+     and never used below 14px.
+
+     `--dl-ui` (Silkscreen) is the workhorse. It is a pixel face that
+     stays readable down to 10px, which is what makes it usable for the
+     labels, key caps, stat readouts and buttons that make up most of the
+     chrome — and it is what stops the UI reading as a web page bolted to
+     a pixel-art game.
+
+     `--dl-font` (system-ui) is for prose only. Explanatory paragraphs in
+     a bitmap face are a wall, so anything longer than a label falls back
+     to the reader's own text face.
+
+     Both pixel faces are loaded in .storybook/preview-head.html and both
+     name a real fallback, so a blocked font request degrades to monospace
+     rather than to a default serif. */
+  --dl-display: 'Press Start 2P', 'Courier New', monospace;
+  --dl-ui: 'Silkscreen', 'Press Start 2P', 'Courier New', monospace;
+  --dl-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --dl-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  --dl-t-micro: 10px;  /* uppercase field labels */
+  --dl-t-xs:    11px;
+  --dl-t-sm:    12px;
+  --dl-t-md:    13px;
+  --dl-t-lg:    16px;
+  --dl-t-xl:    20px;
+
+  --dl-shadow:    0 6px 18px rgba(10, 7, 16, 0.55);
+  --dl-shadow-lg: 0 14px 40px rgba(10, 7, 16, 0.7);
+}
+
+/* Storybook renders each story into #storybook-root on a white body by
+   default, which flashes white around every letterboxed map. */
+body.dl-themed,
+body.dl-themed #storybook-root {
+  background: var(--dl-void);
+  color: var(--dl-ink);
+}
+
+/* Native checkboxes, radios and range thumbs are drawn by the OS in its
+   own accent — a stock blue tick next to DawnBringer 16 art is the same
+   mismatch this file exists to fix, and one property retints all of them. */
+body.dl-themed {
+  accent-color: var(--dl-accent);
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   Primitives
+   ========================================================================= */
+
+.dl-ui,
+.dl-ui * {
+  box-sizing: border-box;
+}
+
+.dl-ui {
+  font-family: var(--dl-font);
+  font-size: var(--dl-t-sm);
+  color: var(--dl-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* A keyboard-visible focus ring, once, for everything. The examples are
+   demos people tab through; several had `outline: none` and nothing in
+   its place. */
+.dl-ui :focus-visible,
+.dl-btn:focus-visible,
+.dl-field select:focus-visible,
+.dl-field input:focus-visible {
+  outline: 2px solid var(--dl-link);
+  outline-offset: 1px;
+}
+
+/* ---- Panel ---- */
+
+.dl-panel {
+  background: var(--dl-surface);
+  border: 1px solid var(--dl-line);
+  border-radius: var(--dl-r);
+  box-shadow: inset 0 1px 0 0 var(--dl-bevel-lip), var(--dl-shadow);
+}
+
+.dl-panel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--dl-s-2);
+  padding: var(--dl-s-2) var(--dl-s-3);
+  border-bottom: 1px solid var(--dl-line);
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dl-accent);
+}
+
+/* The 2px accent rule down the left of a header is the one repeated
+   flourish that ties the panels together across every example. */
+.dl-panel-head::before {
+  content: '';
+  width: 2px;
+  align-self: stretch;
+  background: var(--dl-accent);
+  border-radius: 1px;
+}
+
+.dl-panel-body { padding: var(--dl-s-3); }
+
+/* ---- Buttons ---- */
+
+.dl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--dl-s-2);
+  padding: 6px 12px;
+  border: 1px solid var(--dl-line-strong);
+  border-radius: var(--dl-r-sm);
+  background: var(--dl-surface-2);
+  box-shadow: inset 0 1px 0 0 var(--dl-bevel-lip);
+  color: var(--dl-ink);
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-xs);
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 60ms ease;
+}
+
+.dl-btn:hover:not(:disabled) {
+  background: var(--dl-surface-3);
+  border-color: var(--dl-ink-faint);
+}
+
+.dl-btn:active:not(:disabled) { transform: translateY(1px); }
+
+.dl-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.dl-btn.primary {
+  background: var(--dl-accent-wash);
+  border-color: var(--dl-accent);
+  color: var(--dl-ink);
+}
+
+.dl-btn.primary:hover:not(:disabled) {
+  background: rgba(109, 170, 44, 0.28);
+  border-color: var(--dl-accent);
+}
+
+.dl-btn.danger {
+  background: var(--dl-danger-wash);
+  border-color: var(--dl-danger);
+}
+
+.dl-btn.ghost {
+  background: transparent;
+  border-color: var(--dl-line);
+  color: var(--dl-ink-dim);
+}
+
+.dl-btn.ghost:hover:not(:disabled) {
+  background: var(--dl-surface-2);
+  color: var(--dl-ink);
+}
+
+.dl-btn.icon {
+  padding: 6px;
+  min-width: 30px;
+}
+
+/* ---- Toolbar ----
+   Replaces the `position: absolute; top: 8px; left: 8px` strips several
+   examples floated ON TOP of their own map, where they covered whatever
+   the generator happened to put in the corner. */
+
+.dl-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--dl-s-3);
+  flex: 0 0 auto;
+  padding: var(--dl-s-2) var(--dl-s-3);
+  background: var(--dl-surface);
+  border-bottom: 1px solid var(--dl-line);
+  box-shadow: inset 0 -1px 0 0 var(--dl-bevel-dark);
+}
+
+.dl-toolbar-title {
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--dl-accent);
+  white-space: nowrap;
+}
+
+.dl-toolbar-spacer { margin-left: auto; }
+
+/* ---- Readouts ---- */
+
+.dl-readout {
+  display: flex;
+  align-items: baseline;
+  gap: var(--dl-s-3);
+  flex-wrap: wrap;
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-xs);
+  color: var(--dl-ink-dim);
+}
+
+.dl-readout.boxed {
+  padding: 5px 9px;
+  border: 1px solid var(--dl-line);
+  border-radius: var(--dl-r-sm);
+  background: color-mix(in srgb, var(--dl-surface) 90%, transparent);
+  letter-spacing: 0.03em;
+  gap: var(--dl-s-2);
+}
+
+.dl-readout b {
+  color: var(--dl-ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dl-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.15;
+}
+
+.dl-stat > span {
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dl-ink-faint);
+}
+
+.dl-stat > strong {
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--dl-ink);
+}
+
+.dl-stat.gold > strong   { color: var(--dl-gold); }
+.dl-stat.warn > strong   { color: var(--dl-warn); }
+.dl-stat.danger > strong { color: var(--dl-danger); }
+
+/* ---- Chip ---- */
+
+.dl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border: 1px solid var(--dl-line);
+  border-radius: 999px;
+  background: var(--dl-surface-2);
+  font-size: var(--dl-t-xs);
+  color: var(--dl-ink-dim);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dl-chip:hover { border-color: var(--dl-line-strong); color: var(--dl-ink); }
+
+.dl-chip.on {
+  background: var(--dl-accent-wash);
+  border-color: var(--dl-accent);
+  color: var(--dl-ink);
+}
+
+.dl-chip .count {
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-micro);
+  color: var(--dl-ink-faint);
+}
+
+/* ---- Key cap ---- */
+
+.dl-kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 1px 5px;
+  border: 1px solid var(--dl-line-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--dl-r-sm);
+  background: var(--dl-surface-2);
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-micro);
+  text-align: center;
+  color: var(--dl-ink-dim);
+}
+
+/* ---- Meter ---- */
+
+.dl-meter {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--dl-surface-3);
+  box-shadow: inset 0 1px 2px rgba(10, 7, 16, 0.8);
+  overflow: hidden;
+}
+
+.dl-meter > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--db-dark-green), var(--db-green) 60%, var(--db-yellow));
+  transition: width 220ms ease;
+}
+
+.dl-meter.hp > i   { background: linear-gradient(90deg, var(--db-maroon), var(--db-red)); }
+.dl-meter.mana > i { background: linear-gradient(90deg, var(--db-navy), var(--db-blue), var(--db-cyan)); }
+
+/* ---- Form fields ---- */
+
+.dl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.dl-field > label {
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dl-ink-faint);
+}
+
+.dl-field select,
+.dl-field input {
+  padding: 7px 9px;
+  border: 1px solid var(--dl-line);
+  border-radius: var(--dl-r-sm);
+  background: var(--dl-bg);
+  color: var(--dl-ink);
+  font-family: var(--dl-font);
+  font-size: var(--dl-t-md);
+  outline: none;
+}
+
+.dl-field select:hover,
+.dl-field input:hover { border-color: var(--dl-line-strong); }
+
+/* ---- Code ---- */
+
+.dl-code {
+  margin: 0;
+  padding: var(--dl-s-2) var(--dl-s-3);
+  border: 1px solid var(--dl-line);
+  border-radius: var(--dl-r-sm);
+  background: var(--dl-void);
+  color: var(--dl-ink-dim);
+  font-family: var(--dl-mono);
+  font-size: var(--dl-t-xs);
+  line-height: 1.6;
+  overflow: auto;
+}
+
+.dl-code .tok-name { color: var(--dl-gold); }
+.dl-code .tok-fn   { color: var(--dl-accent); }
+
+/* ---- Stage: the framed, letterboxed area a map is drawn into ---- */
+
+/* `margin: auto` on the child, NOT `justify-content: center` on the
+   scroller. They look identical until the content is wider than the
+   viewport: a centred flex item overflows equally in both directions and
+   the leading edge ends up at a negative scroll offset, which no browser
+   will let you scroll back to. So a map bigger than the stage loses its
+   left and top edges permanently. Auto margins centre when there is room
+   and collapse to zero when there is not, which keeps the whole map
+   reachable. */
+.dl-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: var(--dl-s-4);
+  background:
+    radial-gradient(ellipse at 50% 40%, var(--dl-bg), var(--dl-void) 75%);
+  overflow: auto;
+}
+
+.dl-stage-inner {
+  margin: auto;
+  position: relative;
+  image-rendering: pixelated;
+  border-radius: var(--dl-r-sm);
+  box-shadow: 0 0 0 1px var(--dl-line), 0 0 0 4px var(--dl-void), var(--dl-shadow-lg);
+}
+
+/* ---- Scrollbars ---- */
+
+.dl-scroll::-webkit-scrollbar,
+.dl-stage::-webkit-scrollbar,
+.dl-panel::-webkit-scrollbar { width: 10px; height: 10px; }
+
+.dl-scroll::-webkit-scrollbar-track,
+.dl-stage::-webkit-scrollbar-track,
+.dl-panel::-webkit-scrollbar-track { background: var(--dl-void); }
+
+.dl-scroll::-webkit-scrollbar-thumb,
+.dl-stage::-webkit-scrollbar-thumb,
+.dl-panel::-webkit-scrollbar-thumb {
+  background: var(--dl-surface-3);
+  border: 2px solid var(--dl-void);
+  border-radius: 999px;
+}
+
+.dl-scroll::-webkit-scrollbar-thumb:hover,
+.dl-stage::-webkit-scrollbar-thumb:hover,
+.dl-panel::-webkit-scrollbar-thumb:hover { background: var(--dl-line-strong); }
+
+.dl-scroll,
+.dl-stage,
+.dl-panel { scrollbar-color: var(--dl-surface-3) var(--dl-void); }
+
+/* ---- Page shell ---- */
+
+.dl-page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--dl-void);
+  color: var(--dl-ink);
+  font-family: var(--dl-font);
+}
+
+.dl-body {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 0;
+}
+
+.dl-sidebar {
+  flex: 0 0 300px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--dl-s-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-s-3);
+  background: var(--dl-surface);
+  border-left: 1px solid var(--dl-line);
+}
+
+.dl-sidebar.left {
+  border-left: none;
+  border-right: 1px solid var(--dl-line);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-btn,
+  .dl-meter > i { transition: none; }
+}
+
+/* ---- Display title ----
+   Press Start 2P only. Anything smaller than 14px in this face is a
+   smear, so the class hard-codes a floor rather than trusting callers. */
+
+.dl-title {
+  margin: 0;
+  font-family: var(--dl-display);
+  font-size: clamp(14px, 1.6vw, var(--dl-t-xl));
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: var(--dl-ink);
+  text-shadow: 0 2px 0 var(--dl-bevel-dark);
+}
+
+.dl-title .accent { color: var(--dl-gold); }
+
+.dl-subtitle {
+  margin: 6px 0 0;
+  max-width: 70ch;
+  font-family: var(--dl-font);
+  font-size: var(--dl-t-md);
+  line-height: 1.6;
+  color: var(--dl-ink-dim);
+}
+
+/* ---- Modal ----
+   A scrim plus a panel. Used for run-over screens, which every playable
+   example needs and each one had been building from scratch. */
+
+.dl-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--dl-s-4);
+  background: color-mix(in srgb, var(--dl-void) 82%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.dl-modal {
+  min-width: 300px;
+  max-width: 460px;
+  padding: var(--dl-s-5);
+  border: 1px solid var(--dl-line-strong);
+  border-radius: var(--dl-r-lg);
+  background: var(--dl-surface);
+  box-shadow: inset 0 1px 0 0 var(--dl-bevel-lip), var(--dl-shadow-lg);
+  text-align: center;
+  font-family: var(--dl-font);
+  color: var(--dl-ink);
+}
+
+.dl-modal h2 {
+  margin: 0 0 var(--dl-s-3);
+  font-family: var(--dl-display);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--dl-danger);
+  text-shadow: 0 2px 0 var(--dl-bevel-dark);
+}
+
+.dl-modal h2.win { color: var(--dl-gold); }
+
+.dl-modal p {
+  margin: 0 0 var(--dl-s-4);
+  font-size: var(--dl-t-md);
+  line-height: 1.6;
+  color: var(--dl-ink-dim);
+}

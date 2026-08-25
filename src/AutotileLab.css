@@ -1,15 +1,17 @@
+@import './theme.css';
+
 /* AutotileLabExample — layout + chrome.
    Shares the dark palette of Autotile.css but is self-contained so the
    lab can be lifted into another project without dragging the zone
    examples' styles along. */
 
 .lab-root {
-  --lab-bg: #0f1113;
-  --lab-panel: #1a1d20;
-  --lab-line: #2c3136;
-  --lab-accent: #4caf50;
-  --lab-text: #e8eaed;
-  --lab-muted: #9aa2aa;
+  --lab-bg: var(--dl-void);
+  --lab-panel: var(--dl-surface);
+  --lab-line: var(--dl-line);
+  --lab-accent: var(--dl-accent);
+  --lab-text: var(--dl-ink);
+  --lab-muted: var(--dl-ink-dim);
 
   min-height: 100vh;
   box-sizing: border-box;
@@ -39,9 +41,14 @@
 }
 
 .lab-title h1 {
-  margin: 0 0 6px;
-  font-size: 20px;
-  letter-spacing: 0.3px;
+  margin: 0 0 8px;
+  font-family: var(--dl-display);
+  font-size: clamp(14px, 1.5vw, 18px);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: var(--dl-ink);
+  text-shadow: 0 2px 0 var(--dl-bevel-dark);
 }
 
 .lab-title p {
@@ -85,13 +92,34 @@
 
 /* ---- panels ------------------------------------------------------ */
 
-/* Panel 1 is sized by its neighbour pad, so it gets a bounded column
-   and panel 2 (the variant sheet) absorbs the rest of the width. */
+/* Panel 1 is sized by its neighbour pad, so it gets a bounded column and
+   the other two share the rest of the width.
+
+   The paint canvas used to span both columns on a row of its own, which
+   put it below a variant sheet roughly half the height of the pad beside
+   it — so the layout opened a ~300px hole in the right column and then
+   started a new row underneath it. Stacking panels 2 and 3 in the right
+   column closes the hole and puts the canvas next to the sheet it is
+   painting from. */
 .lab-grid {
   display: grid;
-  grid-template-columns: minmax(340px, 460px) 1fr;
+  grid-template-columns: minmax(340px, 440px) 1fr;
+  grid-template-rows: auto auto;
   gap: 20px;
   align-items: start;
+}
+
+/* The neighbour pad spans both rows so its height does not set row 1's,
+   which is what let the variant sheet and the canvas drift apart. With
+   the span, row 1 is exactly as tall as the sheet and the canvas sits
+   directly under it. */
+.lab-grid > .lab-panel:first-child {
+  grid-row: 1 / span 2;
+}
+
+.lab-grid > .lab-panel:nth-child(2) {
+  grid-column: 2;
+  grid-row: 1;
 }
 
 @media (max-width: 900px) {
@@ -104,11 +132,23 @@
   padding: 18px;
   background: var(--lab-panel);
   border: 1px solid var(--lab-line);
-  border-radius: 12px;
+  border-radius: var(--dl-r);
 }
 
 .lab-panel-wide {
-  grid-column: 1 / -1;
+  grid-column: 2;
+  grid-row: 2;
+}
+
+/* Below the breakpoint the grid collapses to one column, where explicit
+   row and column placement would leave phantom tracks. */
+@media (max-width: 900px) {
+  .lab-grid > .lab-panel:first-child,
+  .lab-grid > .lab-panel:nth-child(2),
+  .lab-panel-wide {
+    grid-column: 1;
+    grid-row: auto;
+  }
 }
 
 .lab-panel h2 {
@@ -140,7 +180,7 @@
 
 .lab-sprite-missing {
   background: repeating-linear-gradient(
-    45deg, #2a1d1d, #2a1d1d 5px, #3a2626 5px, #3a2626 10px
+    45deg, var(--dl-surface-2), var(--dl-surface-2) 5px, var(--dl-surface-3) 5px, var(--dl-surface-3) 10px
   );
 }
 
@@ -151,7 +191,7 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px;
-  background: #000;
+  background: var(--dl-void);
   border-radius: 8px;
 }
 
@@ -175,9 +215,9 @@
   position: relative;
   padding: 0;
   font: inherit;
-  color: #55606a;
-  background: #15181b;
-  border: 1px dashed #333a40;
+  color: var(--dl-line-strong);
+  background: var(--dl-surface);
+  border: 1px dashed var(--dl-line);
   border-radius: 4px;
   cursor: pointer;
   transition: background 0.12s, color 0.12s, border-color 0.12s;
@@ -195,7 +235,7 @@
 }
 
 .lab-pad-toggle.on {
-  color: #0f1113;
+  color: var(--dl-void);
   background: var(--lab-accent);
   border-style: solid;
   border-color: var(--lab-accent);
@@ -237,7 +277,7 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12.5px;
   color: var(--lab-accent);
-  background: #101315;
+  background: var(--dl-bg);
   border-radius: 4px;
 }
 
@@ -247,13 +287,13 @@
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: #0f1113;
-  background: #7aa7c7;
+  color: var(--dl-void);
+  background: var(--dl-info);
   border-radius: 999px;
 }
 
 .lab-badge-warn {
-  background: #d98b4a;
+  background: var(--dl-warn);
 }
 
 /* ---- snippet ----------------------------------------------------- */
@@ -269,8 +309,8 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
   line-height: 1.5;
-  color: #cfd6dc;
-  background: #101315;
+  color: var(--dl-ink);
+  background: var(--dl-bg);
   border: 1px solid var(--lab-line);
   border-radius: 8px;
 }
@@ -282,7 +322,7 @@
   padding: 4px 10px;
   font-size: 11px;
   color: var(--lab-muted);
-  background: #1c2124;
+  background: var(--dl-surface-2);
   border: 1px solid var(--lab-line);
   border-radius: 5px;
   cursor: pointer;
@@ -307,7 +347,7 @@
   align-items: center;
   gap: 5px;
   padding: 8px 4px;
-  background: #101315;
+  background: var(--dl-bg);
   border: 1px solid var(--lab-line);
   border-radius: 8px;
   cursor: pointer;
@@ -319,13 +359,13 @@
 }
 
 .lab-variant.current {
-  background: #16241a;
+  background: var(--dl-accent-wash);
   border-color: var(--lab-accent);
 }
 
 .lab-variant.missing {
   border-style: dashed;
-  border-color: #6b4a2c;
+  border-color: var(--db-brown);
 }
 
 .lab-variant code {
@@ -339,9 +379,9 @@
 .lab-canvas {
   position: relative;
   background:
-    linear-gradient(#15181b 1px, transparent 1px) 0 0 / 64px 64px,
-    linear-gradient(90deg, #15181b 1px, transparent 1px) 0 0 / 64px 64px,
-    #0a0c0d;
+    linear-gradient(var(--dl-surface) 1px, transparent 1px) 0 0 / 64px 64px,
+    linear-gradient(90deg, var(--dl-surface) 1px, transparent 1px) 0 0 / 64px 64px,
+    var(--dl-void);
   border: 1px solid var(--lab-line);
   border-radius: 8px;
   overflow: hidden;
@@ -355,7 +395,7 @@
 }
 
 .lab-canvas-cell:hover {
-  outline: 1px solid rgba(76, 175, 80, 0.6);
+  outline: 1px solid rgba(109, 170, 44, 0.6);
   outline-offset: -1px;
 }
 
@@ -370,7 +410,7 @@
   padding: 6px 14px;
   font-size: 12px;
   color: var(--lab-text);
-  background: #1c2124;
+  background: var(--dl-surface-2);
   border: 1px solid var(--lab-line);
   border-radius: 6px;
   cursor: pointer;

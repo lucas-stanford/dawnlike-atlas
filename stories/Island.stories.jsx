@@ -125,7 +125,12 @@ export default {
   },
   args: {
     theme: 'temperate isle',
-    seed: Math.floor(Math.random() * 1_000_000),
+    // Fixed, not random. These stories are the pack's shop window and its
+    // visual-regression baseline, and a seed rolled at module load meant a
+    // different map on every reload — so no screenshot could be compared to
+    // the last one and no reader could be pointed at what they were seeing.
+    // The Reseed button still rolls a fresh one on demand.
+    seed: 907442,
     width: 34,
     height: 24,
     seaLevel: 0.30,

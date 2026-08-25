@@ -265,23 +265,16 @@ export default function IslandExample({
 
   return (
     <div className="autotile-layout full-viewport" style={dawnlikeAnimVars}>
-      <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 10, display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div className="zone-toolbar">
         <button
+          className="dl-btn"
           onClick={() => setSeed(Math.floor(Math.random() * 1_000_000))}
-          style={{ padding: '6px 12px', cursor: 'pointer' }}
         >
           🔄 New island
         </button>
-        <div style={{
-          padding: '6px 10px',
-          background: 'rgba(0,0,0,0.55)',
-          color: '#fff',
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: 12,
-          borderRadius: 4,
-        }}>
-          seed: {seed} · {W}×{H} · land {Math.round(((W * H - counts[OCEAN]) / (W * H)) * 100)}%
-          {' · '}beach {counts[BEACH]} · woods {counts.trees} · peaks {counts[PEAK]}
+        <div className="readout">
+          seed <b>{seed}</b> · <b>{W}×{H}</b> · land <b>{Math.round(((W * H - counts[OCEAN]) / (W * H)) * 100)}%</b>
+          {' · '}beach <b>{counts[BEACH]}</b> · woods <b>{counts.trees}</b> · peaks <b>{counts[PEAK]}</b>
         </div>
       </div>
 

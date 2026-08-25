@@ -18,7 +18,7 @@
  *
  * Sheet 0 (`DawnlikeAtlas0.png`) holds every sprite's primary frame.
  * Sheet 1 (`DawnlikeAtlas1.png`) holds the alternate frame for the
- * ~1,258 sprites flagged `isAnimated` — the two together make DawnLike's
+ * ~1,493 sprites flagged `isAnimated` — the two together make DawnLike's
  * signature 2-frame idle/walk flicker. Both sheets share one coordinate
  * space, so a sprite's `{x, y}` addresses it in either file.
  */

@@ -1,12 +1,14 @@
+@import './theme.css';
+
 /* ComponentsExample — gallery chrome. */
 
 .cg-root {
-  --cg-bg: #0f1113;
-  --cg-panel: #1a1d20;
-  --cg-line: #2c3136;
-  --cg-accent: #4caf50;
-  --cg-text: #e8eaed;
-  --cg-muted: #9aa2aa;
+  --cg-bg: var(--dl-void);
+  --cg-panel: var(--dl-surface);
+  --cg-line: var(--dl-line);
+  --cg-accent: var(--dl-accent);
+  --cg-text: var(--dl-ink);
+  --cg-muted: var(--dl-ink-dim);
 
   min-height: 100vh;
   box-sizing: border-box;
@@ -28,8 +30,14 @@
 }
 
 .cg-header h1 {
-  margin: 0 0 6px;
-  font-size: 21px;
+  margin: 0 0 8px;
+  font-family: var(--dl-display);
+  font-size: clamp(14px, 1.5vw, 18px);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: var(--dl-ink);
+  text-shadow: 0 2px 0 var(--dl-bevel-dark);
 }
 
 .cg-header p {
@@ -44,7 +52,7 @@
   margin-bottom: 18px;
   background: var(--cg-panel);
   border: 1px solid var(--cg-line);
-  border-radius: 12px;
+  border-radius: var(--dl-r);
 }
 
 .cg-panel h2 {
@@ -68,8 +76,8 @@
   padding: 1px 5px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
-  color: #cfd6dc;
-  background: #101315;
+  color: var(--dl-ink);
+  background: var(--dl-bg);
   border-radius: 4px;
 }
 
@@ -88,8 +96,8 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 11.5px;
   line-height: 1.55;
-  color: #cfd6dc;
-  background: #101315;
+  color: var(--dl-ink);
+  background: var(--dl-bg);
   border: 1px solid var(--cg-line);
   border-radius: 8px;
 }
@@ -104,7 +112,7 @@
 .cg-row-baseline {
   align-items: flex-end;
   padding: 16px 20px;
-  background: #000;
+  background: var(--dl-void);
   border-radius: 8px;
 }
 
@@ -128,7 +136,7 @@
   flex-direction: column;
   gap: 12px;
   padding: 18px 20px;
-  background: #000;
+  background: var(--dl-void);
   border-radius: 8px;
 }
 
@@ -140,7 +148,7 @@
   padding: 6px 14px;
   font-size: 12px;
   color: var(--cg-text);
-  background: #1c2124;
+  background: var(--dl-surface-2);
   border: 1px solid var(--cg-line);
   border-radius: 6px;
   cursor: pointer;
