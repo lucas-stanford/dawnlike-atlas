@@ -1,0 +1,219 @@
+@import './theme.css';
+
+/* PirateExample chrome. Almost everything here is a class from
+   src/theme.css — the page shell, the panels, the buttons, the meters and
+   the modal are all shared — so what is left below is only what is
+   genuinely particular to a voyage: the wind rose, the hold list, and the
+   sea's own letterbox. */
+
+.pirate-page {
+  /* A colder ground than the other examples. It is the only deliberate
+     deviation: the sea's darkest tile is close to DB16 navy, and on the
+     standard near-black surround the map looked like it was floating in
+     a hole rather than lit from above. */
+  background:
+    radial-gradient(ellipse at 50% 38%, #1a1430 0%, var(--dl-void) 72%);
+}
+
+.pirate-grid {
+  position: relative;
+  image-rendering: pixelated;
+  background: var(--dl-void);
+}
+
+.pirate-cell {
+  position: absolute;
+}
+
+/* ---- wind rose ---- */
+
+.pirate-wind {
+  display: flex;
+  align-items: center;
+  gap: var(--dl-s-2);
+  padding: 4px 10px;
+  border: 1px solid var(--dl-line);
+  border-radius: var(--dl-r-sm);
+  background: var(--dl-bg);
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-micro);
+  color: var(--dl-ink-dim);
+}
+
+.pirate-wind-label {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dl-ink-faint);
+}
+
+.pirate-wind-from { color: var(--dl-ink); }
+
+.pirate-wind em {
+  font-style: normal;
+  color: var(--dl-ink-faint);
+}
+
+/* The point of sail is the single most consequential number on screen —
+   it is the difference between a one-watch cable and a three-watch one —
+   so it is the one thing in the toolbar allowed to shout. */
+.pirate-wind.trim-running  em { color: var(--dl-accent); }
+.pirate-wind.trim-reaching em { color: var(--dl-gold); }
+.pirate-wind.trim-beating  em { color: var(--dl-danger); }
+
+/* The arrow points DOWNWIND — the way the ship would be pushed — because
+   that is what a helmsman reads off it. `wind` names where it blows from,
+   so each rotation is 180 degrees off the compass bearing. */
+.pirate-arrow {
+  display: inline-block;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--dl-link);
+  transition: transform 260ms ease;
+}
+
+.pirate-arrow.arrow-n { transform: rotate(180deg); }
+.pirate-arrow.arrow-e { transform: rotate(270deg); }
+.pirate-arrow.arrow-s { transform: rotate(0deg); }
+.pirate-arrow.arrow-w { transform: rotate(90deg); }
+
+.pirate-gauge {
+  display: flex;
+  align-items: center;
+  gap: var(--dl-s-2);
+}
+
+.pirate-gauge > span {
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dl-ink-faint);
+}
+
+.pirate-gauge .dl-meter { width: 96px; }
+
+/* ---- orders ---- */
+
+.pirate-orders {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-s-2);
+}
+
+.pirate-orders > .dl-btn { width: 100%; }
+
+.pirate-order-row {
+  display: flex;
+  gap: var(--dl-s-1);
+}
+
+.pirate-order-row .dl-btn {
+  flex: 1;
+  padding: 6px 4px;
+  font-size: var(--dl-t-micro);
+}
+
+/* ---- hold ---- */
+
+.pirate-hold {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--dl-s-1);
+}
+
+.pirate-hold li {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  gap: var(--dl-s-2);
+  padding: 3px 6px;
+  border: 1px solid var(--dl-line);
+  border-radius: var(--dl-r-sm);
+  background: var(--dl-bg);
+  font-size: var(--dl-t-xs);
+}
+
+.pirate-hold b {
+  font-family: var(--dl-ui);
+  color: var(--dl-gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.pirate-sprite {
+  display: block;
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
+/* ---- prose ---- */
+
+.pirate-note,
+.pirate-help {
+  margin: 0 0 var(--dl-s-2);
+  font-family: var(--dl-font);
+  line-height: 1.6;
+  color: var(--dl-ink-dim);
+}
+
+.pirate-note { font-size: var(--dl-t-sm); }
+
+.pirate-help {
+  font-size: var(--dl-t-xs);
+  color: var(--dl-ink-faint);
+}
+
+.pirate-note:last-child,
+.pirate-help:last-child { margin-bottom: 0; }
+
+.pirate-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--dl-t-xs);
+  line-height: 1.55;
+  color: var(--dl-ink-dim);
+}
+
+.pirate-log li {
+  padding: 3px 0;
+  border-bottom: 1px solid var(--dl-line);
+}
+
+.pirate-log li:last-child { border-bottom: none; }
+
+/* ---- transient message ---- */
+
+.pirate-flash {
+  position: absolute;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  z-index: 90;
+  padding: 7px 14px;
+  border-radius: var(--dl-r-sm);
+  background: var(--dl-surface);
+  border: 1px solid var(--dl-accent);
+  box-shadow: var(--dl-shadow);
+  font-size: var(--dl-t-sm);
+  color: var(--dl-ink);
+  pointer-events: none;
+  animation: pirate-flash-fade 2.8s ease forwards;
+}
+
+.pirate-flash.bad { border-color: var(--dl-danger); }
+
+@keyframes pirate-flash-fade {
+  0%   { opacity: 0; transform: translate(-50%, 6px); }
+  10%  { opacity: 1; transform: translate(-50%, 0); }
+  76%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pirate-flash { animation: none; }
+  .pirate-arrow { transition: none; }
+}

@@ -1,36 +1,60 @@
+/* Shared chrome for the zone examples — Dungeon, Cave, Sewer, Island,
+   Wilderness, Town, Arena and Tactical Combat all mount into this layout.
+   Every colour here is a role from src/theme.css; there are no literal
+   hex values below on purpose, because this file is where the Material
+   Design green that used to sit next to DawnBringer 16 art came from. */
+
+@import './theme.css';
+/* A flex column, not a block. The zone examples used to float their
+   toolbar ON TOP of the map with `position: absolute; top: 8; left: 8`,
+   so the strip covered whatever the generator happened to place in the
+   top-left corner and its text sat on the map's own art. In a column the
+   toolbar is a real header and the map gets the rest, which is also what
+   the Farm example already did by hand. Panels that genuinely want to
+   float — the draggable HUDs in Tactical Combat — are absolutely
+   positioned against this element and are unaffected. */
 .autotile-layout.full-viewport {
   position: relative;
-  display: block;
+  display: flex;
+  flex-direction: column;
   padding: 0;
   overflow: hidden;
   height: 100vh;
   width: 100vw;
+  background: var(--dl-void);
+  color: var(--dl-ink);
+  font-family: var(--dl-font);
 }
 
 .map-viewport.maximized {
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
-  height: 100%;
   border: none;
   border-radius: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
 }
+
+/* ---- floating settings affordance ---- */
 
 .gear-button {
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: var(--dl-s-4);
+  right: var(--dl-s-4);
   z-index: 2000;
-  background: rgba(30, 30, 30, 0.8);
-  border: 1px solid #4CAF50;
-  color: white;
-  padding: 10px;
+  width: 38px;
+  height: 38px;
+  background: var(--dl-surface);
+  border: 1px solid var(--dl-line-strong);
+  color: var(--dl-ink-dim);
+  padding: 0;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-  transition: transform 0.3s ease;
+  font-size: 17px;
+  box-shadow: inset 0 1px 0 0 var(--dl-bevel-lip), var(--dl-shadow);
+  transition: transform 250ms ease, background 150ms ease, color 150ms ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -39,240 +63,354 @@
 
 .gear-button:hover {
   transform: rotate(90deg);
-  background: rgba(40, 40, 40, 0.9);
+  background: var(--dl-surface-2);
+  color: var(--dl-accent);
+  border-color: var(--dl-accent);
+}
+
+.gear-button:focus-visible {
+  outline: 2px solid var(--dl-link);
+  outline-offset: 2px;
 }
 
 .floating-config {
   position: absolute;
-  top: 70px;
-  right: 20px;
+  top: 66px;
+  right: var(--dl-s-4);
   z-index: 1900;
-  width: 280px;
-  animation: slideIn 0.3s ease-out;
+  width: 290px;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+  animation: slideIn 220ms ease-out;
 }
 
 @keyframes slideIn {
-  from { transform: translateX(50px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from { transform: translateX(40px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
 }
 
 .mini-stats {
-  margin-top: 12px;
-  font-size: 11px;
-  color: #888;
+  margin-top: var(--dl-s-3);
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-micro);
+  color: var(--dl-ink-faint);
   text-align: center;
-  border-top: 1px solid #333;
-  padding-top: 10px;
+  border-top: 1px solid var(--dl-line);
+  padding-top: var(--dl-s-2);
 }
 
 .autotile-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--dl-s-4);
 }
 
+/* ---- cards ---- */
+
 .control-card {
-  background: #1e1e1e;
-  border-radius: 12px;
-  padding: 20px;
-  border: 1px solid #333;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  background: var(--dl-surface);
+  border-radius: var(--dl-r);
+  padding: var(--dl-s-4);
+  border: 1px solid var(--dl-line);
+  box-shadow: inset 0 1px 0 0 var(--dl-bevel-lip), var(--dl-shadow);
 }
 
 .control-card h3 {
-  margin: 0 0 15px 0;
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: var(--dl-s-2);
+  margin: 0 0 var(--dl-s-3);
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-xs);
+  font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #4CAF50;
-  border-bottom: 1px solid #333;
-  padding-bottom: 10px;
+  letter-spacing: 0.06em;
+  color: var(--dl-accent);
+  border-bottom: 1px solid var(--dl-line);
+  padding-bottom: var(--dl-s-2);
+}
+
+.control-card h3::before {
+  content: '';
+  width: 2px;
+  height: 1em;
+  background: var(--dl-accent);
+  border-radius: 1px;
 }
 
 .field-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 5px;
+  margin-bottom: var(--dl-s-3);
 }
 
 .field-group label {
-  font-size: 12px;
-  color: #888;
-  font-weight: 600;
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dl-ink-faint);
+  font-weight: 400;
 }
 
-.field-group select, .field-group input {
-  background: #2a2a2a;
-  border: 1px solid #444;
-  color: #fff;
-  padding: 10px;
-  border-radius: 6px;
-  font-size: 14px;
+.field-group select,
+.field-group input {
+  background: var(--dl-bg);
+  border: 1px solid var(--dl-line);
+  color: var(--dl-ink);
+  padding: 8px 9px;
+  border-radius: var(--dl-r-sm);
+  font-family: var(--dl-font);
+  font-size: var(--dl-t-md);
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 150ms ease;
 }
 
-.field-group select:focus {
-  border-color: #4CAF50;
+.field-group select:hover,
+.field-group input:hover { border-color: var(--dl-line-strong); }
+
+.field-group select:focus-visible,
+.field-group input:focus-visible {
+  outline: 2px solid var(--dl-link);
+  outline-offset: 1px;
 }
 
 .primary-button {
-  background: #4CAF50;
-  color: white;
-  border: none;
-  padding: 12px;
-  border-radius: 6px;
-  font-weight: 700;
+  width: 100%;
+  background: var(--dl-accent-wash);
+  color: var(--dl-ink);
+  border: 1px solid var(--dl-accent);
+  padding: 10px 12px;
+  border-radius: var(--dl-r-sm);
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-xs);
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: transform 0.1s, background 0.2s;
+  box-shadow: inset 0 1px 0 0 var(--dl-bevel-lip);
+  transition: transform 60ms ease, background 150ms ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--dl-s-2);
 }
 
-.primary-button:hover {
-  background: #45a049;
+.primary-button:hover { background: rgba(109, 170, 44, 0.3); }
+.primary-button:active { transform: translateY(1px); }
+
+.primary-button:focus-visible {
+  outline: 2px solid var(--dl-link);
+  outline-offset: 1px;
 }
 
-.primary-button:active {
-  transform: scale(0.98);
-}
+/* ---- stats ---- */
 
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: var(--dl-s-2);
 }
 
 .stat-item {
-  background: #252525;
-  padding: 10px;
-  border-radius: 6px;
+  background: var(--dl-bg);
+  border: 1px solid var(--dl-line);
+  padding: var(--dl-s-2);
+  border-radius: var(--dl-r-sm);
   text-align: center;
 }
 
 .stat-label {
   display: block;
-  font-size: 10px;
-  color: #888;
-  margin-bottom: 4px;
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--dl-ink-faint);
+  margin-bottom: 3px;
 }
 
 .stat-value {
+  font-family: var(--dl-ui);
   font-weight: 700;
-  font-size: 16px;
-  color: #fff;
+  font-size: var(--dl-t-lg);
+  font-variant-numeric: tabular-nums;
+  color: var(--dl-ink);
 }
 
+/* ---- the map itself ----
+   The old frame was an 8px flat-grey border with a 16px radius. Next to a
+   32px hard-edged tile a radius that large reads as a rendering artefact,
+   so the frame is now a hairline in the palette's own line colour, backed
+   off from the art by a ring of void. */
+
+/* `margin: auto` on the child, NOT `justify-content: center` on the
+   scroller. They look identical until the content is wider than the
+   viewport: a centred flex item overflows equally in both directions and
+   the leading edge ends up at a negative scroll offset, which no browser
+   will let you scroll back to. So a map bigger than the stage loses its
+   left and top edges permanently. Auto margins centre when there is room
+   and collapse to zero when there is not, which keeps the whole map
+   reachable. */
 .map-viewport {
-  background: #0a0a0a;
-  border-radius: 16px;
-  border: 8px solid #1e1e1e;
+  background: radial-gradient(ellipse at 50% 42%, var(--dl-bg), var(--dl-void) 78%);
+  border-radius: var(--dl-r);
+  border: 1px solid var(--dl-line);
   overflow: auto;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: inset 0 0 50px rgba(0,0,0,0.5), 0 20px 50px rgba(0,0,0,0.4);
+  align-items: flex-start;
+  justify-content: flex-start;
+  box-shadow: inset 0 0 60px rgba(10, 7, 16, 0.75), var(--dl-shadow-lg);
   position: relative;
   min-height: 600px;
 }
 
+.map-viewport > .map-grid { margin: auto; }
+/* No frame around the grid itself: a generator's grid is often larger
+   than the level it drew inside it, and a hairline box around the empty
+   remainder advertises the gap rather than hiding it. The viewport's
+   vignette does the framing instead. */
 .map-grid {
   position: relative;
-  background: #000;
+  background: var(--dl-void);
   image-rendering: pixelated;
 }
 
 .how-it-works {
-  font-size: 13px;
-  line-height: 1.6;
-  color: #aaa;
+  font-family: var(--dl-font);
+  font-size: var(--dl-t-sm);
+  line-height: 1.65;
+  color: var(--dl-ink-dim);
 }
 
 .how-it-works code {
-  background: #2a2a2a;
-  padding: 2px 4px;
-  border-radius: 3px;
-  color: #4CAF50;
+  background: var(--dl-void);
+  border: 1px solid var(--dl-line);
+  padding: 1px 4px;
+  border-radius: var(--dl-r-sm);
+  font-family: var(--dl-mono);
+  font-size: var(--dl-t-xs);
+  color: var(--dl-gold);
 }
 
-/* Scrollbar styling */
-.map-viewport::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+/* ---- scrollbars ---- */
+
+.map-viewport::-webkit-scrollbar,
+.floating-config::-webkit-scrollbar { width: 10px; height: 10px; }
+
+.map-viewport::-webkit-scrollbar-track,
+.floating-config::-webkit-scrollbar-track { background: var(--dl-void); }
+
+.map-viewport::-webkit-scrollbar-thumb,
+.floating-config::-webkit-scrollbar-thumb {
+  background: var(--dl-surface-3);
+  border: 2px solid var(--dl-void);
+  border-radius: 999px;
 }
 
-.map-viewport::-webkit-scrollbar-track {
-  background: #1e1e1e;
-}
+.map-viewport::-webkit-scrollbar-thumb:hover,
+.floating-config::-webkit-scrollbar-thumb:hover { background: var(--dl-line-strong); }
 
-.map-viewport::-webkit-scrollbar-thumb {
-  background: #444;
-  border-radius: 5px;
-}
+.map-viewport,
+.floating-config { scrollbar-color: var(--dl-surface-3) var(--dl-void); }
 
-.map-viewport::-webkit-scrollbar-thumb:hover {
-  background: #555;
-}
+/* ---- hover inspector ---- */
 
-/* Logic Inspector Popup */
 .logic-popup {
-  background: rgba(30, 30, 30, 0.95);
+  background: color-mix(in srgb, var(--dl-surface) 92%, transparent);
   backdrop-filter: blur(8px);
-  border: 1px solid #4CAF50;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  border: 1px solid var(--dl-accent);
+  border-radius: var(--dl-r);
+  padding: var(--dl-s-3);
+  box-shadow: var(--dl-shadow-lg);
   min-width: 220px;
   pointer-events: none;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--dl-font);
 }
 
 .popup-header {
-  font-size: 11px;
-  color: #4CAF50;
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-micro);
+  color: var(--dl-accent);
   text-transform: uppercase;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  border-bottom: 1px solid #333;
-  padding-bottom: 8px;
-  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--dl-line);
+  padding-bottom: var(--dl-s-2);
+  margin-bottom: var(--dl-s-2);
 }
 
 .popup-layers {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--dl-s-2);
 }
 
 .popup-layer {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .layer-tag {
-  font-size: 10px;
-  background: #4CAF50;
-  color: #fff;
-  padding: 1px 6px;
-  border-radius: 4px;
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-micro);
+  background: var(--dl-accent-wash);
+  border: 1px solid var(--dl-accent);
+  color: var(--dl-ink);
+  padding: 0 6px;
+  border-radius: var(--dl-r-sm);
   width: fit-content;
-  font-weight: bold;
+  letter-spacing: 0.03em;
 }
 
 .layer-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #eee;
+  font-family: var(--dl-mono);
+  font-size: var(--dl-t-sm);
+  color: var(--dl-gold);
 }
 
 .layer-reason {
-  font-size: 11px;
-  color: #aaa;
+  font-size: var(--dl-t-xs);
+  color: var(--dl-ink-dim);
   font-style: italic;
-  padding-left: 4px;
-  border-left: 2px solid #444;
+  padding-left: 6px;
+  border-left: 2px solid var(--dl-line-strong);
+  line-height: 1.5;
+}
+
+/* ---- the top-left strip several zone examples float over their map ----
+   Given a class so the examples stop re-declaring it inline, and given a
+   real surface so a native button on a black page stops being the first
+   thing you notice. */
+
+.zone-toolbar {
+  position: relative;
+  z-index: 10;
+  flex: 0 0 auto;
+  display: flex;
+  gap: var(--dl-s-3);
+  align-items: center;
+  flex-wrap: wrap;
+  padding: var(--dl-s-2) var(--dl-s-3);
+  background: var(--dl-surface);
+  border-bottom: 1px solid var(--dl-line);
+  box-shadow: inset 0 -1px 0 0 var(--dl-bevel-dark);
+}
+
+.zone-toolbar .readout {
+  font-family: var(--dl-ui);
+  font-size: var(--dl-t-xs);
+  letter-spacing: 0.03em;
+  color: var(--dl-ink-dim);
+  white-space: nowrap;
+}
+
+.zone-toolbar .readout b {
+  color: var(--dl-ink);
+  font-weight: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gear-button,
+  .primary-button { transition: none; }
+  .floating-config { animation: none; }
 }

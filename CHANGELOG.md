@@ -19,7 +19,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Autotile Lab** example and story — an interactive playground for all six
   resolvers: a neighbour pad with the exact call printed underneath, the full
   variant sheet for any family, and a paint canvas that autotiles live.
-- **Sprite Browser** example and story — search all 4,456 sprites by name and
+- **Sprite Browser** example and story — search all 4,487 sprites by name and
   tag, inspect any atlas record, and copy React / CSS / Phaser snippets.
 - **Components** gallery example and story — every component the package
   exports, rendered live with its props, including a HUD assembled from the GUI
@@ -51,6 +51,48 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   replace the warm highlight with a cool sheen and deepen the shadow — and at
   night, with no room to darken, the sheen brightens to blue instead. The atlas
   grew from 69 to 70 rows (2048×2240); existing sprites did not move.
+- **Pirate** example, story and rules engine (`dawnlike-atlas/utils/pirate`) — an
+  archipelago treasure run: sail out on the wind, anchor off an island, row
+  ashore, dig up the cache and get the hold home to the cove before something
+  takes the ship apart. Islands are grown as overlapping ellipses so every one is
+  a single connected blob the 47-tile shore set can wrap; a shallow lagoon rings
+  each of them, which is what keeps the deep-water beasts out and makes hugging
+  the coast a real tactic. Rules are a pure state machine with no React and no
+  atlas dependency; every action returns the same state reference on failure.
+  Two gaps in the pack became the two mechanics: there is no compass rose and no
+  sail sprite, so the wind is a rule rather than a drawing (running before it
+  costs one watch, reaching two, beating three, and the ship only moves
+  forwards); and there is no ship at all, so one was drawn — see below.
+- **Ship tiles** — 31 new sprites, drawn by `scripts/generate-ship-deck.mjs`,
+  because DawnLike has no boat anywhere in it: no hull, no deck, no sail. The
+  nearest wood in the pack is `board a/b/c`, which are trestle tables, and six
+  of those side by side read as a bookcase floating on the sea. The set is
+  `ship deck ns|we a|b|c` planking in two orientations (planks run fore-and-aft,
+  so they turn when the ship does), a 16-tile `ship rail *` gunwale family,
+  four `ship bow *` chamfered prows per orientation, and a `ship mast`. Colours
+  are the five DawnBringer 16 entries DawnLike uses for its own wood, counted
+  off `closed wooden door front` rather than guessed.
+  The gunwale is a **floor** family, not a fence family, and that is the whole
+  trick: a fence sprite draws its rail down the centre of a tile, because a
+  fence occupies a whole cell of a map, so fence sprites laid along a hull put a
+  bar a quarter of a tile inboard on every side and the ship came out looking
+  like a portcullis. A floor family draws its transition at the tile boundary,
+  which is where a gunwale is — so the ship's hull autotiles through
+  `resolveDawnLikeFloorName`, the same call that outlines a ploughed field, and
+  re-resolves every time she comes about. The atlas grew from 70 to 71 rows
+  (2048×2272); existing sprites did not move.
+- **Shared UI theme** (`src/theme.css`) — every example now draws its chrome
+  from one set of DawnBringer 16 design tokens. The interface around the sprites
+  had drifted to Material Design green (`#4CAF50`), Material blue and a spread
+  of neutral greys — 98 distinct hex values across eight stylesheets, plus two
+  examples still on a light theme inside a dark Storybook — so the chrome and
+  the art no longer looked like one project. Anything that carries meaning is
+  now an exact palette entry; only the dead surfaces underneath interpolate, and
+  they interpolate between DB16 `black` and `maroon`, the same warm violet cast
+  DawnLike's own shadows are painted in. Ships primitives for panels, buttons,
+  toolbars, meters, key caps, modals and the framed map stage, and routes the
+  two pixel faces the repo already loaded (Press Start 2P for titles, Silkscreen
+  for labels) to the roles each is actually readable at.
 - **Farm** example, story and rules engine (`dawnlike-atlas/utils/farm`) — a
   complete farming loop: till, sow, water, harvest, sell, plus livestock, an
   orchard, a watering can that only refills at the pond, crops that wither after
@@ -79,6 +121,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Zone-example toolbars no longer float over the map they belong to. Cave,
+  Island, Sewer and Arena each positioned a strip at `top: 8; left: 8` on top of
+  their own canvas, where it covered whatever the generator happened to place in
+  the corner, and each rendered an unstyled native `<button>` — light OS chrome
+  on a black page. The shared layout is now a flex column with a real header bar.
+- Story seeds are fixed instead of rolled at module load. Eight stories called
+  `Math.random()` in their `args`, so every reload produced a different map:
+  no screenshot could be compared to the last one and no reader could be pointed
+  at what they were looking at. The Reseed button still rolls a fresh one.
+- Corrected sprite figures throughout the docs. Six places still said "4,157
+  sprites in a 2048×2080 PNG" and four still said "1,258 animated", both of them
+  superseded two atlas growths ago. `tests/docs-and-theme.test.js` now fails
+  when a documented figure and the atlas disagree.
+- The Autotile Lab's paint canvas spanned both columns on a row of its own,
+  leaving a ~300px hole in the right column above it; it now stacks under the
+  variant sheet it paints from.
 - The `wall` autotile manifest listed `center` in its fallback chains, but
   fallback entries are pattern keys, not suffixes — the isolated pattern key is
   `''`. Every `center` fallback was dead code, so a wall family lacking straight

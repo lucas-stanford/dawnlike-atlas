@@ -54,7 +54,7 @@ export default function CaveExample({
   // Buried rock draws nothing (that is the whole point of the dungeon
   // resolver returning null), so the grid needs a solid backdrop or
   // those cells read as a hole in the world rather than as stone.
-  backdrop: backdropProp = '#141018',
+  backdrop: backdropProp = '#0a0710',
 } = {}) {
   const [atlas, setAtlas] = useState(null);
   const [hoverInfo, setHoverInfo] = useState(null);
@@ -204,22 +204,16 @@ export default function CaveExample({
 
   return (
     <div className="autotile-layout full-viewport" style={dawnlikeAnimVars}>
-      <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 10, display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div className="zone-toolbar">
         <button
+          className="dl-btn"
           onClick={() => setSeed(Math.floor(Math.random() * 1_000_000))}
-          style={{ padding: '6px 12px', cursor: 'pointer' }}
         >
           🔄 New cavern
         </button>
-        <div style={{
-          padding: '6px 10px',
-          background: 'rgba(0,0,0,0.55)',
-          color: '#fff',
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: 12,
-          borderRadius: 4,
-        }}>
-          seed: {seed} · {W}×{H} · walkable {counts.floor} · water {counts.water} · rock {counts.rock}
+        <div className="readout">
+          seed <b>{seed}</b> · <b>{W}×{H}</b> · walkable <b>{counts.floor}</b>
+          {' · '}water <b>{counts.water}</b> · rock <b>{counts.rock}</b>
         </div>
       </div>
 

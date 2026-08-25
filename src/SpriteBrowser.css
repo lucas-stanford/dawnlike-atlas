@@ -1,12 +1,14 @@
+@import './theme.css';
+
 /* SpriteBrowserExample — catalogue chrome. */
 
 .browser-root {
-  --br-bg: #0f1113;
-  --br-panel: #1a1d20;
-  --br-line: #2c3136;
-  --br-accent: #4caf50;
-  --br-text: #e8eaed;
-  --br-muted: #9aa2aa;
+  --br-bg: var(--dl-void);
+  --br-panel: var(--dl-surface);
+  --br-line: var(--dl-line);
+  --br-accent: var(--dl-accent);
+  --br-text: var(--dl-ink);
+  --br-muted: var(--dl-ink-dim);
 
   display: flex;
   flex-direction: column;
@@ -36,8 +38,14 @@
 }
 
 .browser-header h1 {
-  margin: 0 0 4px;
-  font-size: 19px;
+  margin: 0 0 8px;
+  font-family: var(--dl-display);
+  font-size: clamp(14px, 1.5vw, 18px);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  color: var(--dl-ink);
+  text-shadow: 0 2px 0 var(--dl-bevel-dark);
 }
 
 .browser-header p {
@@ -112,15 +120,15 @@
 }
 
 .browser-tag.on {
-  color: #0f1113;
+  color: var(--dl-void);
   background: var(--br-accent);
   border-color: var(--br-accent);
   font-weight: 600;
 }
 
 .browser-tag-clear {
-  color: #d98b4a;
-  border-color: #6b4a2c;
+  color: var(--dl-warn);
+  border-color: var(--db-brown);
 }
 
 /* ---- body -------------------------------------------------------- */
@@ -171,7 +179,7 @@
 }
 
 .browser-cell.selected {
-  background: #16241a;
+  background: var(--dl-accent-wash);
   border-color: var(--br-accent);
 }
 
@@ -220,7 +228,7 @@
   overflow-y: auto;
   background: var(--br-panel);
   border: 1px solid var(--br-line);
-  border-radius: 12px;
+  border-radius: var(--dl-r);
 }
 
 .browser-detail-inner {
@@ -233,7 +241,7 @@
   justify-content: center;
   padding: 14px;
   margin-bottom: 14px;
-  background: #000;
+  background: var(--dl-void);
   border-radius: 8px;
 }
 
@@ -276,7 +284,7 @@
   padding: 8px;
   font-size: 12px;
   color: var(--br-text);
-  background: #1c2124;
+  background: var(--dl-surface-2);
   border: 1px solid var(--br-line);
   border-radius: 6px;
   cursor: pointer;
@@ -329,8 +337,8 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 11px;
   line-height: 1.5;
-  color: #cfd6dc;
-  background: #101315;
+  color: var(--dl-ink);
+  background: var(--dl-bg);
   border: 1px solid var(--br-line);
   border-radius: 6px;
   cursor: copy;

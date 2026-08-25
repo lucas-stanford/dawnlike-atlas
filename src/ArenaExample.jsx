@@ -314,17 +314,10 @@ export default function ArenaExample({
 
   return (
     <div className="autotile-layout full-viewport" style={dawnlikeAnimVars}>
-      <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 10, display: 'flex', gap: 8 }}>
-        <button onClick={reseed} style={{ padding: '6px 12px', cursor: 'pointer' }}>🔄 Reseed</button>
-        <div style={{
-          padding: '6px 10px',
-          background: 'rgba(0,0,0,0.55)',
-          color: '#fff',
-          fontFamily: 'system-ui, sans-serif',
-          fontSize: 12,
-          borderRadius: 4,
-        }}>
-          seed: {seed} · {W}×{H} · obstacle: {obstacleKindProp} {obstacleStyleProp}
+      <div className="zone-toolbar">
+        <button className="dl-btn" onClick={reseed}>🔄 Reseed</button>
+        <div className="readout">
+          seed <b>{seed}</b> · <b>{W}×{H}</b> · obstacle <b>{obstacleKindProp} {obstacleStyleProp}</b>
         </div>
       </div>
       <div className="map-viewport maximized">
@@ -380,7 +373,7 @@ export default function ArenaExample({
               right: 16,
               top: 16,
               background: 'rgba(0,0,0,0.7)',
-              color: '#fff',
+              color: 'var(--dl-ink)',
               padding: '8px 10px',
               borderRadius: 4,
               fontFamily: 'ui-monospace, Menlo, monospace',

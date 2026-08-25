@@ -26,17 +26,19 @@ function Wizard() {
 
 | Path | What's in it |
 | --- | --- |
-| `atlas/DawnlikeAtlas0.png` | Primary frames — 4,456 sprites, 2048×2240 |
-| `atlas/DawnlikeAtlas1.png` | Alternate frames for the 1,258 animated sprites |
+| `atlas/DawnlikeAtlas0.png` | Primary frames — 4,487 sprites, 2048×2272 |
+| `atlas/DawnlikeAtlas1.png` | Alternate frames for the 1,493 animated sprites |
 | `atlas/DawnlikeAtlas.json` | `byName` lookup, Phaser `frames`, AI-generated tags |
 | `src/utils/atlasApi.js` | Framework-agnostic helpers over the atlas JSON |
 | `src/utils/autotile.js` | The six autotile resolvers + their manifests |
 | `src/utils/tactical/` | XCOM-style AP / LOS / cover / combat toolkit |
 | `src/utils/farm.js` | Farming-sim rules engine — crops, watering, day cycle, economy |
+| `src/utils/pirate.js` | Archipelago-voyage rules engine — wind, hull, digging, sea beasts |
+| `src/theme.css` | The shared UI theme: DawnBringer 16 as design tokens |
 | `src/*Example.jsx` | The example components |
 | `src/phaser/` | A complete Phaser 4 roguelike |
 | `stories/` | Storybook stories wrapping each example |
-| `tests/` | Unit tests — atlas integrity, resolvers, API, tactical |
+| `tests/` | Unit tests — atlas integrity, resolvers, API, tactical, farm, pirate |
 
 ## Key features
 
@@ -281,11 +283,55 @@ node scripts/generate-watered-field.mjs           # preview PNG only
 node scripts/generate-watered-field.mjs --apply   # write into the atlas
 ```
 
-Both generators are additive and idempotent: existing sprites never move, and
-re-running rewrites the generated tiles in the cells they already occupy.
+All three generators — shore, watered soil and ship — are additive and
+idempotent: existing sprites never move, and re-running rewrites the generated
+tiles in the cells they already occupy, byte for byte.
 
 See [Farm](https://lucas-stanford.github.io/dawnlike-atlas/?path=/story/dawnlike-games-and-systems-farm--playable)
+and [Pirate](https://lucas-stanford.github.io/dawnlike-atlas/?path=/story/dawnlike-games-and-systems-pirate--playable)
 for the whole thing driving a game loop.
+
+---
+
+## The chrome is on the palette too
+
+Every sprite in the pack is DawnBringer 16. The interface around the sprites was
+not: it had drifted to Material Design green (`#4CAF50`), Material blue and a
+spread of neutral greys — 98 distinct hex values across eight stylesheets, with
+two examples still on a light theme inside a dark Storybook — so the chrome and
+the art stopped looking like one project.
+
+`src/theme.css` is now the only place a raw colour is written down, and it
+enforces one rule:
+
+> Anything that carries **meaning** — text, accents, borders, state — is an exact
+> DB16 entry. Only the dead surfaces underneath interpolate, and they interpolate
+> between DB16 `black` and `maroon`, which is the same warm violet cast
+> DawnLike's own shadows are painted in.
+
+```css
+.thing {
+  background: var(--dl-surface);   /* a role, never a hex */
+  border: 1px solid var(--dl-line);
+  color: var(--dl-ink-dim);
+}
+```
+
+It ships the primitives the examples kept rebuilding — `.dl-panel`, `.dl-btn`,
+`.dl-toolbar`, `.dl-stat`, `.dl-meter`, `.dl-kbd`, `.dl-chip`, `.dl-modal`, and
+`.dl-stage` for a framed map — plus a focus ring, themed scrollbars and an
+`accent-color` so native checkboxes stop rendering in the OS blue.
+
+It also gives the two pixel faces the repo already loaded a job each. Press
+Start 2P is a 5×7 bitmap face: gorgeous at a title, illegible at anything else,
+so it is capped at titles. Silkscreen stays readable down to 10px, which makes
+it the workhorse for labels, key caps and stat readouts — and is what stops the
+UI reading as a web page bolted to a pixel-art game. Prose falls back to
+`system-ui`, because explanatory paragraphs in a bitmap face are a wall.
+
+`tests/docs-and-theme.test.js` fails the build if a stylesheet reintroduces an
+off-palette colour, or if a sprite count quoted in the docs and the actual atlas
+disagree.
 
 ---
 
@@ -299,8 +345,8 @@ self-contained component under `src/`.
 | Story | Source | What it shows |
 | --- | --- | --- |
 | **Autotile Lab** | `src/AutotileLabExample.jsx` | Interactive playground for all six resolvers: neighbour pad, full variant sheet, and a live paint canvas. |
-| **Sprite Browser** | `src/SpriteBrowserExample.jsx` | Search all 4,456 sprites by name and tag, inspect any record, copy React/CSS/Phaser snippets. |
-| **Mega Atlas** | `src/components/SpriteSheet.jsx` | The packed sheet itself, in its 64×70 grid, with hover names and animation toggle. |
+| **Sprite Browser** | `src/SpriteBrowserExample.jsx` | Search all 4,487 sprites by name and tag, inspect any record, copy React/CSS/Phaser snippets. |
+| **Mega Atlas** | `src/components/SpriteSheet.jsx` | The packed sheet itself, in its 64×71 grid, with hover names and animation toggle. |
 | **Components** | `src/ComponentsExample.jsx` | Live gallery of every component the npm package exports, each with the props beside it — plus a HUD built only from GUI sprites inside the mega-atlas. |
 
 ### Zone generators
@@ -325,6 +371,7 @@ lifting the generator into your own project.
 | --- | --- | --- |
 | **Phaser Roguelike** | `src/phaser/` | An explorable overworld + town + 3-level dungeon on [Phaser 4](https://phaser.io/), with working exits, a chrome HUD, hold-to-walk movement, sprite animation, and `localStorage` save/resume keyed off one seed. |
 | **Farm** | `src/FarmExample.jsx` + `src/utils/farm.js` | A complete farming loop — till, sow, water, harvest, sell — with livestock, an orchard and a stamina-driven day cycle that re-tints the whole map through the four daylight sprite families. Rules are a pure state machine with no React or atlas dependency. |
+| **Pirate** | `src/PirateExample.jsx` + `src/utils/pirate.js` | An archipelago treasure run — sail, land, dig, and get the hold home before something takes the ship apart. The ship is not a sprite: it is a six-cell tile map whose gunwale re-autotiles every time she comes about. |
 | **Tactical Combat** | `src/TacticalCombatExample.jsx` | XCOM-style squad tactics on `src/utils/tactical/` — action points, fog of war, cover, flanking, overwatch. |
 | **Arena Combat** | `src/ArenaCombatExample.jsx` | Real-time arena fighting with movable, collapsible HUD panels. |
 | **Menu HUD** | `src/MenuExample.jsx` | Inventory, equipment and dialogue built from the GUI sprites. |
@@ -356,6 +403,64 @@ quirks shaped the design and both became mechanics: crops have exactly two drawn
 stages, so growth *time* varies per crop instead of inventing intermediate art;
 and the four daylight tints are driven by the farmer's remaining stamina, so the
 working day visibly runs out.
+
+### The voyage toolkit
+
+`src/utils/pirate.js` is the rules engine behind the Pirate example, published as
+`dawnlike-atlas/utils/pirate`:
+
+```js
+import {
+  createSea, sail, turn, act,   // build an archipelago, then work it
+  shipCells, hullNeighbours,    // the ship's footprint and its outline
+  sailCost, pointOfSail,        // the wind rule
+  dig, loot, bank, endDay,      // the loop
+} from 'dawnlike-atlas/utils/pirate';
+```
+
+Two of the pack's gaps shaped it, and both became mechanics. There is **no
+compass rose and no sail sprite**, so the wind is not drawn at all — it is a
+rule: running before it costs one watch, reaching across it two, beating into it
+three, and the ship only ever moves forwards. That one rule turns a grid walk
+into a routing problem and needs no art whatsoever.
+
+And there is **no ship**. See below.
+
+### A ship, drawn from nothing
+
+DawnLike has no boat anywhere in it — no hull, no deck, no sail. The nearest
+wood in the pack is `board a/b/c`, which are trestle tables, and six of those
+side by side read as a bookcase floating on the sea.
+
+So `scripts/generate-ship-deck.mjs` draws one: 31 tiles of planking, gunwale,
+prow and mast, in the five DawnBringer 16 entries DawnLike uses for its own
+wooden doors (counted off `closed wooden door front` rather than guessed).
+
+```bash
+node scripts/generate-ship-deck.mjs           # preview PNG only
+node scripts/generate-ship-deck.mjs --apply   # write into the atlas
+```
+
+The gunwale is generated as a **16-tile floor family** — `ship rail nw`,
+`ship rail we`, and the rest of the standard suffixes — and that is the whole
+trick. A fence family would have been the obvious choice, but a fence sprite
+draws its rail down the *centre* of a tile, because a fence occupies a whole
+cell of a map; a ship's rail is on the *edge* of the deck. Fence sprites laid
+along the hull put a bar a quarter of a tile inboard on every side, and the ship
+came out looking like a portcullis. A floor family draws its transition at the
+tile boundary, which is exactly where a gunwale is.
+
+Which means the ship's hull is autotiled by `resolveDawnLikeFloorName` — the
+same call that outlines a ploughed field:
+
+```js
+// Heading north, the six cells resolve to nw ne / w e / sw se.
+// Heading east, to nw sw / n s / ne se. Nothing tells it that.
+resolveDawnLikeFloorName('ship rail', neighbours, atlas.byName);
+```
+
+Autotile resolvers are normally run once over a static map. **A rigid body is
+just a very small map that happens to rotate.**
 
 ### The tactical toolkit
 

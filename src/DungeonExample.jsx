@@ -282,7 +282,7 @@ export default function DungeonExample({
           <div className="control-card">
             <h3>Tile Overrides</h3>
             {overrideLog.length === 0 ? (
-              <div style={{ color: '#bbb', fontSize: 13 }}>
+              <div style={{ color: 'var(--dl-ink-dim)', fontSize: 13 }}>
                 No overrides yet. Click any tile to pin its inspector, then
                 pick an alternate sprite from the swatch picker to override
                 the autotile choice. Use the Storybook Controls panel for
@@ -290,14 +290,14 @@ export default function DungeonExample({
               </div>
             ) : (
               <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, color: '#fff' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, color: 'var(--dl-ink)' }}>
                   <strong>Overrides ({overrideLog.length})</strong>
                   <span>
                     <button onClick={copyLog} title="Copy log JSON to clipboard">📋 Copy</button>
                     <button onClick={() => setSpriteOverrides({})} style={{ marginLeft: 4 }} title="Clear all overrides">Clear</button>
                   </span>
                 </div>
-                <pre data-testid="dungeon-override-log" style={{ maxHeight: 240, overflow: 'auto', fontSize: 11, margin: 0, background: 'rgba(0,0,0,0.35)', padding: 6, borderRadius: 4, color: '#fff' }}>
+                <pre data-testid="dungeon-override-log" style={{ maxHeight: 240, overflow: 'auto', fontSize: 11, margin: 0, background: 'var(--dl-void)', border: '1px solid var(--dl-line)', padding: 6, borderRadius: 4, color: 'var(--dl-ink-dim)', fontFamily: 'var(--dl-mono)' }}>
 {JSON.stringify(overrideLog, null, 2)}
                 </pre>
               </>

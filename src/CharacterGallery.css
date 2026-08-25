@@ -1,10 +1,12 @@
+@import './theme.css';
+
 .character-gallery {
   font-family: sans-serif;
-  color: #333;
+  color: var(--dl-ink);
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  background: #f9f9f9;
+  background: var(--dl-surface);
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   margin-bottom: 40px;
@@ -12,15 +14,15 @@
 
 .character-gallery h2 {
   margin-top: 0;
-  color: #2c3e50;
-  border-bottom: 2px solid #e0e0e0;
+  color: var(--dl-ink);
+  border-bottom: 2px solid var(--dl-line);
   padding-bottom: 10px;
 }
 
 .prompt-section {
-  background: #eef2f5;
+  background: var(--dl-surface-2);
   padding: 15px;
-  border-left: 4px solid #3498db;
+  border-left: 4px solid var(--dl-info);
   margin-bottom: 20px;
   border-radius: 4px;
 }
@@ -38,7 +40,7 @@
 
 .asset-card {
   background: white;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--dl-line);
   border-radius: 8px;
   overflow: hidden;
   display: flex;
@@ -48,11 +50,11 @@
 .asset-card h3 {
   margin: 0;
   padding: 15px;
-  background: #fdfdfd;
-  border-bottom: 1px solid #e0e0e0;
+  background: var(--dl-surface-2);
+  border-bottom: 1px solid var(--dl-line);
   text-align: center;
   font-size: 16px;
-  color: #555;
+  color: var(--dl-ink-dim);
 }
 
 .img-container {
@@ -60,7 +62,7 @@
   justify-content: center;
   align-items: center;
   padding: 20px;
-  background: #fff;
+  background: var(--dl-surface-2);
   min-height: 200px;
 }
 
@@ -68,7 +70,7 @@
   width: 150px;
   height: 150px;
   object-fit: cover;
-  border: 2px solid #ccc;
+  border: 2px solid var(--dl-ink-dim);
   border-radius: 4px;
   image-rendering: pixelated;
 }
@@ -88,7 +90,7 @@
 .preview-label {
   font-size: 11px;
   text-transform: uppercase;
-  color: #7f8c8d;
+  color: var(--dl-ink-dim);
   margin-bottom: 8px;
   font-weight: bold;
 }
@@ -98,16 +100,16 @@
   max-width: 400px;
   height: auto;
   image-rendering: pixelated;
-  border: 1px dashed #ccc;
+  border: 1px dashed var(--dl-ink-dim);
 }
 
 .animated-sprite-window {
   width: 128px;
   height: 128px;
   overflow: hidden;
-  border: 2px solid #3498db;
+  border: 2px solid var(--dl-info);
   border-radius: 4px;
-  background: #fff;
+  background: var(--dl-surface-2);
   position: relative;
 }
 
@@ -153,20 +155,20 @@
 
 .prompt-modifier {
   padding: 15px;
-  background: #fafafa;
-  border-top: 1px solid #e0e0e0;
+  background: var(--dl-surface-2);
+  border-top: 1px solid var(--dl-line);
   flex-grow: 1;
 }
 
 .prompt-modifier strong {
   font-size: 12px;
   text-transform: uppercase;
-  color: #888;
+  color: var(--dl-ink-faint);
 }
 
 .prompt-modifier p {
   margin: 5px 0 0 0;
   font-size: 13px;
-  line-height: 1.4;
-  color: #444;
+  line-height: 1.5;
+  color: var(--dl-ink-dim);
 }

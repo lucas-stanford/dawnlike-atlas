@@ -1,4 +1,6 @@
-<!-- Pixel UI fonts used across all stories. -->
+<!-- Pixel UI faces used across all stories. Both are loaded here rather than
+     from CSS so the browser starts fetching them before any story module is
+     evaluated; src/theme.css names them as --dl-display and --dl-ui. -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link
@@ -7,21 +9,43 @@
 />
 <style>
   :root {
+    /* Kept as aliases: several examples predate the theme and still ask
+       for these names directly. */
     --font-pixel: 'Press Start 2P', 'Courier New', monospace;
     --font-pixel-small: 'Silkscreen', 'Press Start 2P', 'Courier New', monospace;
   }
+
+  /* The body default used to be Press Start 2P with font smoothing OFF,
+     which set a 5x7 bitmap face as the fallback for every paragraph in
+     every story and left the system face that most of them opt back into
+     rendering unhinted and crunchy. The default is now the readable one,
+     and stories that want the bitmap face ask for it by name. */
   body,
   .sb-show-main {
-    font-family: var(--font-pixel);
-    -webkit-font-smoothing: none;
-    -moz-osx-font-smoothing: grayscale;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    /* Nothing in this pack is a photograph, so nearest-neighbour is
+       always what we want; kept global so a sprite drawn by an example
+       that forgets to ask for it does not come out blurry. */
     image-rendering: pixelated;
   }
-  /* Tighten letter-spacing default — Press Start 2P is very wide. */
-  body {
-    letter-spacing: 0;
+
+  /* Smoothing off belongs to the bitmap faces alone: it is what keeps
+     their pixel grid crisp, and what makes anti-aliased text look broken. */
+  .pixel-small,
+  [style*='Press Start'],
+  .dl-title,
+  .dl-panel-head,
+  .dl-toolbar-title,
+  .dl-kbd,
+  .dl-btn,
+  .dl-stat > span,
+  .dl-stat > strong,
+  .dl-readout,
+  .dl-field > label {
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: grayscale;
   }
-  /* Helper class for small text where Press Start 2P is unreadable. */
+
   .pixel-small {
     font-family: var(--font-pixel-small);
     letter-spacing: 0.5px;

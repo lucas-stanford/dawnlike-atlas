@@ -60,7 +60,7 @@ export default function PhaserExample({ manifests, width = 800, height = 696 }) 
   return (
     <div
       ref={containerRef}
-      style={{ width, height, margin: '0 auto', background: '#0a0a0a' }}
+      style={{ width, height, margin: '0 auto', background: 'var(--dl-void, #0a0710)' }}
     />
   );
 }

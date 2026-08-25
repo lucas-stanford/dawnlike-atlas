@@ -8,12 +8,18 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { ChevronDown, ChevronUp, GripHorizontal } from 'lucide-react';
 
+// Surfaces come from the theme tokens so a panel matches whatever example
+// it is floating over. `accent`, though, stays a plain hex string: the
+// header builds its wash and hairline by appending alpha suffixes to it
+// (`${accent}18`), and that string concatenation cannot be done to a
+// `var(--...)` reference. So the default is DawnBringer 16's cyan written
+// out longhand, and callers are expected to pass DB16 entries too.
 const DEFAULT_HUD = {
-  text: '#e8eaf0',
-  panelBg: 'rgba(12,16,24,0.92)',
-  border: '1px solid rgba(160,180,210,0.18)',
-  shadow: '0 6px 18px rgba(0,0,0,0.55)',
-  accent: '#5dd4d4',
+  text: 'var(--dl-ink, #dfefd7)',
+  panelBg: 'color-mix(in srgb, var(--dl-surface, #1b1220) 94%, transparent)',
+  border: '1px solid var(--dl-line, #3a2b41)',
+  shadow: 'var(--dl-shadow, 0 6px 18px rgba(10,7,16,0.55))',
+  accent: '#6dc3cb',
 };
 
 function readStored(storageKey, defaultCollapsed) {
@@ -56,7 +62,7 @@ export function MovablePanel({
   children,
   zIndex = 60,
   bodyPadding = '8px 10px 10px',
-  fontFamily = 'system-ui, sans-serif',
+  fontFamily = 'var(--dl-font, system-ui, sans-serif)',
   className,
 }) {
   const panelRef = useRef(null);
@@ -186,7 +192,8 @@ export function MovablePanel({
         style={{
           display: 'flex', alignItems: 'center', gap: 6,
           padding: '6px 8px',
-          fontSize: 10, fontWeight: 700, letterSpacing: '2px',
+          fontFamily: 'var(--dl-ui, ui-monospace, monospace)',
+          fontSize: 10, letterSpacing: '1px',
           color: accent,
           background: `linear-gradient(180deg, ${accent}18 0%, ${accent}05 100%)`,
           borderBottom: state.collapsed ? 'none' : `1px solid ${accent}26`,

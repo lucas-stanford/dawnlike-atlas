@@ -61,28 +61,40 @@ const TILE_SIZE = 32;
 
 // ===== HUD theme =====
 // Tactical-HUD palette + reusable style fragments for a consistent look.
+// The HUD palette. Everything below is an exact DawnBringer 16 entry, or an
+// alpha of one, so the interface and the sprites it frames are drawn from the
+// same sixteen colours. It used to be a neon sci-fi set (#5cc8ff, #ffc658,
+// #ff6470, #74ff9a, #c690ff) which looked sharp on its own and looked like a
+// different game the moment a DawnLike tile sat next to it.
+//
+// One honest compromise: DB16 has no violet. The wizard and the ability mode
+// used to be purple, and the nearest palette entry that still reads as
+// "arcane" against the cyan/gold/green/red already in play is DB16's blue,
+// so the role is named `arcane` rather than `purple` — the key would
+// otherwise promise a colour the palette cannot make.
 const HUD = {
-  bg:         'rgba(8, 12, 20, 0.88)',
-  bgSolid:    'rgba(12, 18, 28, 0.96)',
-  panelBg:    'linear-gradient(180deg, rgba(18,26,40,0.94) 0%, rgba(10,16,26,0.94) 100%)',
-  border:     '1px solid rgba(120, 190, 240, 0.30)',
-  borderHot:  '1px solid rgba(120, 190, 240, 0.65)',
-  shadow:     '0 6px 22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05)',
-  text:       '#e6eef9',
-  textDim:    '#90a4be',
-  textMuted:  '#5d728e',
-  cyan:       '#5cc8ff',
-  amber:      '#ffc658',
-  red:        '#ff6470',
-  green:      '#74ff9a',
-  purple:     '#c690ff',
-  font:       "'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
-  fontMono:   "ui-monospace, 'JetBrains Mono', Menlo, monospace",
+  bg:         'rgba(20, 12, 28, 0.88)',        // db black
+  bgSolid:    'rgba(27, 18, 32, 0.96)',
+  panelBg:    'linear-gradient(180deg, rgba(36,26,43,0.95) 0%, rgba(20,12,28,0.95) 100%)',
+  border:     '1px solid rgba(134, 150, 162, 0.28)',  // db blueGrey
+  borderHot:  '1px solid rgba(109, 195, 203, 0.65)',  // db cyan
+  shadow:     '0 6px 22px rgba(10,7,16,0.6), inset 0 1px 0 rgba(223,239,215,0.06)',
+  text:       '#dfefd7',   // db white
+  textDim:    '#8696a2',   // db blueGrey
+  textMuted:  '#757161',   // db grey
+  cyan:       '#6dc3cb',   // db cyan
+  gold:       '#dbd75d',   // db yellow
+  red:        '#d34549',   // db red
+  green:      '#6daa2c',   // db green
+  arcane:     '#597dcf',   // db blue — see note above
+  font:       "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+  fontUi:     "'Silkscreen', 'Press Start 2P', ui-monospace, monospace",
+  fontMono:   "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
 };
 
 const CLASS_COLORS = {
-  knight: HUD.amber,
-  wizard: HUD.purple,
+  knight: HUD.gold,
+  wizard: HUD.arcane,
   rogue:  HUD.green,
   cleric: HUD.cyan,
 };
@@ -90,9 +102,9 @@ const CLASS_COLORS = {
 const MODE_THEME = {
   move:    { color: HUD.cyan,   label: 'MOVE'      },
   attack:  { color: HUD.red,    label: 'ATTACK'    },
-  cast:    { color: HUD.purple, label: 'ABILITY'   },
+  cast:    { color: HUD.arcane, label: 'ABILITY'   },
   heal:    { color: HUD.green,  label: 'HEAL'      },
-  overwatch:{color: HUD.amber,  label: 'OVERWATCH' },
+  overwatch:{color: HUD.gold,  label: 'OVERWATCH' },
 };
 
 // Reusable Lucide icon wrapper — consistent stroke + glow.
@@ -561,17 +573,17 @@ export default function TacticalCombatExample({
     if (mode === 'attack') {
       maxR = u.weapon?.range ?? 1;
       optR = u.weapon?.optimalRange ?? maxR;
-      color = 'rgba(255,90,90,0.42)';
+      color = 'rgba(211,69,73,0.45)';
     } else if (mode === 'cast') {
       const a = u.ability;
       maxR = a?.range ?? u.weapon?.range ?? 1;
       optR = maxR;
-      color = 'rgba(190,120,255,0.42)';
+      color = 'rgba(89,125,207,0.45)';
     } else {
       const a = u.ability;
       maxR = a?.range ?? 1;
       optR = maxR;
-      color = 'rgba(120,255,160,0.42)';
+      color = 'rgba(109,170,44,0.45)';
     }
     const optimalSet = new Set();
     const maxSet = new Set();
@@ -1085,7 +1097,7 @@ export default function TacticalCombatExample({
                 cursor: 'pointer',
               };
               if (dim === 0) {
-                return <div key={key} style={{ ...baseStyle, background: '#0a0a0c', cursor: 'default' }} />;
+                return <div key={key} style={{ ...baseStyle, background: '#0a0710', cursor: 'default' }} />;
               }
               // Mode-specific tinting
               const reachKey = moveReachable?.has(key);
@@ -1095,9 +1107,9 @@ export default function TacticalCombatExample({
               const inAoe = aoePreviewSet?.has(key);
               let tintColor = null;
               if (isMoveTarget) {
-                tintColor = 'rgba(120,200,255,0.25)';
+                tintColor = 'rgba(109,195,203,0.28)';
               } else if (inAoe) {
-                tintColor = 'rgba(255,150,60,0.50)';
+                tintColor = 'rgba(211,125,44,0.55)';
               } else if (inOptRange) {
                 tintColor = rangeOverlay.color;
               } else if (inMaxRange) {
@@ -1168,14 +1180,14 @@ export default function TacticalCombatExample({
               background: HUD.bgSolid,
               border: `1px solid ${
                 hitPreview.percent >= 70 ? HUD.green :
-                hitPreview.percent >= 40 ? HUD.amber : HUD.red
+                hitPreview.percent >= 40 ? HUD.gold : HUD.red
               }cc`,
               boxShadow: `0 0 14px ${
                 hitPreview.percent >= 70 ? HUD.green :
-                hitPreview.percent >= 40 ? HUD.amber : HUD.red
+                hitPreview.percent >= 40 ? HUD.gold : HUD.red
               }66`,
               color: hitPreview.percent >= 70 ? HUD.green :
-                     hitPreview.percent >= 40 ? HUD.amber : HUD.red,
+                     hitPreview.percent >= 40 ? HUD.gold : HUD.red,
               borderRadius: 5,
               fontSize: 14,
               fontFamily: HUD.fontMono,
@@ -1240,7 +1252,7 @@ export default function TacticalCombatExample({
       {(state.victory || state.defeat) && (
         <div style={{
           position: 'absolute', inset: 0, zIndex: 100,
-          background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.9) 100%)',
+          background: 'radial-gradient(ellipse at center, rgba(10,7,16,0.65) 0%, rgba(10,7,16,0.9) 100%)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
         }}>
@@ -1279,11 +1291,11 @@ export default function TacticalCombatExample({
             </div>
             <button onClick={restart}
               onMouseEnter={(e) => { e.currentTarget.style.background = `linear-gradient(180deg, ${HUD.cyan}33 0%, ${HUD.cyan}14 100%)`; e.currentTarget.style.borderColor = HUD.cyan; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(20,28,42,0.85)'; e.currentTarget.style.borderColor = `${HUD.cyan}88`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(36,26,43,0.88)'; e.currentTarget.style.borderColor = `${HUD.cyan}88`; }}
               style={{
                 display: 'inline-flex', alignItems: 'center', gap: 10,
                 padding: '12px 28px',
-                background: 'rgba(20,28,42,0.85)',
+                background: 'rgba(36,26,43,0.88)',
                 color: HUD.cyan,
                 border: `1px solid ${HUD.cyan}88`,
                 boxShadow: `0 0 16px ${HUD.cyan}33`,
@@ -1343,22 +1355,22 @@ function TopBar({ state, onEndTurn }) {
           </div>
           {isPlayer && !state.victory && !state.defeat && (
             <button onClick={onEndTurn}
-              onMouseEnter={(e) => { e.currentTarget.style.background = `linear-gradient(180deg, ${HUD.amber}33 0%, ${HUD.amber}14 100%)`; e.currentTarget.style.borderColor = `${HUD.amber}cc`; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = HUD.panelBg; e.currentTarget.style.borderColor = `${HUD.amber}66`; }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = `linear-gradient(180deg, ${HUD.gold}33 0%, ${HUD.gold}14 100%)`; e.currentTarget.style.borderColor = `${HUD.gold}cc`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = HUD.panelBg; e.currentTarget.style.borderColor = `${HUD.gold}66`; }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 6,
                 padding: '6px 10px',
                 background: HUD.panelBg,
-                color: HUD.amber,
-                border: `1px solid ${HUD.amber}66`,
-                boxShadow: `${HUD.shadow}, 0 0 12px ${HUD.amber}22`,
+                color: HUD.gold,
+                border: `1px solid ${HUD.gold}66`,
+                boxShadow: `${HUD.shadow}, 0 0 12px ${HUD.gold}22`,
                 borderRadius: 5,
                 cursor: 'pointer',
                 fontFamily: HUD.font,
                 fontSize: 11, fontWeight: 700, letterSpacing: '1.2px',
                 transition: 'all 0.15s ease',
               }}>
-              END <Icon component={SkipForward} size={13} color={HUD.amber} glow />
+              END <Icon component={SkipForward} size={13} color={HUD.gold} glow />
             </button>
           )}
         </div>
@@ -1372,7 +1384,7 @@ function TopBar({ state, onEndTurn }) {
           width={520}
           title="Objective"
           icon={Target}
-          accent={HUD.amber}
+          accent={HUD.gold}
           fontFamily={HUD.font}
           bodyPadding="8px 12px 10px"
         >
@@ -1407,7 +1419,7 @@ function SidePanel({ state, squad, selectedUnitId, setSelected, atlas, onShowCha
         const ended = !dead && u.ended;
         const accent = CLASS_COLORS[u.classKey] || HUD.cyan;
         const hpPct = Math.max(0, u.hp) / u.maxHp;
-        const hpColor = hpPct > 0.66 ? HUD.green : hpPct > 0.33 ? HUD.amber : HUD.red;
+        const hpColor = hpPct > 0.66 ? HUD.green : hpPct > 0.33 ? HUD.gold : HUD.red;
         return (
           <div key={u.id}
             onClick={() => u.hp > 0 && setSelected(u.id)}
@@ -1418,10 +1430,10 @@ function SidePanel({ state, squad, selectedUnitId, setSelected, atlas, onShowCha
               borderRadius: 5,
               background: sel
                 ? `linear-gradient(90deg, ${accent}26 0%, ${accent}0d 100%)`
-                : 'rgba(255,255,255,0.025)',
+                : 'rgba(223,239,215,0.025)',
               opacity: dead ? 0.4 : ended ? 0.65 : 1,
               cursor: u.hp > 0 ? 'pointer' : 'not-allowed',
-              border: sel ? `1px solid ${accent}aa` : '1px solid rgba(255,255,255,0.06)',
+              border: sel ? `1px solid ${accent}aa` : '1px solid rgba(223,239,215,0.06)',
               boxShadow: sel ? `0 0 14px ${accent}33, inset 0 0 0 1px ${accent}22` : 'none',
               transition: 'all 0.12s ease',
               position: 'relative',
@@ -1480,14 +1492,14 @@ function SidePanel({ state, squad, selectedUnitId, setSelected, atlas, onShowCha
                       onClick={(e) => { e.stopPropagation(); onShowCharacter && onShowCharacter(u.id); }}
                       title={`${u.name} — character sheet`}
                       onMouseEnter={(e) => { e.currentTarget.style.color = accent; e.currentTarget.style.borderColor = `${accent}88`; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = HUD.textMuted; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = HUD.textMuted; e.currentTarget.style.borderColor = 'rgba(223,239,215,0.10)'; }}
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         width: 18, height: 18,
                         padding: 0,
-                        background: 'rgba(8,12,20,0.55)',
+                        background: 'rgba(10,7,16,0.55)',
                         color: HUD.textMuted,
-                        border: '1px solid rgba(255,255,255,0.10)',
+                        border: '1px solid rgba(223,239,215,0.10)',
                         borderRadius: 3,
                         cursor: 'pointer',
                         transition: 'all 0.12s ease',
@@ -1499,7 +1511,7 @@ function SidePanel({ state, squad, selectedUnitId, setSelected, atlas, onShowCha
               </div>
               {/* HP bar */}
               <div style={{
-                height: 5, background: 'rgba(255,255,255,0.08)', borderRadius: 2,
+                height: 5, background: 'rgba(223,239,215,0.08)', borderRadius: 2,
                 overflow: 'hidden', marginBottom: 3,
               }}>
                 <div style={{
@@ -1516,7 +1528,7 @@ function SidePanel({ state, squad, selectedUnitId, setSelected, atlas, onShowCha
                 return (
                   <div title={`${u.xp ?? 0} / ${need} XP to level ${(u.level ?? 1) + 1}`}
                        style={{
-                         height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 1.5,
+                         height: 3, background: 'rgba(223,239,215,0.06)', borderRadius: 1.5,
                          overflow: 'hidden', marginBottom: 4,
                        }}>
                     <div style={{
@@ -1570,14 +1582,14 @@ function Stat({ label, value }) {
 function logLineStyle(line) {
   const l = line.toLowerCase();
   if (l.includes('dies') || l.includes('crit')) return { color: HUD.red,    icon: Skull };
-  if (l.includes('hits') || l.includes('shoots') || l.includes('shoves')) return { color: HUD.amber, icon: Crosshair };
+  if (l.includes('hits') || l.includes('shoots') || l.includes('shoves')) return { color: HUD.gold, icon: Crosshair };
   if (l.includes('heal')) return { color: HUD.green, icon: HeartPulse };
   if (l.includes('misses')) return { color: HUD.textDim, icon: Activity };
-  if (l.includes('fireball')) return { color: HUD.purple, icon: Flame };
-  if (l.includes('bash')) return { color: HUD.amber, icon: Shield };
+  if (l.includes('fireball')) return { color: HUD.arcane, icon: Flame };
+  if (l.includes('bash')) return { color: HUD.gold, icon: Shield };
   if (l.includes('move')) return { color: HUD.cyan, icon: Footprints };
-  if (l.includes('mission')) return { color: HUD.amber, icon: Award };
-  if (l.includes('overwatch')) return { color: HUD.amber, icon: Eye };
+  if (l.includes('mission')) return { color: HUD.gold, icon: Award };
+  if (l.includes('overwatch')) return { color: HUD.gold, icon: Eye };
   return { color: HUD.text, icon: ChevronRight };
 }
 
@@ -1681,23 +1693,23 @@ function ActionBar({ state, selectedUnit, mode, setMode, onMove, onAttack, onCas
   const maxAp = selectedUnit.maxAp || CLASSES[selectedUnit.classKey]?.maxAp || 2;
   const can = (cost) => apLeft >= cost && state.turn === 'player' && !state.victory && !state.defeat;
   const hpPct = Math.max(0, selectedUnit.hp) / selectedUnit.maxHp;
-  const hpColor = hpPct > 0.66 ? HUD.green : hpPct > 0.33 ? HUD.amber : HUD.red;
+  const hpColor = hpPct > 0.66 ? HUD.green : hpPct > 0.33 ? HUD.gold : HUD.red;
 
   const ActionBtn = ({ iconComponent, label, sub, hotkey, onClick, active, accent: btnAccent = HUD.cyan, disabled }) => {
     const inactive = disabled || !can(1);
     return (
       <button onClick={onClick} disabled={inactive}
         onMouseEnter={(e) => { if (!inactive && !active) { e.currentTarget.style.borderColor = `${btnAccent}aa`; e.currentTarget.style.boxShadow = `0 0 14px ${btnAccent}55, inset 0 0 0 1px ${btnAccent}33`; }}}
-        onMouseLeave={(e) => { if (!inactive && !active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; e.currentTarget.style.boxShadow = 'none'; }}}
+        onMouseLeave={(e) => { if (!inactive && !active) { e.currentTarget.style.borderColor = 'rgba(223,239,215,0.10)'; e.currentTarget.style.boxShadow = 'none'; }}}
         style={{
           position: 'relative',
           minWidth: 92,
           padding: '8px 10px 6px',
           background: active
             ? `linear-gradient(180deg, ${btnAccent}33 0%, ${btnAccent}10 100%)`
-            : 'rgba(20,28,42,0.85)',
+            : 'rgba(36,26,43,0.88)',
           color: active ? btnAccent : HUD.text,
-          border: active ? `1px solid ${btnAccent}` : '1px solid rgba(255,255,255,0.10)',
+          border: active ? `1px solid ${btnAccent}` : '1px solid rgba(223,239,215,0.10)',
           boxShadow: active ? `0 0 16px ${btnAccent}66, inset 0 0 0 1px ${btnAccent}55` : 'none',
           borderRadius: 5,
           cursor: inactive ? 'not-allowed' : 'pointer',
@@ -1734,7 +1746,7 @@ function ActionBar({ state, selectedUnit, mode, setMode, onMove, onAttack, onCas
     const r = selectedUnit.ability?.range ?? '?';
     abilityBtn = (
       <ActionBtn iconComponent={Flame} label="FIREBALL" sub={`rng ${r} · ${selectedUnit.abilityUsesLeft} left`} hotkey="3"
-        onClick={() => setMode('cast')} active={mode === 'cast'} accent={HUD.purple}
+        onClick={() => setMode('cast')} active={mode === 'cast'} accent={HUD.arcane}
         disabled={selectedUnit.abilityUsesLeft <= 0} />
     );
   } else if (selectedUnit.classKey === 'cleric') {
@@ -1747,13 +1759,13 @@ function ActionBar({ state, selectedUnit, mode, setMode, onMove, onAttack, onCas
     const r = selectedUnit.ability?.range ?? 1;
     abilityBtn = (
       <ActionBtn iconComponent={ShieldAlert} label="BASH" sub={`rng ${r}`} hotkey="3"
-        onClick={() => setMode('cast')} active={mode === 'cast'} accent={HUD.amber} />
+        onClick={() => setMode('cast')} active={mode === 'cast'} accent={HUD.gold} />
     );
   } else if (selectedUnit.classKey === 'rogue') {
     const r = selectedUnit.ability?.range ?? 1;
     abilityBtn = (
       <ActionBtn iconComponent={Sword} label="DAGGER" sub={`rng ${r}`} hotkey="3"
-        onClick={() => setMode('cast')} active={mode === 'cast'} accent={HUD.purple} />
+        onClick={() => setMode('cast')} active={mode === 'cast'} accent={HUD.arcane} />
     );
   }
 
@@ -1794,7 +1806,7 @@ function ActionBar({ state, selectedUnit, mode, setMode, onMove, onAttack, onCas
             </div>
             {/* HP bar */}
             <div style={{
-              height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 3,
+              height: 6, background: 'rgba(223,239,215,0.08)', borderRadius: 3,
               overflow: 'hidden', marginTop: 4, marginBottom: 4,
             }}>
               <div style={{
@@ -1824,7 +1836,7 @@ function ActionBar({ state, selectedUnit, mode, setMode, onMove, onAttack, onCas
             onClick={onAttack} active={mode === 'attack'} accent={HUD.red} />
           {abilityBtn}
           <ActionBtn iconComponent={Eye} label="OVERWATCH" sub="end turn" hotkey="4"
-            onClick={onOverwatch} active={mode === 'overwatch'} accent={HUD.amber} />
+            onClick={onOverwatch} active={mode === 'overwatch'} accent={HUD.gold} />
         </div>
       </div>
     </MovablePanel>
@@ -1866,7 +1878,7 @@ function ActorSprite({ atlas, sprite, x, y, z = 5, selected, overwatching, side 
       {side === 'enemy' && (
         <div style={{
           position: 'absolute', inset: -1,
-          border: '1px solid rgba(255,60,60,0.7)',
+          border: '1px solid rgba(211,69,73,0.75)',
           borderRadius: 4,
           boxSizing: 'border-box',
           zIndex: 1,
@@ -1955,7 +1967,7 @@ function CharacterScreen({ unit, atlas, onClose }) {
   const accent = CLASS_COLORS[unit.classKey] || HUD.cyan;
   const className = CLASSES[unit.classKey]?.name || unit.classKey;
   const hpPct = Math.max(0, unit.hp) / unit.maxHp;
-  const hpColor = hpPct > 0.66 ? HUD.green : hpPct > 0.33 ? HUD.amber : HUD.red;
+  const hpColor = hpPct > 0.66 ? HUD.green : hpPct > 0.33 ? HUD.gold : HUD.red;
   const maxAp = unit.maxAp || CLASSES[unit.classKey]?.maxAp || 2;
   const wpn = unit.weapon || {};
   const ab = unit.ability || {};
@@ -1994,7 +2006,7 @@ function CharacterScreen({ unit, atlas, onClose }) {
       onClick={onClose}
       style={{
         position: 'absolute', inset: 0, zIndex: 110,
-        background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.92) 100%)',
+        background: 'radial-gradient(ellipse at center, rgba(10,7,16,0.65) 0%, rgba(10,7,16,0.92) 100%)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)',
         animation: 'tac-fadeIn 0.18s ease',
@@ -2026,14 +2038,14 @@ function CharacterScreen({ unit, atlas, onClose }) {
         <button
           onClick={onClose}
           onMouseEnter={(e) => { e.currentTarget.style.color = HUD.text; e.currentTarget.style.borderColor = `${HUD.red}aa`; e.currentTarget.style.background = `${HUD.red}22`; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = HUD.textMuted; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; e.currentTarget.style.background = 'rgba(8,12,20,0.55)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = HUD.textMuted; e.currentTarget.style.borderColor = 'rgba(223,239,215,0.10)'; e.currentTarget.style.background = 'rgba(10,7,16,0.55)'; }}
           style={{
             position: 'absolute', top: 12, right: 12,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             width: 28, height: 28,
-            background: 'rgba(8,12,20,0.55)',
+            background: 'rgba(10,7,16,0.55)',
             color: HUD.textMuted,
-            border: '1px solid rgba(255,255,255,0.10)',
+            border: '1px solid rgba(223,239,215,0.10)',
             borderRadius: 4,
             cursor: 'pointer',
             transition: 'all 0.15s ease',
@@ -2074,13 +2086,13 @@ function CharacterScreen({ unit, atlas, onClose }) {
               </span>
               {Number.isFinite(unit.kills) && (
                 <span style={{
-                  fontSize: 10, color: HUD.amber, padding: '2px 7px',
-                  background: `${HUD.amber}1f`, border: `1px solid ${HUD.amber}55`,
+                  fontSize: 10, color: HUD.gold, padding: '2px 7px',
+                  background: `${HUD.gold}1f`, border: `1px solid ${HUD.gold}55`,
                   borderRadius: 4, letterSpacing: '1.5px',
                   fontFamily: HUD.fontMono,
                   display: 'inline-flex', alignItems: 'center', gap: 4,
                 }}>
-                  <Icon component={Skull} size={10} color={HUD.amber} strokeWidth={2.2} />
+                  <Icon component={Skull} size={10} color={HUD.gold} strokeWidth={2.2} />
                   {unit.kills}
                 </span>
               )}
@@ -2143,10 +2155,10 @@ function CharacterScreen({ unit, atlas, onClose }) {
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10,
           marginBottom: 18,
         }}>
-          <AttrCell icon={Target}      label="AIM"       value={`${unit.aim ?? CLASSES[unit.classKey]?.aim ?? '—'}%`} color={HUD.amber} />
+          <AttrCell icon={Target}      label="AIM"       value={`${unit.aim ?? CLASSES[unit.classKey]?.aim ?? '—'}%`} color={HUD.gold} />
           <AttrCell icon={Shield}      label="DEFENSE"   value={unit.defense ?? CLASSES[unit.classKey]?.defense ?? '—'} color={HUD.cyan} />
           <AttrCell icon={ShieldAlert} label="ARMOR"     value={unit.armor   ?? CLASSES[unit.classKey]?.armor   ?? '—'} color={HUD.green} />
-          <AttrCell icon={Footprints}  label="MOVE"      value={`${unit.moveRange ?? CLASSES[unit.classKey]?.moveRange ?? '—'} tiles`} color={HUD.purple} />
+          <AttrCell icon={Footprints}  label="MOVE"      value={`${unit.moveRange ?? CLASSES[unit.classKey]?.moveRange ?? '—'} tiles`} color={HUD.arcane} />
         </div>
 
         {/* Weapon + Ability cards */}
@@ -2185,7 +2197,7 @@ function CharacterScreen({ unit, atlas, onClose }) {
         <div style={{
           marginTop: 16,
           padding: '12px 14px',
-          background: 'rgba(8,12,20,0.55)',
+          background: 'rgba(10,7,16,0.55)',
           border: `1px solid ${accent}22`,
           borderRadius: 6,
           fontSize: 12, color: HUD.textDim,
@@ -2229,7 +2241,7 @@ function BarRow({ icon, color, label, value, pct }) {
         <span style={{ fontSize: 12, fontFamily: HUD.fontMono, fontWeight: 700, color }}>{value}</span>
       </div>
       <div style={{
-        height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 4, overflow: 'hidden',
+        height: 8, background: 'rgba(223,239,215,0.06)', borderRadius: 4, overflow: 'hidden',
       }}>
         <div style={{
           width: `${Math.max(0, Math.min(1, pct)) * 100}%`, height: '100%',
@@ -2246,7 +2258,7 @@ function AttrCell({ icon, label, value, color }) {
   return (
     <div style={{
       padding: '10px 12px',
-      background: 'rgba(8,12,20,0.55)',
+      background: 'rgba(10,7,16,0.55)',
       border: `1px solid ${color}33`,
       borderRadius: 6,
       textAlign: 'center',
@@ -2274,7 +2286,7 @@ function DetailCard({ iconComponent, tag, title, stats, color }) {
   return (
     <div style={{
       padding: '12px 14px',
-      background: `linear-gradient(180deg, ${color}10 0%, rgba(8,12,20,0.65) 100%)`,
+      background: `linear-gradient(180deg, ${color}10 0%, rgba(10,7,16,0.65) 100%)`,
       border: `1px solid ${color}55`,
       borderRadius: 6,
       boxShadow: `inset 0 0 0 1px ${color}1a`,
@@ -2302,7 +2314,7 @@ function DetailCard({ iconComponent, tag, title, stats, color }) {
             display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
             fontSize: 11.5,
             paddingTop: i > 0 ? 4 : 0,
-            borderTop: i > 0 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+            borderTop: i > 0 ? '1px solid rgba(223,239,215,0.04)' : 'none',
           }}>
             <span style={{ color: HUD.textMuted, letterSpacing: '0.5px' }}>{s.label}</span>
             <span style={{ color: HUD.text, fontFamily: HUD.fontMono, fontWeight: 600 }}>{s.value}</span>
@@ -2319,7 +2331,7 @@ function DetailCard({ iconComponent, tag, title, stats, color }) {
 
 function EnemyTooltip({ enemy, mouse, atlas }) {
   const hpPct = Math.max(0, enemy.hp) / enemy.maxHp;
-  const hpColor = hpPct > 0.66 ? HUD.green : hpPct > 0.33 ? HUD.amber : HUD.red;
+  const hpColor = hpPct > 0.66 ? HUD.green : hpPct > 0.33 ? HUD.gold : HUD.red;
   const wpn = enemy.weapon || {};
   // Position the tooltip near the cursor, but clamp so it stays in viewport.
   const W = 220;
@@ -2369,9 +2381,9 @@ function EnemyTooltip({ enemy, mouse, atlas }) {
             {enemy.rank || 'Hostile'}
             {enemy.aware && (
               <span style={{
-                marginLeft: 4, color: HUD.amber,
+                marginLeft: 4, color: HUD.gold,
                 padding: '0 4px', borderRadius: 2,
-                background: `${HUD.amber}1a`, border: `1px solid ${HUD.amber}55`,
+                background: `${HUD.gold}1a`, border: `1px solid ${HUD.gold}55`,
               }}>
                 ALERT
               </span>
@@ -2380,7 +2392,7 @@ function EnemyTooltip({ enemy, mouse, atlas }) {
         </div>
       </div>
       <div style={{
-        height: 5, background: 'rgba(255,255,255,0.08)', borderRadius: 2,
+        height: 5, background: 'rgba(223,239,215,0.08)', borderRadius: 2,
         overflow: 'hidden', marginBottom: 2,
       }}>
         <div style={{
@@ -2403,19 +2415,19 @@ function EnemyTooltip({ enemy, mouse, atlas }) {
       <div style={{
         display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3,
         fontSize: 10, fontFamily: HUD.fontMono,
-        paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.06)',
+        paddingTop: 4, borderTop: '1px solid rgba(223,239,215,0.06)',
       }}>
         <TooltipStat icon={wpn.kind === 'ranged' ? Crosshair : Sword}
                      label={wpn.kind === 'ranged' ? 'RNG ATK' : 'MLE ATK'}
                      value={wpn.dmg ? `${wpn.dmg[0]}–${wpn.dmg[1]}` : '—'} color={HUD.red} />
-        <TooltipStat icon={Target}      label="RANGE"   value={wpn.range ?? '—'}   color={HUD.amber} />
-        <TooltipStat icon={Crosshair}   label="AIM"     value={`${enemy.aim ?? '—'}%`} color={HUD.amber} />
+        <TooltipStat icon={Target}      label="RANGE"   value={wpn.range ?? '—'}   color={HUD.gold} />
+        <TooltipStat icon={Crosshair}   label="AIM"     value={`${enemy.aim ?? '—'}%`} color={HUD.gold} />
         <TooltipStat icon={Shield}      label="DEF"     value={enemy.defense ?? 0} color={HUD.cyan} />
         <TooltipStat icon={ShieldAlert} label="ARMOR"   value={enemy.armor ?? 0}   color={HUD.green} />
-        <TooltipStat icon={Footprints}  label="MOVE"    value={`${enemy.moveRange ?? 4}t`} color={HUD.purple} />
+        <TooltipStat icon={Footprints}  label="MOVE"    value={`${enemy.moveRange ?? 4}t`} color={HUD.arcane} />
       </div>
       <div style={{
-        marginTop: 6, paddingTop: 4, borderTop: '1px solid rgba(255,255,255,0.06)',
+        marginTop: 6, paddingTop: 4, borderTop: '1px solid rgba(223,239,215,0.06)',
         fontSize: 9, color: HUD.textMuted, letterSpacing: '0.8px', textAlign: 'center',
       }}>
         CLICK FOR FULL DOSSIER
@@ -2429,7 +2441,7 @@ function TooltipStat({ icon, label, value, color }) {
     <div style={{
       display: 'flex', alignItems: 'center', gap: 4,
       padding: '2px 4px',
-      background: 'rgba(8,12,20,0.45)',
+      background: 'rgba(10,7,16,0.45)',
       border: `1px solid ${color}22`,
       borderRadius: 3,
     }}>
@@ -2443,14 +2455,14 @@ function TooltipStat({ icon, label, value, color }) {
 function EnemyScreen({ enemy, atlas, onClose }) {
   const accent = HUD.red;
   const hpPct = Math.max(0, enemy.hp) / enemy.maxHp;
-  const hpColor = hpPct > 0.66 ? HUD.green : hpPct > 0.33 ? HUD.amber : HUD.red;
+  const hpColor = hpPct > 0.66 ? HUD.green : hpPct > 0.33 ? HUD.gold : HUD.red;
   const wpn = enemy.weapon || {};
   return (
     <div
       onClick={onClose}
       style={{
         position: 'absolute', inset: 0, zIndex: 110,
-        background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.92) 100%)',
+        background: 'radial-gradient(ellipse at center, rgba(10,7,16,0.65) 0%, rgba(10,7,16,0.92) 100%)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         backdropFilter: 'blur(5px)', WebkitBackdropFilter: 'blur(5px)',
         animation: 'tac-fadeIn 0.18s ease',
@@ -2482,14 +2494,14 @@ function EnemyScreen({ enemy, atlas, onClose }) {
         <button
           onClick={onClose}
           onMouseEnter={(e) => { e.currentTarget.style.color = HUD.text; e.currentTarget.style.borderColor = `${accent}aa`; e.currentTarget.style.background = `${accent}22`; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = HUD.textMuted; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; e.currentTarget.style.background = 'rgba(8,12,20,0.55)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = HUD.textMuted; e.currentTarget.style.borderColor = 'rgba(223,239,215,0.10)'; e.currentTarget.style.background = 'rgba(10,7,16,0.55)'; }}
           style={{
             position: 'absolute', top: 12, right: 12,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             width: 28, height: 28,
-            background: 'rgba(8,12,20,0.55)',
+            background: 'rgba(10,7,16,0.55)',
             color: HUD.textMuted,
-            border: '1px solid rgba(255,255,255,0.10)',
+            border: '1px solid rgba(223,239,215,0.10)',
             borderRadius: 4,
             cursor: 'pointer',
             transition: 'all 0.15s ease',
@@ -2523,13 +2535,13 @@ function EnemyScreen({ enemy, atlas, onClose }) {
               {(enemy.rank || 'Hostile').toUpperCase()}
               {enemy.aware && (
                 <span style={{
-                  fontSize: 10, color: HUD.amber, padding: '2px 7px',
-                  background: `${HUD.amber}1f`, border: `1px solid ${HUD.amber}66`,
+                  fontSize: 10, color: HUD.gold, padding: '2px 7px',
+                  background: `${HUD.gold}1f`, border: `1px solid ${HUD.gold}66`,
                   borderRadius: 4, letterSpacing: '1.5px',
                   fontFamily: HUD.fontMono,
                   display: 'inline-flex', alignItems: 'center', gap: 4,
                 }}>
-                  <Icon component={Eye} size={10} color={HUD.amber} strokeWidth={2.2} />
+                  <Icon component={Eye} size={10} color={HUD.gold} strokeWidth={2.2} />
                   ALERT
                 </span>
               )}
@@ -2543,13 +2555,13 @@ function EnemyScreen({ enemy, atlas, onClose }) {
                 padding: '4px 0',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Icon component={TrendingUp} size={14} color={HUD.amber} strokeWidth={2} glow />
+                  <Icon component={TrendingUp} size={14} color={HUD.gold} strokeWidth={2} glow />
                   <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1.5px', color: HUD.textDim }}>
                     BOUNTY
                   </span>
                 </div>
                 <span style={{
-                  fontSize: 12, fontFamily: HUD.fontMono, fontWeight: 700, color: HUD.amber,
+                  fontSize: 12, fontFamily: HUD.fontMono, fontWeight: 700, color: HUD.gold,
                 }}>
                   +{enemy.xpReward ?? 0} XP
                 </span>
@@ -2569,10 +2581,10 @@ function EnemyScreen({ enemy, atlas, onClose }) {
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10,
           marginBottom: 18,
         }}>
-          <AttrCell icon={Target}      label="AIM"     value={`${enemy.aim ?? '—'}%`} color={HUD.amber} />
+          <AttrCell icon={Target}      label="AIM"     value={`${enemy.aim ?? '—'}%`} color={HUD.gold} />
           <AttrCell icon={Shield}      label="DEFENSE" value={enemy.defense ?? 0}      color={HUD.cyan} />
           <AttrCell icon={ShieldAlert} label="ARMOR"   value={enemy.armor ?? 0}        color={HUD.green} />
-          <AttrCell icon={Footprints}  label="MOVE"    value={`${enemy.moveRange ?? 4} tiles`} color={HUD.purple} />
+          <AttrCell icon={Footprints}  label="MOVE"    value={`${enemy.moveRange ?? 4} tiles`} color={HUD.arcane} />
         </div>
 
         {/* Weapon card */}
@@ -2594,7 +2606,7 @@ function EnemyScreen({ enemy, atlas, onClose }) {
         <div style={{
           marginTop: 16,
           padding: '12px 14px',
-          background: 'rgba(8,12,20,0.55)',
+          background: 'rgba(10,7,16,0.55)',
           border: `1px solid ${accent}22`,
           borderRadius: 6,
           fontSize: 12, color: HUD.textDim,
