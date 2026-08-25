@@ -28,7 +28,7 @@ import { dawnlikeAnimVars, DAWNLIKE_ATLAS_0_URL } from './utils/spriteAnim';
 import './utils/spriteAnim.css';
 import {
   resolveDawnLikeFloorName,
-  resolveDawnLikePoolName,
+  resolveDawnLikeShoreName,
   resolveDawnLikeDungeonWallName,
 } from './utils/autotile';
 import './Autotile.css';
@@ -46,6 +46,21 @@ export default function CaveExample({
   wallStyle: wallStyleProp = 'dark mine wall',
   floorStyle: floorStyleProp = 'night stone floor',
   waterStyle: waterStyleProp = 'stone murky pool',
+  /**
+   * The lake's bank.
+   *
+   * The pool families were the obvious choice here and they are the wrong
+   * one. A pool family is eleven tiles keyed on four cardinals, drawn for
+   * a rectangular built basin — it has no piece for a corner cut by a
+   * diagonal, so on an organic cave lake every such cell falls back to
+   * `center` and the water simply stops dead against the floor. That is
+   * most of the waterline on a cellular-automata blob.
+   *
+   * The generated `* shore` set is a 47-tile blob keyed on all eight
+   * neighbours, which is what an organic waterline actually needs. `mud`
+   * because a cave lake has a silt bank, not a beach.
+   */
+  shoreStyle: shoreStyleProp = 'mud shore',
   fillProbability: fillProbabilityProp = 0.55,
   smoothing: smoothingProp = 4,
   waterLevel: waterLevelProp = 0.18,
@@ -166,15 +181,47 @@ export default function CaveExample({
       layers.push({ name: floor.name, z: 0, reason: 'Cave floor · floor resolver' });
     }
 
-    // Layer 1 — underground lake.
+    // Layer 1 — the lake itself, as a flat fill. All the edge work is
+    // done by the bank above it, which is transparent where its water
+    // goes, so this never has to agree with anything.
     if (tile.kind === WATER) {
-      const isWater = (nx, ny) => kindAt(nx, ny) === WATER;
-      const pool = resolveDawnLikePoolName(
-        waterStyleProp,
-        { n: isWater(x, y - 1), s: isWater(x, y + 1), e: isWater(x + 1, y), w: isWater(x - 1, y) },
+      const fill = `${waterStyleProp} center`;
+      layers.push({
+        name: atlas.byName[fill] ? fill : waterStyleProp,
+        z: 1,
+        reason: 'Lake · flat fill',
+      });
+    }
+
+    // Layer 1.5 — the bank, through the 47-tile shore blob. Drawn on the
+    // LAND side and transparent over its water, so one tile carries the
+    // whole transition and the lake underneath simply shows through.
+    //
+    // Rock counts as land here even though its wall sprite will cover
+    // most of the result: without it the bank would open up wherever the
+    // lake runs into a wall, and the waterline would break every time the
+    // cavern pinched.
+    if (tile.kind !== WATER) {
+      const isBank = (nx, ny) => kindAt(nx, ny) !== WATER;
+      const shore = resolveDawnLikeShoreName(
+        shoreStyleProp,
+        {
+          n: isBank(x, y - 1), s: isBank(x, y + 1),
+          w: isBank(x - 1, y), e: isBank(x + 1, y),
+          nw: isBank(x - 1, y - 1), ne: isBank(x + 1, y - 1),
+          sw: isBank(x - 1, y + 1), se: isBank(x + 1, y + 1),
+        },
         atlas.byName,
       );
-      layers.push({ name: pool.name, z: 1, flipY: pool.flipY, reason: 'Lake · pool resolver' });
+      // The fully-inland piece is solid mud, which would carpet the whole
+      // cavern floor — only the tiles that actually touch water want it.
+      const touchesWater = !isBank(x, y - 1) || !isBank(x, y + 1)
+        || !isBank(x - 1, y) || !isBank(x + 1, y)
+        || !isBank(x - 1, y - 1) || !isBank(x + 1, y - 1)
+        || !isBank(x - 1, y + 1) || !isBank(x + 1, y + 1);
+      if (touchesWater) {
+        layers.push({ name: shore.name, z: 1.5, reason: `Bank · ${shore.reason}` });
+      }
     }
 
     if (tile.decor) layers.push({ name: tile.decor, z: 2, reason: 'Cave life' });

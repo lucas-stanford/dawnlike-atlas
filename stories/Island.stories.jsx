@@ -4,6 +4,26 @@ import IslandExample from '../src/IslandExample';
 // Theme presets remap the five sprite families. The generator knobs
 // (sea level, tree line, …) stay independent so a preset can be
 // combined with any terrain shape.
+/**
+ * Theme presets.
+ *
+ * PAIRING RULE, learned the hard way: a floor family's EDGE variants are
+ * a transition to one specific neighbouring tone, not a generic border.
+ * `day grass floor n` fades to orange, `morning grass floor n` fades to
+ * pale pink, `dusk dirt floor n` fades to red. So the grass tint has to
+ * be chosen against the shore family it will meet, or its edge reads as a
+ * third terrain wedged between the sand and the meadow.
+ *
+ * The tropical atoll used to pair `morning grass floor` (pink edge) with
+ * `sand shore` (orange sand, pink wet-sand band). The two pinks landed
+ * next to each other, the eye lost the actual waterline, and the island
+ * came out looking like it had a border rather than a beach.
+ *
+ * Current pairings, all checked against their shore:
+ *   sand shore  (orange, tan surf) → day grass floor  (orange edge)
+ *   snow shore  (white, blue surf) → night grass floor (grey edge)
+ *   ash shore   (grey, RED surf)   → dusk dirt floor   (red edge)
+ */
 const THEMES = {
   'temperate isle': {
     waterStyle: 'stone clear pool center',
@@ -16,7 +36,8 @@ const THEMES = {
   'tropical atoll': {
     waterStyle: 'brick clear pool center',
     shoreStyle: 'sand shore',
-    grassStyle: 'morning grass floor',
+    // `day`, not `morning` — see the pairing rule above.
+    grassStyle: 'day grass floor',
     treeStyle: 'palm',
     mountainStyle: 'yellow peak',
     decors: ['pebble', 'boulder'],

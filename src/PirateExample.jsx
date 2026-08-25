@@ -43,7 +43,8 @@ import {
   resolveDawnLikeFloorName,
 } from './utils/autotile';
 import {
-  SAND, COMPASS_LABEL, WATCHES_PER_DAY, HULL_MAX, HOLD_CAPACITY, LOOT,
+  SAND, COMPASS_LABEL, WATCHES_PER_DAY, LOOT, VESSEL_IDS,
+  hullMax, holdCapacity, vesselOf, boatSprite,
   createSea, cellAt, shipCells, hullNeighbours, hullSuffix, bowSprite,
   beastAt, propAt, hasCanopy, holdWeight, holdValue, atCove, canLand,
   sailCost, pointOfSail, waterSprite, deckSprite, primaryAction,
@@ -78,6 +79,8 @@ export default function PirateExample({
   width: widthProp = 34,
   height: heightProp = 22,
   islands: islandsProp = 5,
+  /** `'ship'` (six cells, autotiled hull) or `'boat'` (one cell, one sprite). */
+  vessel: vesselProp = 'ship',
   seed: seedProp,
   captainSprite: captainSpriteProp = CAPTAIN_SPRITE,
   canopyStyle: canopyStyleProp = 'palm',
@@ -98,8 +101,12 @@ export default function PirateExample({
   }, []);
 
   useEffect(() => {
-    setSea(createSea({ width: widthProp, height: heightProp, islands: islandsProp, seed }));
-  }, [seed, widthProp, heightProp, islandsProp]);
+    setSea(createSea({
+      width: widthProp, height: heightProp, islands: islandsProp,
+      vessel: VESSEL_IDS.includes(vesselProp) ? vesselProp : 'ship',
+      seed,
+    }));
+  }, [seed, widthProp, heightProp, islandsProp, vesselProp]);
 
   const say = useCallback((message, ok = true) => {
     if (message) setFlash({ message, ok, at: Date.now() });
@@ -127,9 +134,10 @@ export default function PirateExample({
   const restart = useCallback(() => {
     setSea(createSea({
       width: widthProp, height: heightProp, islands: islandsProp,
+      vessel: VESSEL_IDS.includes(vesselProp) ? vesselProp : 'ship',
       seed: Math.floor(Math.random() * 1_000_000),
     }));
-  }, [widthProp, heightProp, islandsProp]);
+  }, [widthProp, heightProp, islandsProp, vesselProp]);
 
   // ---- input -------------------------------------------------------
 
@@ -170,6 +178,15 @@ export default function PirateExample({
     if (!sea || !atlas) return new Map();
     const map = new Map();
     const heading = sea.ship.heading;
+
+    // A one-cell boat is a sprite, not a tile map: there is no outline to
+    // resolve, no deck to plank and nowhere to step a mast. It is drawn
+    // the way a creature is drawn.
+    if (vesselOf(sea.ship).along === 1) {
+      const [cell] = shipCells(sea.ship);
+      map.set(`${cell.x},${cell.y}`, { boat: boatSprite(heading) });
+      return map;
+    }
 
     hullNeighbours(sea.ship).forEach((cell, i) => {
       const suffix = hullSuffix(cell);
@@ -231,7 +248,11 @@ export default function PirateExample({
 
     const ship = shipLayer.get(`${x},${y}`);
     if (ship) {
-      if (ship.bow) {
+      if (ship.boat) {
+        // No figure at the helm: at one cell the boat sprite already has
+        // someone in it, and a captain drawn on top just hides the boat.
+        layers.push({ name: ship.boat, z: Z.deck });
+      } else if (ship.bow) {
         layers.push({ name: ship.bow, z: Z.deck });
       } else {
         layers.push({ name: ship.deck, z: Z.deck });
@@ -258,6 +279,8 @@ export default function PirateExample({
   }
 
   const primary = primaryAction(sea);
+  const maxHull = hullMax(sea);
+  const maxHold = holdCapacity(sea);
   const cost = sailCost(sea.ship.heading, sea.wind);
   const trim = pointOfSail(sea.ship.heading, sea.wind);
   const cargo = holdWeight(sea);
@@ -266,15 +289,15 @@ export default function PirateExample({
   return (
     <div className="dl-page pirate-page dl-ui" style={dawnlikeAnimVars}>
       <div className="dl-toolbar">
-        <span className="dl-toolbar-title">Voyage</span>
+        <span className="dl-toolbar-title">{vesselOf(sea.ship).label}</span>
         <div className="dl-stat"><span>Day</span><strong>{sea.day}</strong></div>
         <div className="dl-stat gold"><span>Banked</span><strong>{sea.banked}</strong></div>
         <div className="dl-stat"><span>Hold</span><strong>{holdValue(sea)}</strong></div>
         <div className="dl-stat"><span>Caches</span><strong>{dug}/{sea.caches.length}</strong></div>
 
-        <div className="pirate-gauge" title={`Hull ${sea.hull} of ${HULL_MAX}`}>
+        <div className="pirate-gauge" title={`Hull ${sea.hull} of ${maxHull}`}>
           <span>Hull</span>
-          <div className="dl-meter hp"><i style={{ width: `${(sea.hull / HULL_MAX) * 100}%` }} /></div>
+          <div className="dl-meter hp"><i style={{ width: `${(sea.hull / maxHull) * 100}%` }} /></div>
         </div>
 
         <div className="pirate-gauge" title={`${sea.watches} watches left of ${WATCHES_PER_DAY}`}>
@@ -373,7 +396,7 @@ export default function PirateExample({
           </section>
 
           <section className="dl-panel">
-            <h3 className="dl-panel-head">Hold · {cargo}/{HOLD_CAPACITY}</h3>
+            <h3 className="dl-panel-head">Hold · {cargo}/{maxHold}</h3>
             <div className="dl-panel-body">
               {sea.hold.length ? (
                 <ul className="pirate-hold">

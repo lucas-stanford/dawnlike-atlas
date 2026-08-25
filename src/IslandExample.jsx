@@ -151,13 +151,53 @@ export default function IslandExample({
       }
     }
 
+    /**
+     * Land tiles that touch the sea, computed once here rather than per
+     * tile at draw time.
+     *
+     * The meadow needs this to know where to stop (see the drawing code),
+     * and doing the 8-neighbour scan inside the render path meant running
+     * it four more times per tile for the neighbour truth table — a few
+     * thousand redundant reads per frame on a map this size.
+     *
+     * Off-map counts as sea, which is what closes the coastline along the
+     * border of the chart.
+     */
+    const bandOf = (x, y) => (x >= 0 && y >= 0 && x < W && y < H ? tiles[`${x},${y}`].band : OCEAN);
+    const coast = new Set();
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        if (bandOf(x, y) === OCEAN) continue;
+        for (let dy = -1; dy <= 1 && !coast.has(`${x},${y}`); dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            if (bandOf(x + dx, y + dy) === OCEAN) { coast.add(`${x},${y}`); break; }
+          }
+        }
+      }
+    }
+
     const counts = { [OCEAN]: 0, [BEACH]: 0, [GRASS]: 0, [PEAK]: 0, trees: 0 };
     for (const tile of Object.values(tiles)) {
       counts[tile.band]++;
       if (tile.tree) counts.trees++;
     }
+    /**
+     * Tiles showing bare shore, which is NOT the same as the beach band.
+     * The band is an elevation slice; the visible beach is that slice
+     * plus every waterline tile the meadow has stepped back from. The
+     * readout quotes this because it is what a reader can actually count
+     * on the screen — on the default seed the band is 45 tiles and the
+     * beach you can see is nearly twice that.
+     */
+    counts.shore = 0;
+    for (const key of Object.keys(tiles)) {
+      const band = tiles[key].band;
+      if (band === OCEAN || band === PEAK) continue;
+      if (band === BEACH || coast.has(key)) counts.shore++;
+    }
 
-    return { tiles, W, H, counts };
+    return { tiles, W, H, counts, coast };
   }, [
     atlas, seed, widthProp, heightProp,
     seaLevelProp, beachWidthProp, treeLineProp, forestDensityProp,
@@ -208,15 +248,31 @@ export default function IslandExample({
       layers.push({ name: shore.name, z: 1, reason: `Coast · ${shore.reason}` });
     }
 
-    // Layer 2 — meadow, inland of the beach. The grass autotiles against
-    // the GRASS/PEAK bands only, so it recedes from the coast and lets
-    // the shore's sand show through at the waterline — the same way
-    // DawnLike's own grass floor falls back to dirt at its edges.
-    if (tile.band === GRASS || tile.band === PEAK) {
-      const isMeadow = (nx, ny) => {
-        const band = bandAt(nx, ny);
-        return band === GRASS || band === PEAK;
-      };
+    // Layer 2 — meadow, and it genuinely RECEDES from the water rather
+    // than merely autotiling against its own band.
+    //
+    // The beach band is an elevation slice, so its width on the ground
+    // depends on the local gradient: wherever the coast is steep the
+    // slice is zero tiles wide and a grass tile ends up sitting directly
+    // on the waterline. Painted there it covers the shore tile beneath
+    // it — sand, surf and all — and the coast reads as grass meeting
+    // open water with no transition. On this example's default seed that
+    // was 47 of the 93 land tiles on the waterline, so more than half the
+    // coastline had its shore art hidden.
+    //
+    // The predicate is therefore "grass or rock, AND not touching the
+    // sea", which guarantees a one-tile sand ring whatever the band
+    // widths happen to be. The test is EIGHT-way to match the shore
+    // resolver's own read: a four-way test leaves tiles that touch the
+    // water only diagonally counting as inland, and the bank comes out
+    // checkered between grass and sand. FarmExample does the same thing
+    // around its pond.
+    const isMeadow = (nx, ny) => {
+      const band = bandAt(nx, ny);
+      return (band === GRASS || band === PEAK) && !mapData.coast.has(`${nx},${ny}`);
+    };
+
+    if (isMeadow(x, y)) {
       const grass = resolveDawnLikeFloorName(
         grassStyleProp,
         { n: isMeadow(x, y - 1), s: isMeadow(x, y + 1), e: isMeadow(x + 1, y), w: isMeadow(x - 1, y) },
@@ -274,7 +330,7 @@ export default function IslandExample({
         </button>
         <div className="readout">
           seed <b>{seed}</b> · <b>{W}×{H}</b> · land <b>{Math.round(((W * H - counts[OCEAN]) / (W * H)) * 100)}%</b>
-          {' · '}beach <b>{counts[BEACH]}</b> · woods <b>{counts.trees}</b> · peaks <b>{counts[PEAK]}</b>
+          {' · '}beach <b>{counts.shore}</b> · woods <b>{counts.trees}</b> · peaks <b>{counts[PEAK]}</b>
         </div>
       </div>
 
