@@ -26,7 +26,7 @@ function Wizard() {
 
 | Path | What's in it |
 | --- | --- |
-| `atlas/DawnlikeAtlas0.png` | Primary frames — 4,491 sprites, 2048×2272 |
+| `atlas/DawnlikeAtlas0.png` | Primary frames — 4,499 sprites, 2048×2272 |
 | `atlas/DawnlikeAtlas1.png` | Alternate frames for the 1,493 animated sprites |
 | `atlas/DawnlikeAtlas.json` | `byName` lookup, Phaser `frames`, AI-generated tags |
 | `src/utils/atlasApi.js` | Framework-agnostic helpers over the atlas JSON |
@@ -345,7 +345,7 @@ self-contained component under `src/`.
 | Story | Source | What it shows |
 | --- | --- | --- |
 | **Autotile Lab** | `src/AutotileLabExample.jsx` | Interactive playground for all six resolvers: neighbour pad, full variant sheet, and a live paint canvas. |
-| **Sprite Browser** | `src/SpriteBrowserExample.jsx` | Search all 4,491 sprites by name and tag, inspect any record, copy React/CSS/Phaser snippets. |
+| **Sprite Browser** | `src/SpriteBrowserExample.jsx` | Search all 4,499 sprites by name and tag, inspect any record, copy React/CSS/Phaser snippets. |
 | **Mega Atlas** | `src/components/SpriteSheet.jsx` | The packed sheet itself, in its 64×71 grid, with hover names and animation toggle. |
 | **Components** | `src/ComponentsExample.jsx` | Live gallery of every component the npm package exports, each with the props beside it — plus a HUD built only from GUI sprites inside the mega-atlas. |
 
@@ -432,17 +432,56 @@ DawnLike has no boat anywhere in it — no hull, no deck, no sail. The nearest
 wood in the pack is `board a/b/c`, which are trestle tables, and six of those
 side by side read as a bookcase floating on the sea.
 
-So `scripts/generate-ship-deck.mjs` draws one: 35 tiles of planking, gunwale,
-prow and mast, in the five DawnBringer 16 entries DawnLike uses for its own
-wooden doors (counted off `closed wooden door front` rather than guessed).
+So `scripts/generate-ship-deck.mjs` draws them: 43 tiles of planking, gunwale,
+prow, mast and small craft, in the DawnBringer 16 entries DawnLike uses for its
+own wooden doors and canvas (counted off `closed wooden door front` rather than
+guessed).
 
-Four of those are a **one-cell boat**, `boat n|e|s|w`. The six-cell ship is a
-tile map, which is the right shape for something you stand on and the reason the
-hull autotiles at all; a ship's boat, a skiff or a ferry wants the opposite —
-one sprite you drop on one cell, the way you place a creature. Both are vessels
-the Pirate example can sail, and they are not cosmetic alternatives: the boat
-draws less, so it works lagoons a 3×2 hull cannot come about in, and it carries
-a third of the loot and takes a third of the punishment.
+Twelve of those are **one-cell vessels**, each in four headings:
+
+| family | what it is |
+| --- | --- |
+| `boat n\|e\|s\|w` | a rowboat — the boat you row ashore in |
+| `sloop n\|e\|s\|w` | a fore-and-aft rigged sloop, the small working craft of the 1790s–1850s |
+| `black sloop n\|e\|s\|w` | the same sloop under a black mainsail, with a device on it and a pennant at the masthead |
+
+The six-cell ship is a tile map, which is the right shape for something you
+stand on and the reason its hull autotiles at all. A ship's boat, a skiff or a
+ferry wants the opposite — one sprite you drop on one cell, the way you place a
+creature. All four are vessels the Pirate example can sail.
+
+Hull size is not cosmetic: a smaller vessel draws less, so it works lagoons a
+3×2 hull cannot come about in, and carries and survives correspondingly less.
+The black sloop **is** cosmetic, deliberately — same hull, same rig, different
+flag.
+
+### Four headings, not one sprite turned four ways
+
+The first version of the one-cell vessels drew a single boat and rotated it 90°
+three times, and it was obviously wrong the moment the four sat side by side: it
+read as one paper cut-out being spun on a table. Two things cause that, and both
+are standard ground in the literature on directional sprites:
+
+**The light rotates with the sprite.** Shading is baked into pixel art — a lit
+rim on the upper left and a shadow on the lower right is what makes a flat shape
+read as solid. Rotate the finished tile and the lit rim marches round with it,
+so the sun appears to orbit the boat as she turns. The fix is to build the
+*shape* in boat space, rotate that, and only then light it in **screen** space,
+so every heading shares one fixed light — here from the north-west, the
+direction DawnLike's own wall tiles are lit from.
+
+**A mast is vertical.** A hull lies flat on the water and turns with the boat. A
+mast does not: under the slightly-tilted camera every top-down tile game uses,
+anything vertical projects **up the screen** whichever way its base points — the
+same reason a tree leans up its tile rather than lying flat on it. So the sail
+is always above the hull, and what changes with the heading is its *shape*:
+broadside and trailing aft for east and west (mirror images of each other),
+foreshortened to about half its chord for north and south.
+
+The sun in a game like this sits behind the viewer, so the last cue is free:
+sailing south is sailing at the camera and shows the sail's lit face, sailing
+north shows its shaded back, and the same canvas comes out bright one way and
+grey the other.
 
 ```bash
 node scripts/generate-ship-deck.mjs           # preview PNG only

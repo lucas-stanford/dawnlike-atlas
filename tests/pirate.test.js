@@ -14,7 +14,7 @@ import {
   HULL_MAX, HOLD_CAPACITY, BEASTS, LOOT, LOOT_IDS, FLOTSAM,
   SHIP_DECK_SPRITES, CAPTAIN_SPRITE, SHORE_FAMILY,
   CANOPY_FAMILY, DEEP_SPRITE, SHALLOW_SPRITE, COVE_SPRITE, DIG_SPRITE,
-  MAST_SPRITE, MAST_INDEX, VESSELS, VESSEL_IDS, vesselOf, boatSprite,
+  MAST_SPRITE, MAST_INDEX, VESSELS, VESSEL_IDS, vesselOf, vesselSprite,
   hullMax, holdCapacity,
   makeRng, createSea, shipCells, bowCells, hullNeighbours, hullSuffix, bowSprite,
   HULL_FAMILY,
@@ -158,7 +158,9 @@ describe('the one-cell boat', () => {
   });
 
   it('names a sprite the atlas has, in every heading', () => {
-    for (const heading of HEADINGS) expect(byName[boatSprite(heading)], heading).toBeTruthy();
+    for (const heading of HEADINGS) {
+      expect(byName[vesselSprite({ heading, vessel: 'boat' })], heading).toBeTruthy();
+    }
   });
 
   it('carries less and takes less than the ship', () => {
@@ -216,6 +218,54 @@ describe('the one-cell boat', () => {
     for (const id of VESSEL_IDS) {
       const sea = createSea({ seed: SEED, vessel: id });
       expect(shipCells(sea.ship).length, id).toBe(VESSELS[id].along * VESSELS[id].abeam);
+    }
+  });
+});
+
+describe('the sailing sloops', () => {
+  it('every one-cell vessel names a real sprite in every heading', () => {
+    const missing = [];
+    for (const id of VESSEL_IDS) {
+      if (!VESSELS[id].sprite) continue;
+      for (const heading of HEADINGS) {
+        const name = vesselSprite({ heading, vessel: id });
+        if (!byName[name]) missing.push(name);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it('the ship has no single sprite — it is assembled', () => {
+    for (const heading of HEADINGS) {
+      expect(vesselSprite({ heading, vessel: 'ship' })).toBeNull();
+    }
+  });
+
+  it('sits between the ship and the rowboat', () => {
+    const { ship, sloop, boat } = VESSELS;
+    expect(sloop.hull).toBeLessThan(ship.hull);
+    expect(sloop.hull).toBeGreaterThan(boat.hull);
+    expect(sloop.hold).toBeLessThan(ship.hold);
+    expect(sloop.hold).toBeGreaterThan(boat.hold);
+  });
+
+  it('the black sloop is a livery, not a different hull', () => {
+    const { sloop, blackSloop } = VESSELS;
+    // Same boat, different flag: everything but the sprite must match, or
+    // the story's claim that the colour is cosmetic stops being true.
+    for (const key of ['along', 'abeam', 'hull', 'hold']) {
+      expect(blackSloop[key], key).toBe(sloop[key]);
+    }
+    expect(blackSloop.sprite).not.toBe(sloop.sprite);
+  });
+
+  it('sails and moors like any other one-cell vessel', () => {
+    for (const id of ['sloop', 'blackSloop']) {
+      const sea = createSea({ seed: SEED, vessel: id });
+      expect(shipCells(sea.ship), id).toHaveLength(1);
+      expect(isWater(sea, sea.ship.x, sea.ship.y), id).toBe(true);
+      expect(turn(sea, 'port').ok, id).toBe(true);
+      expect(sea.hull, id).toBe(VESSELS[id].hull);
     }
   });
 });
