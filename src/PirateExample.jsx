@@ -44,7 +44,7 @@ import {
 } from './utils/autotile';
 import {
   SAND, COMPASS_LABEL, WATCHES_PER_DAY, LOOT, VESSEL_IDS,
-  hullMax, holdCapacity, vesselOf, boatSprite,
+  hullMax, holdCapacity, vesselOf, vesselSprite,
   createSea, cellAt, shipCells, hullNeighbours, hullSuffix, bowSprite,
   beastAt, propAt, hasCanopy, holdWeight, holdValue, atCove, canLand,
   sailCost, pointOfSail, waterSprite, deckSprite, primaryAction,
@@ -79,7 +79,7 @@ export default function PirateExample({
   width: widthProp = 34,
   height: heightProp = 22,
   islands: islandsProp = 5,
-  /** `'ship'` (six cells, autotiled hull) or `'boat'` (one cell, one sprite). */
+  /** `'ship'` (six cells, autotiled hull) or a one-cell vessel — see VESSELS. */
   vessel: vesselProp = 'ship',
   seed: seedProp,
   captainSprite: captainSpriteProp = CAPTAIN_SPRITE,
@@ -182,9 +182,10 @@ export default function PirateExample({
     // A one-cell boat is a sprite, not a tile map: there is no outline to
     // resolve, no deck to plank and nowhere to step a mast. It is drawn
     // the way a creature is drawn.
-    if (vesselOf(sea.ship).along === 1) {
+    const single = vesselSprite(sea.ship);
+    if (single) {
       const [cell] = shipCells(sea.ship);
-      map.set(`${cell.x},${cell.y}`, { boat: boatSprite(heading) });
+      map.set(`${cell.x},${cell.y}`, { boat: single });
       return map;
     }
 
@@ -249,8 +250,8 @@ export default function PirateExample({
     const ship = shipLayer.get(`${x},${y}`);
     if (ship) {
       if (ship.boat) {
-        // No figure at the helm: at one cell the boat sprite already has
-        // someone in it, and a captain drawn on top just hides the boat.
+        // No figure at the helm: at one cell the vessel sprite already
+        // fills it, and a captain drawn on top just hides the boat.
         layers.push({ name: ship.boat, z: Z.deck });
       } else if (ship.bow) {
         layers.push({ name: ship.bow, z: Z.deck });

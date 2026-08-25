@@ -76,12 +76,13 @@ export default {
     vessel: {
       table: { category: 'Voyage' },
       control: { type: 'inline-radio' },
-      options: ['ship', 'boat'],
+      options: ['ship', 'sloop', 'blackSloop', 'boat'],
       description:
-        'The six-cell ship, whose hull autotiles, or the one-cell boat, which is a '
-        + 'single generated sprite. Not just cosmetic: the boat draws less, so it works '
-        + 'lagoons a 3x2 hull cannot come about in, and it carries a third of the loot '
-        + 'and takes a third of the punishment.',
+        'The six-cell ship, whose hull autotiles, or one of the one-cell vessels, each '
+        + 'a single generated sprite in four headings. Hull size is not cosmetic — a '
+        + 'smaller vessel draws less, so it works lagoons a 3x2 hull cannot come about '
+        + 'in, and carries and survives correspondingly less. The black sloop IS '
+        + 'cosmetic: same hull, same rig, different flag.',
     },
     captainSprite: {
       table: { category: 'Sprites' },
@@ -111,6 +112,26 @@ export const Playable = { render: (args) => <PirateExample {...args} /> };
  * The one-cell boat. Same sea, same wind rule, a third of the hull and a
  * third of the hold — and it fits places the ship cannot turn around in.
  */
+export const BlackSloop = {
+  name: 'Black sloop (one cell)',
+  args: { vessel: 'blackSloop' },
+  render: (args) => <PirateExample {...args} />,
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'A fore-and-aft rigged sloop — the small working craft of the 1790s to the '
+          + '1850s — under a black mainsail with a device on it and a pennant at the '
+          + 'masthead. One cell, one sprite, four headings, all generated: DawnLike '
+          + 'draws no boat of any size.\n\n'
+          + 'Mechanically it sits between the ship and the rowboat: eight hull points '
+          + 'and four units of hold. The black canvas is a livery and nothing more — '
+          + '`sloop` is the identical hull under working white.',
+      },
+    },
+  },
+};
+
 export const ShipsBoat = {
   name: "Ship's boat (one cell)",
   args: { vessel: 'boat' },

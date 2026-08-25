@@ -108,21 +108,37 @@ export const COST = {
 };
 
 /**
- * The two vessels.
+ * The vessels.
  *
  * The ship is a six-cell tile map — the right shape for something you
- * stand on, and the reason the hull autotiles. The boat is a single cell
- * and a single sprite, which is the right shape for anything a map wants
- * to place the way it places a creature.
+ * stand on, and the reason its hull autotiles. Everything else is a
+ * single cell and a single sprite, which is the right shape for anything
+ * a map wants to place the way it places a creature; `sprite` names the
+ * family, and the heading picks the frame.
  *
- * They are not cosmetic alternatives. A boat draws less, so it can work
- * lagoons and pinches a 3x2 hull cannot come about in; it carries a third
- * of the loot and takes a third of the punishment, so the same crossing
- * is a different problem in each.
+ * Hull size is not cosmetic. Anything smaller than the ship draws less,
+ * so it can work lagoons and pinches a 3x2 hull cannot come about in, and
+ * it carries and survives correspondingly less — the same crossing is a
+ * different problem in each.
+ *
+ * The black sloop IS cosmetic, and deliberately so: it is the same hull
+ * under the same rig, in a livery. A pirate is not a different class of
+ * boat, only a different flag.
  */
 export const VESSELS = {
-  ship: { id: 'ship', label: 'Ship',  along: 3, abeam: 2, hull: 12, hold: 6 },
-  boat: { id: 'boat', label: 'Boat',  along: 1, abeam: 1, hull: 5,  hold: 2 },
+  ship: {
+    id: 'ship', label: 'Ship', along: 3, abeam: 2, hull: 12, hold: 6, sprite: null,
+  },
+  sloop: {
+    id: 'sloop', label: 'Sloop', along: 1, abeam: 1, hull: 8, hold: 4, sprite: 'sloop',
+  },
+  blackSloop: {
+    id: 'blackSloop', label: 'Black sloop', along: 1, abeam: 1, hull: 8, hold: 4,
+    sprite: 'black sloop',
+  },
+  boat: {
+    id: 'boat', label: 'Rowboat', along: 1, abeam: 1, hull: 5, hold: 2, sprite: 'boat',
+  },
 };
 
 export const VESSEL_IDS = Object.keys(VESSELS);
@@ -140,8 +156,14 @@ export const HOLD_CAPACITY = VESSELS.ship.hold;
 export const hullMax = (state) => vesselOf(state.ship).hull;
 export const holdCapacity = (state) => vesselOf(state.ship).hold;
 
-/** Sprite for a one-cell boat, which is drawn rather than assembled. */
-export const boatSprite = (heading) => `boat ${heading}`;
+/**
+ * Sprite for a one-cell vessel, which is drawn rather than assembled.
+ * Returns null for the ship, which has no single sprite to name.
+ */
+export function vesselSprite(ship) {
+  const { sprite } = vesselOf(ship);
+  return sprite ? `${sprite} ${ship.heading}` : null;
+}
 
 // ---------------------------------------------------------------------
 // catalogue

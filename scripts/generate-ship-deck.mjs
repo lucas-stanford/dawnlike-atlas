@@ -66,6 +66,9 @@ const PALETTE = {
   brown:    [0x86, 0x4d, 0x30],
   orange:   [0xd3, 0x7d, 0x2c],
   tan:      [0xd3, 0xaa, 0x9a],
+  grey:     [0x75, 0x71, 0x61],
+  blueGrey: [0x86, 0x96, 0xa2],
+  white:    [0xdf, 0xef, 0xd7],
 };
 
 const N = 16;      // logical authoring resolution
@@ -158,6 +161,124 @@ export const BOW_SUFFIXES = ['nw', 'ne', 'sw', 'se'];
 export const BOAT_HEADINGS = ['n', 'e', 's', 'w'];
 
 /**
+ * A one-cell fore-and-aft rigged sailing boat — a sloop, the small
+ * working craft of the 1790s–1850s: one mast stepped well forward, a
+ * boomed mainsail aft of it and a jib on the forestay.
+ *
+ * Two liveries. `sloop` carries working canvas; `black sloop` is the same
+ * hull under a black mainsail with a white device on it and a pennant at
+ * the masthead — a Jolly Roger, which is the one piece of pirate iconography
+ * that survives being drawn at sixteen logical pixels.
+ *
+ * The rowboat stays exactly what it was. It is the boat you row ashore in;
+ * this is the boat you arrive in.
+ */
+export const SLOOP_LIVERIES = ['sloop', 'black sloop'];
+
+/**
+ * Hull for the sloop: an almond, fine at both ends, a little narrower
+ * than the rowboat's.
+ */
+const SLOOP_HULL = [2, 4, 6, 8, 8, 8, 8, 8, 8, 8, 8, 6, 4, 2];
+
+/**
+ * The mainsail, as spans of x per row: a triangle with its apex at the
+ * mast, forward, widening aft and leaning to starboard.
+ *
+ * This is a cheat, and a deliberate one. Seen from directly overhead a
+ * sail is edge-on — a line — and a boat drawn honestly that way is a hull
+ * with a scratch on it. Two earlier attempts drew it honestly-ish: a
+ * round sail over the middle ate the hull and read as a dumpling; a slim
+ * sail set entirely outboard read as a fin. What reads as a sailing boat
+ * is the sail laid over the hull as if seen from up and astern, which is
+ * how every top-down game has drawn one since the 8-bit era.
+ *
+ * Rotating the tile rotates the wind with it, which is a lie a top-down
+ * game tells anyway: the alternative is eight sprites per livery and a
+ * rig that flips as you tack.
+ */
+const MAINSAIL = {
+  2: [9, 10], 3: [9, 11], 4: [9, 12], 5: [9, 13], 6: [9, 14],
+  7: [9, 14], 8: [9, 14], 9: [9, 13], 10: [9, 12], 11: [9, 11], 12: [9, 10],
+};
+
+/** Rows the mast runs down — the sail's luff is bent to it. */
+const MAST_ROW = 2;
+const MAST_END = 12;
+
+/**
+ * One sloop, bow to the north.
+ *
+ * `dark` swaps the canvas for the pirate's. A black mainsail needs its
+ * outline in a tone that is NOT black, or it merges with the hull's own
+ * outline and reads as a hole punched in the boat.
+ */
+function drawSloop(dark) {
+  const px = Array.from({ length: N }, () => Array(N).fill(null));
+  const top = 1;
+  const last = SLOOP_HULL.length - 1;
+
+  // ---- hull ----
+  for (let i = 0; i <= last; i += 1) {
+    const y = top + i;
+    const w = SLOOP_HULL[i];
+    const x0 = 8 - w / 2;
+    const x1 = 7 + w / 2;
+    for (let x = x0; x <= x1; x += 1) {
+      const depth = Math.min(x - x0, x1 - x, i, last - i);
+      px[y][x] = depth === 0 ? 'black' : depth === 1 ? 'orange' : 'brown';
+    }
+  }
+
+  // ---- canvas ----
+  const body = dark ? 'black' : 'white';
+  const luff = dark ? 'grey' : 'blueGrey';
+  const edge = dark ? 'darkGrey' : 'black';
+
+  // Outline the LEECH only — the aft, outboard edge. Outlining the whole
+  // boundary was the obvious thing and it was wrong: a sail this narrow
+  // is five pixels across at its widest, so "every pixel touching a
+  // non-sail neighbour" is almost every pixel, and the canvas came out as
+  // a black scribble with three white pixels trapped inside it. The luff
+  // needs no outline anyway — it is bent to the mast, which is already a
+  // dark line.
+  for (const [row, [a, b]] of Object.entries(MAINSAIL)) {
+    const y = top + Number(row);
+    for (let x = a; x <= b; x += 1) {
+      px[y][x] = x === b ? edge : x === a ? luff : body;
+    }
+  }
+
+  // The mast head only. A full mast line down the deck sat immediately
+  // beside the sail's shaded luff and the two together read as one thick
+  // dark band splitting the boat in half; the luff shade already implies
+  // the spar the sail is bent to.
+  px[top + MAST_ROW][8] = 'black';
+
+  if (dark) {
+    // The device. Three pale pixels is all there is room for, and a pale
+    // mark on a black sail is unmistakably a flag with something on it.
+    px[top + 6][11] = 'white';
+    px[top + 6][12] = 'white';
+    px[top + 7][11] = 'white';
+    px[top + 7][12] = 'white';
+    // A pennant streaming to port from the masthead.
+    px[top + MAST_ROW - 1][8] = 'black';
+    px[top + MAST_ROW - 1][9] = 'white';
+    px[top + MAST_ROW - 1][10] = 'white';
+  }
+
+  return px;
+}
+
+function sloopFor(livery, heading) {
+  let sail = drawSloop(livery === 'black sloop');
+  const turns = { n: 0, e: 1, s: 2, w: 3 }[heading];
+  for (let i = 0; i < turns; i += 1) sail = rotateCW(sail);
+  return sail;
+}
+
+/**
  * Hull width per row, bow first, in logical pixels.
  *
  * Even numbers so the hull stays centred on the seam between x=7 and
@@ -243,6 +364,11 @@ export function deckSprites() {
   }
   for (const heading of BOAT_HEADINGS) {
     out.push({ name: `boat ${heading}`, boat: heading });
+  }
+  for (const livery of SLOOP_LIVERIES) {
+    for (const heading of BOAT_HEADINGS) {
+      out.push({ name: `${livery} ${heading}`, sloop: livery, heading });
+    }
   }
   // The mast is what stops six planked cells reading as a raft. Drawn
   // over transparency so it composites onto whichever deck tile it
@@ -392,6 +518,7 @@ function transpose(px) {
 /** Render one named sprite to a 32×32 PNG. */
 export function renderTile(sprite) {
   const logical = sprite.mast ? drawMast()
+    : sprite.sloop ? sloopFor(sprite.sloop, sprite.heading)
     : sprite.boat ? boatFor(sprite.boat)
     : sprite.rail ? drawRail(sprite.rail, sprite.bow)
     : (sprite.orientation === 'ns'
@@ -525,7 +652,10 @@ function apply() {
 
     atlas.byName[sprite.name] = {
       x: cx, y: cy, w: tile, h: tile,
-      tags: sprite.boat ? ['vehicle', 'wooden', 'boat', 'ship', 'water', sprite.boat]
+      tags: sprite.sloop
+        ? ['vehicle', 'wooden', 'boat', 'ship', 'water', 'sail',
+           ...(sprite.sloop === 'black sloop' ? ['pirate', 'black'] : []), sprite.heading]
+        : sprite.boat ? ['vehicle', 'wooden', 'boat', 'ship', 'water', 'rowboat', sprite.boat]
         : sprite.mast ? ['structure', 'wooden', 'mast', 'ship', 'decoration']
         : sprite.bow ? ['structure', 'wooden', 'bow', 'ship', 'edge']
         : sprite.rail ? ['structure', 'wooden', 'rail', 'ship', 'edge']
