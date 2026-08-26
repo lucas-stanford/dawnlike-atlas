@@ -37,9 +37,14 @@ export default {
           'only ever moves forwards. That single rule is what turns a grid walk into a ' +
           'routing problem, and it needs no art whatsoever.' +
           '\n\n' +
+          'Landing is just sailing at the beach: she stays afloat where she is, the ' +
+          'captain goes over the bow onto the sand, and walking back into her puts ' +
+          'him aboard again. The shoreline is somewhere you arrive, not a wall you ' +
+          'bounce off.' +
+          '\n\n' +
           'Click the map to give it focus, then **W** to sail, **A**/**D** to put the ' +
-          'helm over, **Space** for the obvious action, **R** to row ashore and back, ' +
-          'and **E** to end the day.',
+          'helm over, **Space** for the obvious action, **R** to row ashore without ' +
+          'the run-up, and **E** to end the day.',
       },
     },
   },

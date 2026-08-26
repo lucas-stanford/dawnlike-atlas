@@ -431,6 +431,7 @@ export default function PirateExample({
                 {sea.ashore ? (
                   <>
                     <kbd className="dl-kbd">WASD</kbd> walk the beach ·
+                    {' '}walk into her to get <strong>back aboard</strong> ·
                     {' '}<kbd className="dl-kbd">Space</kbd> dig or prise open ·
                     {' '}<kbd className="dl-kbd">R</kbd> row back
                   </>
@@ -443,6 +444,12 @@ export default function PirateExample({
                   </>
                 )}
                 {' · '}<kbd className="dl-kbd">E</kbd> end the day
+              </p>
+              <p className="pirate-help">
+                <strong>Sail straight at a beach to land.</strong> She stays afloat
+                where she is and the captain goes over the bow onto the sand; walk
+                back into her to get aboard again. <kbd className="dl-kbd">R</kbd> is
+                the same thing without the run-up, for when she is already alongside.
               </p>
               <p className="pirate-help">
                 She only moves forwards, so every course change is a turn first.

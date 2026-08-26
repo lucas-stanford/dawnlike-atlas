@@ -384,17 +384,63 @@ describe('sailing', () => {
     expect(result.message).toMatch(/daylight/i);
   });
 
-  it('will not sail onto sand', () => {
+  it('sailing into the beach lands you, and leaves her afloat where she was', () => {
     const sea = fresh();
     // Drop sand right in front of the bow.
     const cells = new Map(sea.cells);
-    for (const c of bowCells(sea.ship)) {
-      const { dx, dy } = STEP[sea.ship.heading];
-      cells.set(`${c.x + dx},${c.y + dy}`, SAND);
-    }
-    const result = sail({ ...sea, cells });
+    const { dx, dy } = STEP[sea.ship.heading];
+    for (const c of bowCells(sea.ship)) cells.set(`${c.x + dx},${c.y + dy}`, SAND);
+    const beached = sail({ ...sea, cells });
+
+    expect(beached.ok).toBe(true);
+    // The boat does not move: she cannot float over sand, so what changes
+    // is where the captain is, not where she is.
+    expect(beached.state.ship).toEqual(sea.ship);
+    expect(beached.state.ashore).not.toBeNull();
+    expect(isSand(beached.state, beached.state.ashore.x, beached.state.ashore.y)).toBe(true);
+  });
+
+  it('running her ashore costs a landing, not a passage', () => {
+    const sea = { ...fresh(), wind: 'n' };
+    // Heading into the wind, so a real cable would cost three watches.
+    const facing = { ...sea, ship: { ...sea.ship, heading: 'n' } };
+    expect(sailCost('n', 'n')).toBe(SAIL_AGAINST);
+    const cells = new Map(facing.cells);
+    const { dx, dy } = STEP.n;
+    for (const c of bowCells(facing.ship)) cells.set(`${c.x + dx},${c.y + dy}`, SAND);
+    const beached = sail({ ...facing, cells });
+    expect(beached.ok).toBe(true);
+    expect(beached.state.watches).toBe(facing.watches - COST.land);
+  });
+
+  it('a beast still blocks the way, beach or no beach', () => {
+    const sea = fresh();
+    const { dx, dy } = STEP[sea.ship.heading];
+    const [bow] = bowCells(sea.ship);
+    const cells = new Map(sea.cells);
+    for (const c of bowCells(sea.ship)) cells.set(`${c.x + dx},${c.y + dy}`, SAND);
+    const guarded = {
+      ...sea,
+      cells,
+      beasts: [{ ...BEASTS[0], uid: 'g', x: bow.x + dx, y: bow.y + dy, hp: 1 }],
+    };
+    const result = sail(guarded);
     expect(result.ok).toBe(false);
-    expect(result.message).toMatch(/land ahead/i);
+    expect(result.message).toMatch(/in the way/i);
+  });
+
+  it('walking back into her re-boards — the other half of running ashore', () => {
+    const sea = fresh();
+    const cells = new Map(sea.cells);
+    const { dx, dy } = STEP[sea.ship.heading];
+    for (const c of bowCells(sea.ship)) cells.set(`${c.x + dx},${c.y + dy}`, SAND);
+    const beached = sail({ ...sea, cells }).state;
+    expect(beached.ashore).not.toBeNull();
+
+    // Step back the way we came off: the tile behind is the boat.
+    const back = HEADINGS.map((h) => walk(beached, h)).find((r) => r.ok && r.state.ashore === null);
+    expect(back, 'no heading walked back aboard').toBeDefined();
+    expect(back.state.ship).toEqual(sea.ship);
   });
 
   it('turning costs one watch and changes the heading by one point', () => {

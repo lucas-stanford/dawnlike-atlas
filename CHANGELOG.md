@@ -154,6 +154,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- Sailing into a beach now lands you. It used to be refused — "Land ahead, she
+  will not float over sand" — which made the shoreline a wall you bounced off
+  and left `R` as the only way ashore even when the bow was already touching
+  sand. Driving at the beach and stepping off is what anyone tries first, so it
+  is what it does: she stays afloat where she is, the captain goes over the bow
+  onto the sand ahead, and walking back into her puts him aboard again. Priced
+  as a landing rather than a passage, because the boat does not move — so
+  beaching into a headwind costs one watch, not three. A beast in the way still
+  blocks it.
 - Island coastlines: the meadow was painted over the shore tile wherever a grass
   tile sat on the waterline, which on the default seed was 47 of the 93 land
   tiles on the coast. The beach band is an elevation slice, so it is zero tiles
