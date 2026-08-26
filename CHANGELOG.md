@@ -15,6 +15,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   sloop sits between the ship and the rowboat — eight hull points and four units
   of hold — and the black canvas is a livery only: same hull, same rig, and
   `tests/pirate.test.js` asserts it stays that way.
+  The hulls are pixel maps rather than per-row widths with computed shading:
+  a hull tapering equally at both ends is an almond, and an almond reads as a
+  bean. A profile is bounded on top by the sheerline, at the bow by the curve
+  of the stem and aft by the transom, so the bow rakes forward and sweeps up to
+  the deck, the stern is a flat ninety-degree face, and the sheer dips between
+  them — and the topsides carry strakes, the courses of planking that run stem
+  to transom. None of that survives being derived from a width list. The sail
+  stays procedural, because an outline, a lit rim, a shadowed rim and a body is
+  exactly what a rule gives well.
   All four headings of every one-cell vessel are drawn, not rotated. Rotating a
   finished tile carries its baked-in lighting round with it, so the sun appears
   to orbit the boat as she comes about; the shape is now built in boat space,
