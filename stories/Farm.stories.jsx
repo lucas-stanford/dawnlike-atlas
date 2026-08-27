@@ -136,3 +136,32 @@ export const LargeHolding = {
     },
   },
 };
+
+/**
+ * Enough gold in the purse to raise the barn on day one, so the
+ * building — and the rule behind it — can be seen without farming a
+ * fortnight first.
+ */
+export const RaiseTheBarn = {
+  name: 'Raise the barn',
+  args: { startingGold: 520 },
+  render: (args) => <FarmExample {...args} />,
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Press <kbd>B</kbd>, or use **Raise barn** in the panel. DawnLike ships no '
+          + 'farm buildings, and a barn is the case that does not fit the pack: it is '
+          + 'a thing you walk *around*, not one you pick up or stand on. So it is not '
+          + 'in the atlas at all — `atlas/buildings/barn.png` is one image on its own '
+          + 'palette, drawn over a footprint it deliberately oversails, because a roof '
+          + 'that stops dead at its own walls reads as flat.\n\n'
+          + 'It is not decoration. Produce waiting to be sold sits in the open until '
+          + 'the barn is up, and a third of every heap bigger than two spoils '
+          + 'overnight — so before the barn the right move is to sell every evening, '
+          + 'and after it you can stockpile a season of corn and cash it in one go. '
+          + 'Watch the **Store** figure across an end-of-day with and without it.',
+      },
+    },
+  },
+};

@@ -45,10 +45,11 @@ import {
   resolveDawnLikeWallName,
 } from './utils/autotile';
 import {
-  CROPS, CROP_IDS, ENERGY_PER_DAY, CAN_CAPACITY, WILD,
+  CROPS, CROP_IDS, ENERGY_PER_DAY, CAN_CAPACITY, WILD, BARN, BARN_ART,
   createFarm, tileAt, isPond, isPenWall, isWalkable, isAdjacent,
-  advanceDay, sellStock, act, actionFor,
+  advanceDay, sellStock, act, actionFor, buildBarn, canBuildBarn,
   soilFamily, cropSprite, orchardSprite, dayPhase, stockValue,
+  isBarn, isBarnSite, barnArtRect,
 } from './utils/farm';
 import './Farm.css';
 
@@ -62,8 +63,20 @@ const TILE = 32;
  */
 const Z = {
   water: 0, shore: 1, meadow: 2, soil: 3, fence: 4,
-  scatter: 5, growth: 6, animal: 7, farmer: 8,
+  scatter: 5, growth: 6, animal: 7, farmer: 8, barn: 9,
 };
+
+/**
+ * The barn is drawn ABOVE the farmer, not below.
+ *
+ * Every other layer here stacks by what is physically on top of what,
+ * and on that reading a building the farmer walks in front of should sit
+ * under them. But the barn is mostly ROOF — a surface the farmer could
+ * never be in front of — and a sprite showing through the gable reads as
+ * a bug, not as depth. The footprint is solid, so the farmer can never
+ * actually be inside it, and drawing it last costs nothing while keeping
+ * the silhouette clean.
+ */
 
 /** Which way the farmer is facing, as a tile offset. */
 const FACING = {
@@ -173,6 +186,15 @@ export default function FarmExample({
     });
   }, [say]);
 
+  const raiseBarn = useCallback(() => {
+    setFarm((state) => {
+      if (!state) return state;
+      const result = buildBarn(state);
+      say(result.message, result.ok);
+      return result.state;
+    });
+  }, [say]);
+
   const move = useCallback((dir) => {
     const [dx, dy] = FACING[dir];
     setFarmer((f) => {
@@ -196,6 +218,7 @@ export default function FarmExample({
         return;
       }
       if (event.key === 'e' || event.key === 'E') { event.preventDefault(); endDay(); return; }
+      if (event.key === 'b' || event.key === 'B') { event.preventDefault(); raiseBarn(); return; }
       const index = Number(event.key) - 1;
       if (Number.isInteger(index) && index >= 0 && index < CROP_IDS.length) {
         setSelectedCrop(CROP_IDS[index]);
@@ -203,7 +226,7 @@ export default function FarmExample({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [move, doAct, endDay, farmer]);
+  }, [move, doAct, endDay, raiseBarn, farmer]);
 
   // ---- rendering ---------------------------------------------------
 
@@ -330,7 +353,12 @@ export default function FarmExample({
     return <div className="farm-layout"><div className="farm-panel">Loading…</div></div>;
   }
 
-  const barn = stockValue(farm);
+  // Renamed from "barn" the moment a barn became a thing you can build:
+  // one word cannot mean both the building and what is inside it.
+  const store = stockValue(farm);
+  const build = canBuildBarn(farm);
+  const barnArt = barnArtRect(farm);
+  const barnUrl = resolveAssetPath(BARN_ART.url);
   const ready = Object.values(farm.tiles).filter((t) => t.stage === 'ready').length;
   const thirsty = Object.values(farm.tiles).filter((t) => t.crop && !t.watered && t.stage !== 'withered').length;
 
@@ -339,7 +367,14 @@ export default function FarmExample({
       <div className="farm-hud">
         <div className="farm-stat"><span>Day</span><strong>{farm.day}</strong></div>
         <div className="farm-stat"><span>Gold</span><strong>{farm.gold}g</strong></div>
-        <div className="farm-stat"><span>Barn</span><strong>{barn}g</strong></div>
+        <div
+          className="farm-stat"
+          title={farm.barn
+            ? 'Under a roof — nothing spoils'
+            : 'In the open — a third of every heap spoils overnight'}
+        >
+          <span>Store</span><strong>{store}g</strong>
+        </div>
         <div className="farm-stat"><span>Ready</span><strong>{ready}</strong></div>
         <div className="farm-stat"><span>Thirsty</span><strong>{thirsty}</strong></div>
         <div className="farm-stat" title="Refill at the pond">
@@ -395,6 +430,32 @@ export default function FarmExample({
                 );
               }),
             )}
+
+            {/*
+              The barn, drawn as ONE image rather than as tiles.
+
+              It is the only thing on the map that is not an atlas sprite,
+              and it sits outside the cell loop for the reason it is not
+              sliced: it oversails its own footprint, so there is no single
+              cell it belongs to. One <img> also means the roof cannot
+              develop seams when the browser rounds a fractional tile.
+            */}
+            {barnArt && (
+              <img
+                src={barnUrl}
+                alt="The barn"
+                style={{
+                  position: 'absolute',
+                  left: barnArt.x * TILE,
+                  top: barnArt.y * TILE,
+                  width: barnArt.w * TILE,
+                  height: barnArt.h * TILE,
+                  zIndex: Z.barn,
+                  imageRendering: 'pixelated',
+                  pointerEvents: 'none',
+                }}
+              />
+            )}
           </div>
         </div>
 
@@ -424,7 +485,12 @@ export default function FarmExample({
           </ul>
 
           <div className="farm-buttons">
-            <button type="button" onClick={sell} disabled={!barn}>Sell barn ({barn}g)</button>
+            <button type="button" onClick={sell} disabled={!store}>Sell store ({store}g)</button>
+            {!farm.barn && farm.barnSite && (
+              <button type="button" onClick={raiseBarn} disabled={!build.ok} title={build.reason}>
+                Raise barn ({BARN.cost}g) (B)
+              </button>
+            )}
             <button type="button" className="primary" onClick={endDay}>End day (E)</button>
           </div>
 

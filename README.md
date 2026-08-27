@@ -283,7 +283,55 @@ node scripts/generate-watered-field.mjs           # preview PNG only
 node scripts/generate-watered-field.mjs --apply   # write into the atlas
 ```
 
-All three generators — shore, watered soil and ship — are additive and
+### A building is not a sprite
+
+DawnLike is a *roguelike* pack. It draws a surprising amount of the countryside
+— grass, plowed field, fences, orchards, livestock — but it draws no farm
+**buildings**: no barn, no silo, no coop. The barn is the interesting case,
+because a barn does not fit in a cell.
+
+Everything else in the pack is one tile because everything else is a thing you
+pick up, stand on or fight. A barn is a thing you walk **around**, and at sixteen
+logical pixels a whole barn is a brown smudge.
+
+The tempting fix is to draw it big, slice it into 16px cells named `barn r0c0` …
+`barn r4c4`, and place them like any other sprite so it matches the rest of the
+pack. Don't. Those cells are only ever drawn together, in one fixed arrangement,
+so the grid buys nothing a single image does not — and it costs the art, because
+fitting into the sheet means fitting the sheet's palette. **Buildings live
+outside the atlas:**
+
+| file | what it is |
+| --- | --- |
+| `atlas/buildings/barn.png` | one gambrel-roofed barn, 96×110 logical px, on its own 64-colour palette |
+
+The example places it with `barnArtRect(state)`, which returns a rectangle **in
+tiles** so the caller can draw at whatever zoom it likes. That rectangle is
+deliberately bigger than the 5×5 the barn blocks: bottom-anchored and centred, so
+the roof oversails the footprint by half a tile each side and stands nearly two
+tiles above it. A roof that stops dead at its own footprint reads as flat.
+
+Buildings are traced from art rather than drawn in code:
+
+```bash
+python3 scripts/trace_building.py shot.png atlas/buildings/barn.png
+```
+
+It keys out the magenta, **measures the upscale factor** and divides it out, and
+keeps the source's own colours. Two of those three are easy to get wrong:
+
+- **Key on the shape of the colour, not on a threshold.** A screenshot has been
+  through a lossy encoder, so the field is not `#FF00FF` any more — the barn
+  above keys on `(191, 22, 179)`, which any `> 195` test misses completely,
+  leaving the whole frame "opaque" and the bounding box covering everything.
+- **Measure the block size from edge energy, not from runs of identical colour.**
+  A screenshot of pixel art is pixel art blown up by some factor, and sampling it
+  without undoing that returns half-tones on no palette at all. But after lossy
+  compression almost no two neighbouring pixels are exactly equal, so every run
+  comes back length 1 and their GCD is 1 — "not upscaled", the one answer that is
+  never right. Edges survive compression where equality does not.
+
+The three atlas generators — shore, watered soil and ship — are additive and
 idempotent: existing sprites never move, and re-running rewrites the generated
 tiles in the cells they already occupy, byte for byte.
 
