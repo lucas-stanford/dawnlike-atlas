@@ -748,20 +748,45 @@ export function turn(state, direction) {
  * anywhere else, turn first — which is what gives the wind rule teeth.
  */
 export function sail(state) {
-  if (state.ashore) return fail(state, 'The captain is ashore. Row back first.');
-  const cost = sailCost(state.ship.heading, state.wind);
-  const blocked = afford(state, cost);
-  if (blocked) return fail(state, blocked);
+  if (state.ashore) return fail(state, 'The captain is ashore. Walk back to her first.');
 
   const { dx, dy } = STEP[state.ship.heading];
   const next = { ...state.ship, x: state.ship.x + dx, y: state.ship.y + dy };
 
+  // Look at where she would go before deciding what it costs, because
+  // running her ashore is a different act from sailing and is priced as
+  // one: the boat does not move, so you are paying to step off, not to
+  // make a cable.
+  let beach = null;
   for (const { x, y } of shipCells(next)) {
     if (cellAt(state, x, y) === null) return fail(state, 'That is the edge of the chart.');
-    if (!isWater(state, x, y)) return fail(state, 'Land ahead — she will not float over sand.');
     const beast = beastAt(state, x, y);
     if (beast) return fail(state, `${beast.label} is in the way. Drive it off first.`);
+    if (!isWater(state, x, y) && !beach) beach = { x, y };
   }
+
+  /**
+   * Sailing into the beach lands you.
+   *
+   * Refusing the move — which is what this did — made the shoreline a
+   * wall you bounced off, and left `R` as the only way ashore even when
+   * the bow was already touching sand. Driving at the beach and stepping
+   * off is what anyone tries first, so it is what it does: she stays in
+   * the water where she is, and the captain goes over the bow onto the
+   * sand ahead. Walking back into her re-boards (see `walk`).
+   */
+  if (beach) {
+    const blocked = afford(state, COST.land);
+    if (blocked) return fail(state, blocked);
+    return ok(
+      spend({ ...state, ashore: beach }, COST.land),
+      `Ran her nose up the beach and stepped off at ${beach.x},${beach.y}.`,
+    );
+  }
+
+  const cost = sailCost(state.ship.heading, state.wind);
+  const blocked = afford(state, cost);
+  if (blocked) return fail(state, blocked);
 
   const after = spend({ ...state, ship: next }, cost);
   const trim = pointOfSail(state.ship.heading, state.wind);
@@ -833,10 +858,13 @@ export function walk(state, heading) {
   const x = state.ashore.x + dx;
   const y = state.ashore.y + dy;
   if (!isSand(state, x, y)) {
-    // Stepping into the water is how you get back to the boat, provided
-    // the boat is actually there.
-    const alongside = shipCells(state.ship).some((c) => c.x === x && c.y === y);
-    if (alongside) return toggleShore(state);
+    // Walking into the boat is how you get back aboard — the other half
+    // of running her ashore under `sail`. It is deliberately the same
+    // gesture as walking anywhere else: she is a thing on the map, and
+    // you get in by stepping into her.
+    if (shipCells(state.ship).some((c) => c.x === x && c.y === y)) {
+      return ok(spend({ ...state, ashore: null }, COST.land), 'Back aboard.');
+    }
     return fail(state, 'Only sand underfoot — the captain does not swim.');
   }
   return ok(spend({ ...state, ashore: { x, y } }, COST.walk), '');

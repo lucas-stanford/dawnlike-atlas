@@ -455,6 +455,41 @@ Hull size is not cosmetic: a smaller vessel draws less, so it works lagoons a
 The black sloop **is** cosmetic, deliberately — same hull, same rig, different
 flag.
 
+### The hulls are drawn, not computed
+
+The hulls started as a list of per-row widths with the shading derived from
+distance-to-edge. That works for a rail or a plank field and is hopeless for a
+boat: a hull tapering equally at both ends is an **almond**, and an almond reads
+as a bean.
+
+A hull's profile is bounded on top by the **sheerline**, at the bow by the
+**curve of the stem**, and aft by the **transom** — which on a small working
+boat is flat and near vertical. So the bow rakes forward and sweeps up to the
+deck while the stern is a straight ninety-degree face, and the sheer dips
+between them. None of that survives being computed from a width list.
+
+So the hulls are pixel maps — at sixteen logical pixels a hull is a dozen short
+strings, and every one can be placed on purpose:
+
+```
+'.KK........KKKK.'      the stem head, high and forward
+'.KOKKKKKKKKKOOK.'      the sheer, dipping amidships
+'.KOOOOOOOOOOOOK.'      lit gunwale
+'.KTTTTTTTTTTTKK.'      capping rail
+'.KBBBBBBBBBBBK..'   ┐
+'.KMMMMMMMMMMK...'   ├  strakes: the planking that runs stem to transom
+'.KKKKKKKKKKK....'   ┘
+ ^                      the vertical run down the left IS the transom
+```
+
+The right-hand edge stepping in as it descends **is** the rake of the stem; the
+`B`/`M` courses are the **strakes**, which is what was missing when the topsides
+were one flat field of brown.
+
+The sail stays procedural, because what a sail needs is exactly what a rule
+gives well — an outline, a lit rim, a shadowed rim and a body, with the tones
+swapped per heading. The hull needed the opposite.
+
 ### Four headings, not one sprite turned four ways
 
 The first version of the one-cell vessels drew a single boat and rotated it 90°
