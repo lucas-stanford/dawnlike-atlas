@@ -43,11 +43,23 @@ export function CharacterGallery({
             </div>
             <div className="animation-preview">
               <span className="preview-label">Animation ({walkGridFormat})</span>
-              <div className={`animated-sprite-window format-${walkGridFormat}`}>
-                <div className="animated-sprite-inner">
-                  <img src={walkUrl} alt={`${characterName} walk animation`} className="animated-sprite-img" />
+              {walkGridFormat === '3x4' ? (
+                <div className="animation-grid-2x2">
+                  {['down', 'left', 'right', 'up'].map(dir => (
+                    <div key={dir} className={`animated-sprite-window format-3x4 dir-${dir}`}>
+                      <div className="animated-sprite-inner">
+                        <img src={walkUrl} alt={`${characterName} walk ${dir}`} className="animated-sprite-img" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              ) : (
+                <div className={`animated-sprite-window format-${walkGridFormat}`}>
+                  <div className="animated-sprite-inner">
+                    <img src={walkUrl} alt={`${characterName} walk animation`} className="animated-sprite-img" />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="prompt-modifier">
@@ -65,11 +77,23 @@ export function CharacterGallery({
             </div>
             <div className="animation-preview">
               <span className="preview-label">Animation ({actionGridFormat})</span>
-              <div className={`animated-sprite-window format-${actionGridFormat}`}>
-                <div className="animated-sprite-inner">
-                  <img src={actionUrl} alt={`${characterName} action animation`} className="animated-sprite-img" />
+              {actionGridFormat === '3x4' ? (
+                <div className="animation-grid-2x2">
+                  {['down', 'left', 'right', 'up'].map(dir => (
+                    <div key={dir} className={`animated-sprite-window format-3x4 dir-${dir}`}>
+                      <div className="animated-sprite-inner">
+                        <img src={actionUrl} alt={`${characterName} action ${dir}`} className="animated-sprite-img" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              ) : (
+                <div className={`animated-sprite-window format-${actionGridFormat}`}>
+                  <div className="animated-sprite-inner">
+                    <img src={actionUrl} alt={`${characterName} action animation`} className="animated-sprite-img" />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="prompt-modifier">

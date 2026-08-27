@@ -8,6 +8,33 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Four more buildings, and a module that knows about them** — `cabin`,
+  `cottage`, `townhouse` and `outhouse` join the barn in `atlas/buildings/`, and
+  `dawnlike-atlas/utils/buildings` carries the manifest plus `buildingRect(name,
+  { x0, y1 })` to place any of them. The rectangle comes back in TILES so the
+  caller keeps its own zoom, bottom-anchored and centred so the roof oversails
+  the walls on three sides.
+  `cols` — how many tiles a building BLOCKS — is measured from the part that
+  meets the ground rather than from the width of the picture, and is narrower
+  than the art on every one of the five. A barn whose 6-tile roof also blocked
+  6 tiles of floor would have the player bouncing off thin air a tile short of
+  the wall. Footprint DEPTH is deliberately not recorded: these are drawn
+  front-on, so the art says nothing about it and it is the game's decision.
+  A **Buildings** story shows all five over grass at 1×–4× with their footprints
+  drawn, and `tests/buildings.test.js` checks every measurement in the manifest
+  against the PNG on disk, so a re-trace at another size fails the build instead
+  of silently leaving a building hovering.
+- **`--split` for `scripts/trace_building.py`** — several buildings on one sheet,
+  cut apart by connectivity and named in left-to-right order. Two things had to
+  be fixed to make it work on a real screenshot. The halo threshold is now read
+  off the sheet instead of hardcoded, because how well hue separates bleed from
+  art depends entirely on the key's saturation: against a vivid magenta neutral
+  grey scores 0.87, but against the muted `(171, 56, 125)` of the second sheet
+  grey scores 0.93 and a dark maroon OUTLINE scores 0.99 — so the fixed 0.93
+  ate four buildings down to their studs. And chrome is peeled off first: a HUD
+  strip and a one-pixel border are connected to each other, so a building
+  touching the frame came back fused to the HUD at the opposite corner as one
+  component spanning the entire image.
 - **A barn, as a building rather than as sprites** — `atlas/buildings/barn.png`,
   96×110 logical px on its own 64-colour palette, placed by `barnArtRect` in
   `dawnlike-atlas/utils/farm`. DawnLike draws a lot of the countryside but no

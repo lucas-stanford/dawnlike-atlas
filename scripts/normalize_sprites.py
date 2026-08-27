@@ -22,53 +22,57 @@ def process_sprite(walk_path, action_path, target_slot_width=128, target_height=
     walk_img = remove_white(walk_img)
     action_img = remove_white(action_img)
 
-    walk_bbox = walk_img.getbbox()
-    if not walk_bbox: return
-    
-    global_top = walk_bbox[1]
-    global_bottom = walk_bbox[3]
-    raw_char_height = global_bottom - global_top
-    scale = 96.0 / raw_char_height
+    def get_max_char_height(img, fx, fy):
+        max_h = 1
+        sw = img.width // fx
+        sh = img.height // fy
+        for r in range(fy):
+            for c in range(fx):
+                box = (c * sw, r * sh, (c + 1) * sw, (r + 1) * sh)
+                bbox = img.crop(box).getbbox()
+                if bbox:
+                    max_h = max(max_h, bbox[3] - bbox[1])
+        return max_h
+
+    walk_h = get_max_char_height(walk_img, frames_x, frames_y)
+    scale = 96.0 / walk_h
     
     def layout_frames(img):
         slot_width_raw = img.width // frames_x
         slot_height_raw = img.height // frames_y
         
-        bbox = img.getbbox()
-        if not bbox: return None
-        
-        this_top = bbox[1]
-        this_bottom = bbox[3]
-        
         canvas = Image.new("RGBA", (target_slot_width * frames_x, target_height * frames_y), (0, 0, 0, 0))
         
         for r in range(frames_y):
+            # Find the max bottom for this row to prevent vertical jitter
+            row_max_bottom = 0
             for c in range(frames_x):
-                # Crop the cell
+                box = (c * slot_width_raw, r * slot_height_raw, (c + 1) * slot_width_raw, (r + 1) * slot_height_raw)
+                cell_bbox = img.crop(box).getbbox()
+                if cell_bbox:
+                    row_max_bottom = max(row_max_bottom, cell_bbox[3])
+                    
+            if row_max_bottom == 0:
+                row_max_bottom = slot_height_raw # fallback
+                
+            scaled_row_bottom = int(row_max_bottom * scale)
+            # Align the lowest foot in this row to 16px from the bottom of the slot
+            paste_y = (target_height - 16) - scaled_row_bottom
+            
+            for c in range(frames_x):
                 box = (c * slot_width_raw, r * slot_height_raw, (c + 1) * slot_width_raw, (r + 1) * slot_height_raw)
                 slot_img = img.crop(box)
                 
-                # Further crop vertically to standard bounds
-                # But wait! If we crop using global this_top/this_bottom, it assumes 1x4 horizontal!
-                # If it's a 3x4 grid, the global top/bottom is over the entire 12-frame image.
-                # If we crop (this_top, this_bottom), those bounds might extend OUTSIDE the current cell's `slot_height_raw`!
-                # For a grid, we should just scale the entire cell down and center it.
-                # Since the AI spaces them evenly, the cell itself acts as the bounds.
-                # Actually, to prevent jitter, we scale the cell contents.
-                cell_bbox = slot_img.getbbox()
-                if not cell_bbox: continue
-                
-                # Instead of cropping vertically to a global bound, we crop to the cell's own bounding box
-                # But to prevent vertical jitter, we find the floor of the specific row.
-                # For simplicity in 3x4 RPG Maker grids, we just scale the whole cell.
-                new_w = int(slot_img.width * scale)
-                new_h = int(slot_img.height * scale)
+                new_w = int(slot_width_raw * scale)
+                new_h = int(slot_height_raw * scale)
                 
                 slot_scaled = slot_img.resize((new_w, new_h), Image.Resampling.NEAREST)
                 
-                # Bottom center within its 128x128 slot
-                y_offset = (r * target_height) + (target_height - new_h)
-                x_offset = (c * target_slot_width) + (target_slot_width - new_w) // 2
+                # Center horizontally based on the cell
+                paste_x = (target_slot_width - new_w) // 2
+                
+                x_offset = (c * target_slot_width) + paste_x
+                y_offset = (r * target_height) + paste_y
                 
                 canvas.paste(slot_scaled, (x_offset, y_offset), slot_scaled)
             

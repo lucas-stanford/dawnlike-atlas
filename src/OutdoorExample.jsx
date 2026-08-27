@@ -14,10 +14,11 @@ const DISPLAY_HEIGHT = 40;
 // "light oak nw ne" → "light oak" — the shared "base" of an autotile family.
 const SUFFIX_KEYWORDS = new Set([
   'left','right','up','down','flat','center','nw','ne','sw','se','dense',
-  'nwe','nswe','we','nsw','ns','nse','swe','c','n','s','e','w','alone',
+  'nwe','nswe','we','nsw','ns','nse','swe','c','n','s','e','w','alone','divider',
 ]);
 const cleanName = (name) => {
-  const words = name.split(' ');
+  const baseStr = name.replace(/_[0-9]+$/, '');
+  const words = baseStr.split(' ');
   while (words.length > 1 && SUFFIX_KEYWORDS.has(words[words.length - 1])) {
     words.pop();
   }
@@ -590,7 +591,7 @@ export default function OutdoorExample({
           <div className="control-card">
             <h3>Tile Overrides</h3>
             {overrideLog.length === 0 ? (
-              <div style={{ color: 'var(--dl-ink-dim)', fontSize: 13 }}>
+              <div style={{ color: '#bbb', fontSize: 13 }}>
                 No overrides yet. Click any tile to pin its inspector, then
                 pick an alternate sprite from the swatch picker to override
                 the autotile choice. Use the Storybook Controls panel for
@@ -598,14 +599,14 @@ export default function OutdoorExample({
               </div>
             ) : (
               <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, color: 'var(--dl-ink)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, color: '#fff' }}>
                   <strong>Overrides ({overrideLog.length})</strong>
                   <span>
                     <button onClick={copyLog} title="Copy log JSON to clipboard">📋 Copy</button>
                     <button onClick={() => setSpriteOverrides({})} style={{ marginLeft: 4 }} title="Clear all overrides">Clear</button>
                   </span>
                 </div>
-                <pre style={{ maxHeight: 240, overflow: 'auto', fontSize: 11, margin: 0, background: 'var(--dl-void)', border: '1px solid var(--dl-line)', padding: 6, borderRadius: 4, color: 'var(--dl-ink-dim)', fontFamily: 'var(--dl-mono)' }}>
+                <pre style={{ maxHeight: 240, overflow: 'auto', fontSize: 11, margin: 0, background: 'rgba(0,0,0,0.35)', padding: 6, borderRadius: 4, color: '#fff' }}>
 {JSON.stringify(overrideLog, null, 2)}
                 </pre>
               </>
