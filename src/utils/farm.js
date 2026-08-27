@@ -40,6 +40,8 @@
  * the reason in `message`, so a UI can surface it without a second call.
  */
 
+import { BUILDINGS, buildingRect } from './buildings';
+
 /** Tile ground states. */
 export const WILD = 'wild';     // untouched grass
 export const TILLED = 'tilled'; // hoed, ready to sow
@@ -419,50 +421,23 @@ export function isBarnSite(state, x, y) {
 }
 
 /**
- * The barn's art, in logical DawnLike pixels.
+ * The barn's art — one PNG in `atlas/buildings/`, not a run of atlas cells.
  *
- * It is NOT in the mega-atlas and is not cut into 16px cells. Everything
- * in the pack is one cell because everything in the pack is a thing you
- * pick up, stand on or fight; a building is a thing you walk around, and
- * slicing one up to look like the rest costs you the art and buys nothing
- * — the pieces are only ever drawn together, in one fixed arrangement.
- * So it ships as its own PNG on its own palette, and the renderer places
- * it whole.
+ * See `./buildings` for why buildings are kept out of the mega-atlas, and
+ * for the other four. Re-exported here so callers of this module do not
+ * need to know where it came from.
  */
-export const BARN_ART = {
-  /** Lives at `atlas/buildings/barn.png`; `atlas/` is the static root. */
-  url: '/buildings/barn.png',
-  w: 96,
-  h: 110,
-  /** DawnLike's logical cell, which the art is measured in. */
-  tile: 16,
-};
+export const BARN_ART = BUILDINGS.barn;
 
 /**
  * Where to draw the barn, in TILES, relative to the map's origin.
  *
- * Deliberately bigger than the 5×5 it occupies: the art is six tiles wide
- * and just under seven tall, and it is anchored by its BOTTOM edge, so the
- * roof oversails the footprint by half a tile each side and stands nearly
- * two clear of it. That gap is the point — a building whose roof stops
- * dead at its own footprint reads as flat, and the overhang is what makes
- * the walls look like they have a building on top of them rather than a
- * texture. The farmer can never be inside the footprint, so nothing is
- * ever hidden by the part that oversails.
- *
- * Returned in tiles rather than pixels so the caller can pick its own
- * zoom; multiply by whatever tile size it is drawing at.
+ * Deliberately bigger than the 5×5 it occupies — see `buildingRect`. The
+ * farmer can never be inside the footprint, so nothing is ever hidden by
+ * the part that oversails it.
  */
 export function barnArtRect(state) {
-  if (!state.barn) return null;
-  const w = BARN_ART.w / BARN_ART.tile;
-  const h = BARN_ART.h / BARN_ART.tile;
-  return {
-    x: state.barn.x0 + (BARN.cols - w) / 2,
-    y: state.barn.y1 + 1 - h,
-    w,
-    h,
-  };
+  return buildingRect('barn', state.barn);
 }
 
 /** True when the farmer can stand here. */

@@ -25,6 +25,11 @@
     "./atlas/DawnlikeAtlas0.png": "./atlas/DawnlikeAtlas0.png",
     "./atlas/DawnlikeAtlas1.png": "./atlas/DawnlikeAtlas1.png",
     "./atlas/buildings/barn.png": "./atlas/buildings/barn.png",
+    "./utils/buildings": "./src/utils/buildings.js",
+    "./atlas/buildings/cabin.png": "./atlas/buildings/cabin.png",
+    "./atlas/buildings/cottage.png": "./atlas/buildings/cottage.png",
+    "./atlas/buildings/townhouse.png": "./atlas/buildings/townhouse.png",
+    "./atlas/buildings/outhouse.png": "./atlas/buildings/outhouse.png",
     "./package.json": "./package.json"
   },
   "files": [
@@ -41,6 +46,11 @@
     "atlas/DawnlikeAtlas0.png",
     "atlas/DawnlikeAtlas1.png",
     "atlas/buildings/barn.png",
+    "src/utils/buildings.js",
+    "atlas/buildings/cabin.png",
+    "atlas/buildings/cottage.png",
+    "atlas/buildings/townhouse.png",
+    "atlas/buildings/outhouse.png",
     "README.md"
   ],
   "scripts": {

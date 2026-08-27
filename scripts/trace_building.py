@@ -37,6 +37,7 @@ easy to get wrong:
 Requires Pillow and numpy.
 """
 import argparse
+import pathlib
 
 import numpy as np
 from PIL import Image
@@ -145,34 +146,61 @@ def dilate(mask):
 def keyness(art, key):
     """How nearly each pixel is the key colour's own hue, 0..1.
 
-    The cosine between the pixel and the key as vectors, which ignores
-    brightness and asks only about the MIX of channels. That is the right
-    question: a halo pixel is the key darkened and muddied by whatever it
-    overlaps, so it keeps the key's hue while losing its brightness, and a
-    test on brightness or on distance would miss it.
-
-    It separates cleanly in practice. On the barn this was written for the
-    halo scores 0.96–1.00 while the darkest real timber reaches 0.87, with
-    nothing at all in between.
+    The cosine between pixel and key as vectors, which ignores brightness
+    and asks only about the MIX of channels — the right question for a halo
+    pixel, which is the key muddied by whatever it overlaps and so keeps the
+    hue while losing the brightness.
     """
     unit = key / (np.linalg.norm(key) or 1.0)
     norms = np.maximum(np.linalg.norm(art, axis=-1), 1e-6)
     return (art @ unit) / norms
 
 
-def defringe(art, background, key, limit=0.93):
+def nearness(art, key):
+    """Distance from each pixel to the key, as a fraction of the key's own."""
+    return np.linalg.norm(art - key, axis=-1) / (np.linalg.norm(key) or 1.0)
+
+
+def hue_limit(flat, bg, key, quantile=99.5):
+    """How key-like a pixel must be, for THIS sheet, before it counts as bleed.
+
+    A fixed cosine cannot do this job, because how well hue separates a halo
+    from real art depends entirely on how saturated the key is. Against a
+    vivid magenta, neutral grey scores 0.87 and the test is easy. Against the
+    muted (171, 56, 125) of the second sheet, grey scores 0.93 and a dark
+    maroon OUTLINE scores 0.99 — so any fixed threshold either keeps the
+    halo or eats the linework.
+
+    So the bar is read off the sheet: whatever the art's own interior
+    reaches, plus a margin. Interior means at least two pixels in from the
+    background, which is past the halo.
+    """
+    core = (~bg) & ~dilate(dilate(bg))
+    if not core.any():
+        return 0.93
+    return float(np.percentile(keyness(flat[core], key), quantile))
+
+
+def defringe(art, background, key, limit, near=0.20):
     """Drop the halo of key-coloured bleed around the art.
 
-    Two conditions, and it needs both. A pixel goes only if it is the key's
-    hue (`limit`, see `keyness`) AND it is reachable from the background
-    through other pixels that are — so the halo is followed inwards however
-    thick it is, while a genuinely magenta detail somewhere inside the
-    building would survive, having nothing to reach it by.
+    A pixel goes only if it looks like the key AND is reachable from the
+    background through other pixels that do. The flood is what makes it
+    safe: the halo is followed inwards however thick it is, while a
+    genuinely magenta detail INSIDE a building survives, having nothing to
+    reach it by.
+
+    Looking like the key means either of two things, because the halo does
+    not always fail the same way. Where the art behind it is dark the blend
+    keeps the key's hue and loses its brightness, which `limit` catches;
+    where the art is bright the blend stays close to the key outright, which
+    `near` catches. The barn's halo is the first kind and the houses' is the
+    second, and neither test alone finds both.
 
     They are dropped rather than un-blended. Pixel art has hard edges; there
     is no correct colour to give a pixel that was never really there.
     """
-    tinted = keyness(art, key) > limit
+    tinted = (keyness(art, key) > limit) | (nearness(art, key) < near)
     dropped = background.copy()
     while True:
         newly = dilate(dropped) & tinted & ~dropped
@@ -182,8 +210,78 @@ def defringe(art, background, key, limit=0.93):
 
 
 # ---------------------------------------------------------------------
+# finding the buildings
+# ---------------------------------------------------------------------
 
-def trace(src, dst, colors=64):
+def components(mask):
+    """Label 8-connected runs of `mask`, biggest first, as bounding boxes."""
+    from collections import deque
+
+    h, w = mask.shape
+    seen = np.zeros(mask.shape, dtype=bool)
+    found = []
+    for sy, sx in zip(*np.where(mask)):
+        if seen[sy, sx]:
+            continue
+        queue = deque([(sy, sx)])
+        seen[sy, sx] = True
+        pixels, x0, x1, y0, y1 = 0, sx, sx, sy, sy
+        while queue:
+            cy, cx = queue.popleft()
+            pixels += 1
+            x0, x1 = min(x0, cx), max(x1, cx)
+            y0, y1 = min(y0, cy), max(y1, cy)
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    ny, nx = cy + dy, cx + dx
+                    if 0 <= ny < h and 0 <= nx < w and mask[ny, nx] and not seen[ny, nx]:
+                        seen[ny, nx] = True
+                        queue.append((ny, nx))
+        found.append({'px': pixels, 'box': (x0, y0, x1 + 1, y1 + 1)})
+    return sorted(found, key=lambda c: -c['px'])
+
+
+def trim_chrome(mask, solid=0.9):
+    """Peel a screenshot's frame off the keyed field. Returns (x0, y0, x1, y1).
+
+    A sheet is often a screenshot, so it may arrive inside a HUD strip, a
+    letterbox or a one-pixel border. That is not background, and it cannot
+    just be ignored: the frame is CONNECTED, so a building touching it is
+    fused to the HUD at the far end of the image and the pair come back as
+    one component spanning everything.
+
+    An edge row that is almost entirely non-background is chrome — real
+    subjects sit in the field and do not span a whole edge — so the outside
+    is peeled away a line at a time until both edges are mostly field.
+    """
+    x0, y0, x1, y1 = 0, 0, mask.shape[1], mask.shape[0]
+    changed = True
+    while changed and x1 - x0 > 2 and y1 - y0 > 2:
+        changed = False
+        for axis in (0, 1):
+            for near_start in (True, False):
+                line = (mask[y0 if near_start else y1 - 1, x0:x1] if axis == 0
+                        else mask[y0:y1, x0 if near_start else x1 - 1])
+                if line.mean() <= solid:
+                    continue
+                if axis == 0:
+                    y0, y1 = (y0 + 1, y1) if near_start else (y0, y1 - 1)
+                else:
+                    x0, x1 = (x0 + 1, x1) if near_start else (x0, x1 - 1)
+                changed = True
+    return x0, y0, x1, y1
+
+
+def buildings(mask):
+    """The separate buildings in a keyed sheet, in left-to-right order."""
+    return sorted((c for c in components(mask) if c['px'] >= 64),
+                  key=lambda c: c['box'][0])
+
+
+# ---------------------------------------------------------------------
+
+def prepare(src):
+    """Undo the upscale and key the background. Returns (flat, bg, key)."""
     img = np.asarray(Image.open(src).convert('RGB')).astype(float)
 
     px, ox = fit_grid(np.abs(np.diff(img, axis=1)).sum(axis=(0, 2)))
@@ -195,15 +293,21 @@ def trace(src, dst, colors=64):
     if bg.all() or not bg.any():
         raise SystemExit(f'{src}: no magenta field found — is this a keyed sheet?')
     key = np.median(flat[bg].reshape(-1, 3), axis=0)
+    print(f'key      rgb{tuple(int(v) for v in key)}, {bg.mean():.0%} of the sheet')
 
-    ys, xs = np.where(~bg)
-    x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
+    x0, y0, x1, y1 = trim_chrome(~bg)
+    if (x0, y0, x1, y1) != (0, 0, bg.shape[1], bg.shape[0]):
+        print(f'chrome   trimmed to x{x0}-{x1} y{y0}-{y1} '
+              f'(was {bg.shape[1]}x{bg.shape[0]})')
+        flat, bg = flat[y0:y1, x0:x1], bg[y0:y1, x0:x1]
+    return flat, bg, key, hue_limit(flat, bg, key)
+
+
+def cut(flat, bg, key, limit, box, dst, colors):
+    """Key, de-fringe and quantise one building, and write it out."""
+    x0, y0, x1, y1 = box
     art, background = flat[y0:y1, x0:x1], bg[y0:y1, x0:x1]
-    print(f'content  {x1 - x0} x {y1 - y0} logical, key rgb{tuple(int(v) for v in key)}')
-
-    dropped = defringe(art, background, key)
-    print(f'keyed    {background.sum()} px background, '
-          f'{dropped.sum() - background.sum()} px fringe')
+    dropped = defringe(art, background, key, limit)
 
     # Flood the keyed-out pixels with a colour the art already uses before
     # quantising, so the palette is spent on what you can see.
@@ -218,12 +322,39 @@ def trace(src, dst, colors=64):
     used = len(set(map(tuple, np.asarray(quant)[~dropped])))
     print(f'wrote    {dst} — {out.width}x{out.height}, {used} colours, '
           f'{(~dropped).sum()} opaque px')
+    return {'w': out.width, 'h': out.height}
+
+
+def trace(src, dst, colors=64, split=None):
+    flat, bg, key, limit = prepare(src)
+
+    if not split:
+        ys, xs = np.where(~bg)
+        box = (xs.min(), ys.min(), xs.max() + 1, ys.max() + 1)
+        return cut(flat, bg, key, limit, box, dst, colors)
+
+    found = buildings(~bg)
+    if len(found) != len(split):
+        raise SystemExit(
+            f'{src}: found {len(found)} building(s) but was given {len(split)} '
+            f'name(s): {", ".join(split)}\n'
+            + '\n'.join(f'  {i}: {c["px"]}px at {c["box"]}'
+                        for i, c in enumerate(found)))
+
+    out = pathlib.Path(dst)
+    out.mkdir(parents=True, exist_ok=True)
+    for name, comp in zip(split, found):
+        print(f'--- {name} — {comp["px"]} px at {comp["box"]}')
+        cut(flat, bg, key, limit, comp['box'], out / f'{name}.png', colors)
 
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
-    ap.add_argument('source', help='screenshot or sheet, building on magenta')
-    ap.add_argument('dest', help='PNG to write')
+    ap.add_argument('source', help='screenshot or sheet, building(s) on magenta')
+    ap.add_argument('dest', help='PNG to write, or a directory when --split is used')
     ap.add_argument('--colors', type=int, default=64, help='palette size (default 64)')
+    ap.add_argument('--split', help='comma-separated names for several buildings '
+                                    'on one sheet, in LEFT-TO-RIGHT order')
     args = ap.parse_args()
-    trace(args.source, args.dest, args.colors)
+    trace(args.source, args.dest, args.colors,
+          [n.strip() for n in args.split.split(',')] if args.split else None)

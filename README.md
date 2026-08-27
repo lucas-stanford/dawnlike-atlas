@@ -301,20 +301,42 @@ so the grid buys nothing a single image does not — and it costs the art, becau
 fitting into the sheet means fitting the sheet's palette. **Buildings live
 outside the atlas:**
 
-| file | what it is |
-| --- | --- |
-| `atlas/buildings/barn.png` | one gambrel-roofed barn, 96×110 logical px, on its own 64-colour palette |
+| file | logical px | blocks | what it is |
+| --- | --- | --- | --- |
+| `atlas/buildings/barn.png` | 96×110 | 5 tiles | gambrel roof, hay bales and a pitchfork at its feet |
+| `atlas/buildings/cabin.png` | 65×75 | 4 tiles | log walls on a stone footing, shingle roof |
+| `atlas/buildings/cottage.png` | 62×74 | 3 tiles | half-timbered, blue slate |
+| `atlas/buildings/townhouse.png` | 78×89 | 5 tiles | two storeys and a lean-to |
+| `atlas/buildings/outhouse.png` | 28×46 | 1 tile | one door, one heart |
 
-The example places it with `barnArtRect(state)`, which returns a rectangle **in
-tiles** so the caller can draw at whatever zoom it likes. That rectangle is
-deliberately bigger than the 5×5 the barn blocks: bottom-anchored and centred, so
-the roof oversails the footprint by half a tile each side and stands nearly two
-tiles above it. A roof that stops dead at its own footprint reads as flat.
+Each is its own PNG on its own 64-colour palette. `dawnlike-atlas/utils/buildings`
+carries the measurements and `buildingRect(name, { x0, y1 })` places one, returning
+a rectangle **in tiles** so the caller draws at whatever zoom it likes:
+
+```js
+import { buildingRect } from 'dawnlike-atlas/utils/buildings';
+
+const r = buildingRect('cabin', { x0: 4, y1: 9 });   // left column, bottom row
+// → { x: 3.97, y: 5.31, w: 4.06, h: 4.69 }  — multiply by your tile size
+```
+
+That rectangle is deliberately bigger than the footprint: bottom-anchored and
+centred, so the roof oversails on three sides. A roof that stops dead at its own
+walls reads as flat, and the overhang is the whole reason these are not tiles.
+
+Note the third column is **narrower than the art** in every row — `cols` is
+measured from the part that meets the ground, not from the picture. A barn whose
+6-tile roof also blocked 6 tiles of floor would have you bouncing off thin air.
+How *deep* a footprint is, is not recorded: these are drawn front-on, so the art
+says nothing about it and depth is the game's decision.
 
 Buildings are traced from art rather than drawn in code:
 
 ```bash
 python3 scripts/trace_building.py shot.png atlas/buildings/barn.png
+# several on one sheet, named in left-to-right order:
+python3 scripts/trace_building.py houses.png atlas/buildings/ \
+  --split cabin,outhouse,cottage,townhouse
 ```
 
 It keys out the magenta, **measures the upscale factor** and divides it out, and
@@ -330,6 +352,17 @@ keeps the source's own colours. Two of those three are easy to get wrong:
   compression almost no two neighbouring pixels are exactly equal, so every run
   comes back length 1 and their GCD is 1 — "not upscaled", the one answer that is
   never right. Edges survive compression where equality does not.
+- **Read the halo threshold off the sheet, don't hardcode it.** How well hue
+  separates the magenta bleed from real art depends on how saturated the key is.
+  Against a vivid magenta, neutral grey scores 0.87 and the test is easy; against
+  a muted `(171, 56, 125)`, grey scores 0.93 and a dark maroon *outline* scores
+  0.99, so a fixed threshold either keeps the halo or eats the linework. The bar
+  is whatever the art's own interior reaches, plus a margin.
+
+A screenshot may also arrive inside a HUD strip or a one-pixel border. That
+chrome is **connected**, so a building touching it comes back fused to the HUD at
+the far end of the frame; edge rows that are almost entirely non-background are
+peeled off before anything is measured.
 
 The three atlas generators — shore, watered soil and ship — are additive and
 idempotent: existing sprites never move, and re-running rewrites the generated
