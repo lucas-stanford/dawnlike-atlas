@@ -126,9 +126,13 @@ export const BlackSloop = {
       description: {
         story:
           'A fore-and-aft rigged sloop — the small working craft of the 1790s to the '
-          + '1850s — under a black mainsail with a device on it and a pennant at the '
-          + 'masthead. One cell, one sprite, four headings, all generated: DawnLike '
-          + 'draws no boat of any size.\n\n'
+          + '1850s — under a black mainsail with a bone-white crossbones on it. One '
+          + 'cell, one sprite, four headings, all generated: DawnLike draws no boat of '
+          + 'any size.\n\n'
+          + 'She is drawn in the proportion such a boat reads in from above: a long '
+          + 'shallow hull under one big billowing sail, with a mast and a dotted '
+          + 'forestay. At sixteen logical pixels the canvas is what you recognise her '
+          + 'by — the hull is only what it stands on.\n\n'
           + 'Mechanically it sits between the ship and the rowboat: eight hull points '
           + 'and four units of hold. The black canvas is a livery and nothing more — '
           + '`sloop` is the identical hull under working white.',

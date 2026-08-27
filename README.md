@@ -442,8 +442,8 @@ Twelve of those are **one-cell vessels**, each in four headings:
 | family | what it is |
 | --- | --- |
 | `boat n\|e\|s\|w` | a rowboat — the boat you row ashore in |
-| `sloop n\|e\|s\|w` | a fore-and-aft rigged sloop, the small working craft of the 1790s–1850s |
-| `black sloop n\|e\|s\|w` | the same sloop under a black mainsail, with a device on it and a pennant at the masthead |
+| `sloop n\|e\|s\|w` | a fore-and-aft rigged sloop, the small working craft of the 1790s–1850s — a shallow hull under one big sail |
+| `black sloop n\|e\|s\|w` | the same sloop under a black mainsail with a bone-white crossbones on it |
 
 The six-cell ship is a tile map, which is the right shape for something you
 stand on and the reason its hull autotiles at all. A ship's boat, a skiff or a
