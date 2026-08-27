@@ -26,7 +26,7 @@ function Wizard() {
 
 | Path | What's in it |
 | --- | --- |
-| `atlas/DawnlikeAtlas0.png` | Primary frames — 4,526 sprites, 2048×2272 |
+| `atlas/DawnlikeAtlas0.png` | Primary frames — 4,499 sprites, 2048×2272 |
 | `atlas/DawnlikeAtlas1.png` | Alternate frames for the 1,493 animated sprites |
 | `atlas/DawnlikeAtlas.json` | `byName` lookup, Phaser `frames`, AI-generated tags |
 | `src/utils/atlasApi.js` | Framework-agnostic helpers over the atlas JSON |
@@ -287,40 +287,51 @@ node scripts/generate-watered-field.mjs --apply   # write into the atlas
 
 DawnLike is a *roguelike* pack. It draws a surprising amount of the countryside
 — grass, plowed field, fences, orchards, livestock — but it draws no farm
-**buildings**: no barn, no silo, no coop. `scripts/generate-farm-sim.mjs` starts
-that sheet, and the barn is the interesting case, because a barn does not fit in
-a cell.
+**buildings**: no barn, no silo, no coop. The barn is the interesting case,
+because a barn does not fit in a cell.
 
 Everything else in the pack is one tile because everything else is a thing you
 pick up, stand on or fight. A barn is a thing you walk **around**, and at sixteen
-logical pixels a whole barn is a brown smudge. So it is drawn once at full size
-on an 80×80 canvas and then **sliced** into 16px tiles the way a tile map is cut:
+logical pixels a whole barn is a brown smudge.
 
-| sprite | what it is |
+The tempting fix is to draw it big, slice it into 16px cells named `barn r0c0` …
+`barn r4c4`, and place them like any other sprite so it matches the rest of the
+pack. Don't. Those cells are only ever drawn together, in one fixed arrangement,
+so the grid buys nothing a single image does not — and it costs the art, because
+fitting into the sheet means fitting the sheet's palette. **Buildings live
+outside the atlas:**
+
+| file | what it is |
 | --- | --- |
-| `barn r0c0` … `barn r4c4` | one gambrel-roofed barn, 5×5 tiles |
-| `hay bale` | a small stack of bound straw |
-| `pitchfork` | the fork you moved it with |
+| `atlas/buildings/barn.png` | one gambrel-roofed barn, 96×110 logical px, on its own 64-colour palette |
 
-Each slice is an ordinary atlas sprite the example places by name, which is why
-it composites with everything else for free. The naming is a plain row/column
-grid rather than an autotile family on purpose — a barn has exactly one shape,
-so there is nothing for a resolver to decide, and the mapping from footprint to
-sprite is one line of arithmetic.
+The example places it with `barnArtRect(state)`, which returns a rectangle **in
+tiles** so the caller can draw at whatever zoom it likes. That rectangle is
+deliberately bigger than the 5×5 the barn blocks: bottom-anchored and centred, so
+the roof oversails the footprint by half a tile each side and stands nearly two
+tiles above it. A roof that stops dead at its own footprint reads as flat.
+
+Buildings are traced from art rather than drawn in code:
 
 ```bash
-node scripts/generate-farm-sim.mjs                    # preview PNG only
-node scripts/generate-farm-sim.mjs --apply            # write into the atlas
-node scripts/generate-farm-sim.mjs --from barn.png    # trace real art instead
+python3 scripts/trace_building.py shot.png atlas/buildings/barn.png
 ```
 
-`--from` lifts the barn out of a screenshot rather than drawing one: it keys out
-the magenta background, **measures the upscale factor** from the runs of
-identical colour and divides it out — a screenshot of pixel art is pixel art
-blown up by some integer, and resampling without undoing that gives half-tones
-that sit on no palette — then snaps every colour to the pack's own ramp.
+It keys out the magenta, **measures the upscale factor** and divides it out, and
+keeps the source's own colours. Two of those three are easy to get wrong:
 
-All four generators — shore, watered soil, ship and farm sim — are additive and
+- **Key on the shape of the colour, not on a threshold.** A screenshot has been
+  through a lossy encoder, so the field is not `#FF00FF` any more — the barn
+  above keys on `(191, 22, 179)`, which any `> 195` test misses completely,
+  leaving the whole frame "opaque" and the bounding box covering everything.
+- **Measure the block size from edge energy, not from runs of identical colour.**
+  A screenshot of pixel art is pixel art blown up by some factor, and sampling it
+  without undoing that returns half-tones on no palette at all. But after lossy
+  compression almost no two neighbouring pixels are exactly equal, so every run
+  comes back length 1 and their GCD is 1 — "not upscaled", the one answer that is
+  never right. Edges survive compression where equality does not.
+
+The three atlas generators — shore, watered soil and ship — are additive and
 idempotent: existing sprites never move, and re-running rewrites the generated
 tiles in the cells they already occupy, byte for byte.
 
@@ -382,7 +393,7 @@ self-contained component under `src/`.
 | Story | Source | What it shows |
 | --- | --- | --- |
 | **Autotile Lab** | `src/AutotileLabExample.jsx` | Interactive playground for all six resolvers: neighbour pad, full variant sheet, and a live paint canvas. |
-| **Sprite Browser** | `src/SpriteBrowserExample.jsx` | Search all 4,526 sprites by name and tag, inspect any record, copy React/CSS/Phaser snippets. |
+| **Sprite Browser** | `src/SpriteBrowserExample.jsx` | Search all 4,499 sprites by name and tag, inspect any record, copy React/CSS/Phaser snippets. |
 | **Mega Atlas** | `src/components/SpriteSheet.jsx` | The packed sheet itself, in its 64×71 grid, with hover names and animation toggle. |
 | **Components** | `src/ComponentsExample.jsx` | Live gallery of every component the npm package exports, each with the props beside it — plus a HUD built only from GUI sprites inside the mega-atlas. |
 

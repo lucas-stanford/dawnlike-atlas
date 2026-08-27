@@ -8,28 +8,34 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- **A farm-sim sprite sheet, starting with a barn** —
-  `scripts/generate-farm-sim.mjs` draws `barn r0c0` … `barn r4c4`, `hay bale`
-  and `pitchfork`. DawnLike draws a lot of the countryside but no farm
-  BUILDINGS, and a barn is the case that does not fit the pack's shape:
+- **A barn, as a building rather than as sprites** — `atlas/buildings/barn.png`,
+  96×110 logical px on its own 64-colour palette, placed by `barnArtRect` in
+  `dawnlike-atlas/utils/farm`. DawnLike draws a lot of the countryside but no
+  farm BUILDINGS, and a barn is the case that does not fit the pack's shape:
   everything else is one cell because everything else is a thing you pick up,
   stand on or fight, whereas a barn is a thing you walk around, and at sixteen
-  logical pixels a whole barn is a brown smudge. So it is drawn once at full
-  size on an 80×80 canvas and sliced into 16px tiles the way a tile map is cut.
-  Each slice is an ordinary atlas sprite placed by name, which is why it
-  composites with the rest of the map for free.
-  The slice is a plain row/column grid rather than an autotile family: a barn
-  has exactly one shape, there is nothing for a resolver to decide, and the
-  mapping from footprint to sprite stays one line of arithmetic.
-  `--from <png>` traces real art instead of drawing it — it keys out a magenta
-  background, measures the upscale factor from the runs of identical colour and
-  divides it out, then snaps every colour to the pack's wood ramp. Measuring
-  that factor is the whole trick: a screenshot of pixel art is pixel art blown
-  up by some integer, and resampling to 80×80 without undoing it lands sample
-  points inside blocks at irregular offsets and returns a mush of half-tones on
-  no palette at all.
-- **The barn is something you buy** — `buildBarn`, `canBuildBarn`, `isBarn`,
-  `isBarnSite` and `barnSprite` in `dawnlike-atlas/utils/farm`, with a
+  logical pixels a whole barn is a brown smudge.
+  It is NOT in the mega-atlas and is not sliced into 16px cells. Slicing it
+  would make it look like the rest of the pack, but those cells are only ever
+  drawn together in one fixed arrangement, so the grid buys nothing a single
+  image does not — and it costs the art, because fitting into the sheet means
+  fitting the sheet's palette. `barnArtRect` returns a rectangle in TILES so the
+  caller picks its own zoom, deliberately larger than the 5×5 the barn blocks:
+  bottom-anchored and centred, the roof oversails by half a tile each side and
+  stands nearly two above. A roof stopping dead at its own footprint reads flat.
+- **`scripts/trace_building.py`** — lifts a building out of a magenta-keyed
+  screenshot, keeping the source's colours rather than snapping them to a ramp.
+  Two parts of that are easy to get wrong and were wrong before: keying on fixed
+  thresholds misses a field a lossy encoder has moved off `#FF00FF` (the barn
+  keys on `(191, 22, 179)`, which every `> 195` test calls opaque), and
+  measuring the upscale factor as the GCD of runs of identical colour returns 1
+  on any compressed image, because almost no two neighbouring pixels survive as
+  exact equals. The grid is fitted to edge energy instead, taking the smallest
+  divisor of the best fit that is still a local maximum — every multiple of the
+  true period also lands on edges and scores higher for it, so the best fit is a
+  ceiling rather than an answer.
+- **The barn is something you buy** — `buildBarn`, `canBuildBarn`, `isBarn` and
+  `isBarnSite` in `dawnlike-atlas/utils/farm`, with a
   **Raise barn** control and <kbd>B</kbd> in the Farm example. 400g and six
   stamina, on a yard reserved at map generation in the bottom-right corner,
   one tile in from each edge so the farmer can always walk right around it.

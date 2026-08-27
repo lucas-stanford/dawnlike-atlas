@@ -45,11 +45,11 @@ import {
   resolveDawnLikeWallName,
 } from './utils/autotile';
 import {
-  CROPS, CROP_IDS, ENERGY_PER_DAY, CAN_CAPACITY, WILD, BARN,
+  CROPS, CROP_IDS, ENERGY_PER_DAY, CAN_CAPACITY, WILD, BARN, BARN_ART,
   createFarm, tileAt, isPond, isPenWall, isWalkable, isAdjacent,
   advanceDay, sellStock, act, actionFor, buildBarn, canBuildBarn,
   soilFamily, cropSprite, orchardSprite, dayPhase, stockValue,
-  isBarn, isBarnSite, barnSprite,
+  isBarn, isBarnSite, barnArtRect,
 } from './utils/farm';
 import './Farm.css';
 
@@ -71,11 +71,11 @@ const Z = {
  *
  * Every other layer here stacks by what is physically on top of what,
  * and on that reading a building the farmer walks in front of should sit
- * under them. But the barn's five rows are mostly ROOF — a wall the
- * farmer could never be in front of — and a sprite poking through the
- * gable reads as a bug, not as depth. Since the footprint is solid the
- * farmer can never actually be inside it, so drawing it last costs
- * nothing and keeps the silhouette clean.
+ * under them. But the barn is mostly ROOF — a surface the farmer could
+ * never be in front of — and a sprite showing through the gable reads as
+ * a bug, not as depth. The footprint is solid, so the farmer can never
+ * actually be inside it, and drawing it last costs nothing while keeping
+ * the silhouette clean.
  */
 
 /** Which way the farmer is facing, as a tile offset. */
@@ -337,13 +337,6 @@ export default function FarmExample({
       layers.push({ name: farmerSpriteProp, z: Z.farmer, reason: 'You' });
     }
 
-    const slice = barnSprite(farm, x, y);
-    if (slice) {
-      layers.push({ name: slice, z: Z.barn, reason: 'Barn · sliced building' });
-    } else if (farm.barn && farm.yard[`${x},${y}`]) {
-      layers.push({ name: farm.yard[`${x},${y}`], z: Z.growth, reason: 'Barn yard' });
-    }
-
     return layers;
   }, [farm, atlas, phase, farmer, waterStyleProp, shoreStyleProp, fenceStyleProp, farmerSpriteProp]);
 
@@ -364,6 +357,8 @@ export default function FarmExample({
   // one word cannot mean both the building and what is inside it.
   const store = stockValue(farm);
   const build = canBuildBarn(farm);
+  const barnArt = barnArtRect(farm);
+  const barnUrl = resolveAssetPath(BARN_ART.url);
   const ready = Object.values(farm.tiles).filter((t) => t.stage === 'ready').length;
   const thirsty = Object.values(farm.tiles).filter((t) => t.crop && !t.watered && t.stage !== 'withered').length;
 
@@ -434,6 +429,32 @@ export default function FarmExample({
                   </div>
                 );
               }),
+            )}
+
+            {/*
+              The barn, drawn as ONE image rather than as tiles.
+
+              It is the only thing on the map that is not an atlas sprite,
+              and it sits outside the cell loop for the reason it is not
+              sliced: it oversails its own footprint, so there is no single
+              cell it belongs to. One <img> also means the roof cannot
+              develop seams when the browser rounds a fractional tile.
+            */}
+            {barnArt && (
+              <img
+                src={barnUrl}
+                alt="The barn"
+                style={{
+                  position: 'absolute',
+                  left: barnArt.x * TILE,
+                  top: barnArt.y * TILE,
+                  width: barnArt.w * TILE,
+                  height: barnArt.h * TILE,
+                  zIndex: Z.barn,
+                  imageRendering: 'pixelated',
+                  pointerEvents: 'none',
+                }}
+              />
             )}
           </div>
         </div>

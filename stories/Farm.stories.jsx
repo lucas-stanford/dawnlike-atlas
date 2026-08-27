@@ -150,12 +150,12 @@ export const RaiseTheBarn = {
     docs: {
       description: {
         story:
-          'Press <kbd>B</kbd>, or use **Raise barn** in the panel. The barn is one '
-          + 'building drawn at full size and sliced into twenty-five ordinary atlas '
-          + 'sprites — `barn r0c0` through `barn r4c4` — which is how a structure '
-          + 'bigger than a tile gets into a tile atlas at all. DawnLike ships no farm '
-          + 'buildings, so `scripts/generate-farm-sim.mjs` draws it on the pack\'s own '
-          + 'wood ramp.\n\n'
+          'Press <kbd>B</kbd>, or use **Raise barn** in the panel. DawnLike ships no '
+          + 'farm buildings, and a barn is the case that does not fit the pack: it is '
+          + 'a thing you walk *around*, not one you pick up or stand on. So it is not '
+          + 'in the atlas at all — `atlas/buildings/barn.png` is one image on its own '
+          + 'palette, drawn over a footprint it deliberately oversails, because a roof '
+          + 'that stops dead at its own walls reads as flat.\n\n'
           + 'It is not decoration. Produce waiting to be sold sits in the open until '
           + 'the barn is up, and a third of every heap bigger than two spoils '
           + 'overnight — so before the barn the right move is to sell every evening, '

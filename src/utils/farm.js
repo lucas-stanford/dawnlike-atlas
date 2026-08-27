@@ -191,14 +191,6 @@ export const BARN = {
   rows: 5,
   cost: 400,
   energy: 6,
-  /**
-   * What appears in the yard when the barn goes up, flanking the doors.
-   *
-   * Purely cosmetic, and the point of it: a building dropped onto bare
-   * grass looks placed, and a building with clutter around its feet
-   * looks USED. Two sprites is the cheapest possible version of that.
-   */
-  props: ['hay bale', 'pitchfork'],
 };
 export const SPOIL_SHARE = 1 / 3;
 
@@ -343,11 +335,9 @@ export function createFarm({ width = 22, height = 16, gold = 60, rng = Math.rand
     decor,
     plot,
     barnSite,
-    // The barn once it is standing: the same rectangle as `barnSite`,
-    // or null while it is still a patch of grass. `yard` is the clutter
-    // that appears around it, keyed like `decor`.
+    // The barn once it is standing: the same rectangle as `barnSite`, or
+    // null while it is still a patch of grass.
     barn: null,
-    yard: {},
     width,
     height,
     tiles,
@@ -429,16 +419,50 @@ export function isBarnSite(state, x, y) {
 }
 
 /**
- * Which slice of the barn covers this tile.
+ * The barn's art, in logical DawnLike pixels.
  *
- * The building is drawn once at full size and cut into a plain grid, so
- * the footprint maps to a sprite name by subtraction — no resolver, no
- * neighbour read. A barn has exactly one shape; there is nothing to
- * decide.
+ * It is NOT in the mega-atlas and is not cut into 16px cells. Everything
+ * in the pack is one cell because everything in the pack is a thing you
+ * pick up, stand on or fight; a building is a thing you walk around, and
+ * slicing one up to look like the rest costs you the art and buys nothing
+ * — the pieces are only ever drawn together, in one fixed arrangement.
+ * So it ships as its own PNG on its own palette, and the renderer places
+ * it whole.
  */
-export function barnSprite(state, x, y) {
-  if (!isBarn(state, x, y)) return null;
-  return `barn r${y - state.barn.y0}c${x - state.barn.x0}`;
+export const BARN_ART = {
+  /** Lives at `atlas/buildings/barn.png`; `atlas/` is the static root. */
+  url: '/buildings/barn.png',
+  w: 96,
+  h: 110,
+  /** DawnLike's logical cell, which the art is measured in. */
+  tile: 16,
+};
+
+/**
+ * Where to draw the barn, in TILES, relative to the map's origin.
+ *
+ * Deliberately bigger than the 5×5 it occupies: the art is six tiles wide
+ * and just under seven tall, and it is anchored by its BOTTOM edge, so the
+ * roof oversails the footprint by half a tile each side and stands nearly
+ * two clear of it. That gap is the point — a building whose roof stops
+ * dead at its own footprint reads as flat, and the overhang is what makes
+ * the walls look like they have a building on top of them rather than a
+ * texture. The farmer can never be inside the footprint, so nothing is
+ * ever hidden by the part that oversails.
+ *
+ * Returned in tiles rather than pixels so the caller can pick its own
+ * zoom; multiply by whatever tile size it is drawing at.
+ */
+export function barnArtRect(state) {
+  if (!state.barn) return null;
+  const w = BARN_ART.w / BARN_ART.tile;
+  const h = BARN_ART.h / BARN_ART.tile;
+  return {
+    x: state.barn.x0 + (BARN.cols - w) / 2,
+    y: state.barn.y1 + 1 - h,
+    w,
+    h,
+  };
 }
 
 /** True when the farmer can stand here. */
@@ -730,13 +754,6 @@ export function buildBarn(state) {
     }
   }
 
-  // Clutter at the foot of the walls, on the walkable ground either side
-  // of the doors.
-  const yard = {};
-  const [left, right] = BARN.props;
-  if (site.x0 - 1 >= 0) yard[key(site.x0 - 1, site.y1)] = left;
-  if (site.x1 + 1 < state.width) yard[key(site.x1 + 1, site.y1)] = right;
-
   const message = `Raised the barn for ${BARN.cost}g. The harvest keeps now.`;
   return {
     ok: true,
@@ -745,7 +762,6 @@ export function buildBarn(state) {
       ...state,
       tiles,
       decor,
-      yard,
       barn: site,
       gold: state.gold - BARN.cost,
       energy: state.energy - BARN.energy,

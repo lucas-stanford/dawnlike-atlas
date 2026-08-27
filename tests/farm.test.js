@@ -8,7 +8,9 @@
  * rather than rendering an invisible tile in someone's game.
  */
 
+import fs from 'node:fs';
 import { describe, it, expect } from 'vitest';
+import { PNG } from 'pngjs';
 import atlas from '../atlas/DawnlikeAtlas.json' with { type: 'json' };
 import {
   CROPS, CROP_IDS, ORCHARD, LIVESTOCK, SCATTER, DAY_PHASES,
@@ -18,7 +20,8 @@ import {
   createFarm, tileAt, till, plant, water, refill, harvest, clear, tend, sellStock,
   advanceDay, pickFruit, dayPhase, soilFamily, cropSprite, orchardSprite,
   actionFor, act, stockValue, isWalkable, isPond, hasWaterAccess,
-  BARN, SPOIL_SHARE, buildBarn, canBuildBarn, isBarn, isBarnSite, barnSprite,
+  BARN, BARN_ART, SPOIL_SHARE, buildBarn, canBuildBarn, isBarn, isBarnSite,
+  barnArtRect,
 } from '../src/utils/farm.js';
 
 /** A deterministic RNG, so every farm in these tests is the same farm. */
@@ -673,29 +676,39 @@ describe('the barn', () => {
     expect(till(state, x0, y0).ok).toBe(false);
   });
 
-  it('names a real atlas sprite for every tile of its footprint', () => {
-    const { state } = buildBarn(rich());
-    const seen = new Set();
-    for (let y = state.barn.y0; y <= state.barn.y1; y++) {
-      for (let x = state.barn.x0; x <= state.barn.x1; x++) {
-        const name = barnSprite(state, x, y);
-        expect(name).toMatch(/^barn r\dc\d$/);
-        expect(atlas.byName[name], `${name} missing from the atlas`).toBeTruthy();
-        seen.add(name);
-      }
-    }
-    expect(seen.size).toBe(BARN.cols * BARN.rows);
-    expect(barnSprite(state, state.barn.x0 - 1, state.barn.y0)).toBeNull();
+  it('has no art to place until it is standing', () => {
+    expect(barnArtRect(rich())).toBeNull();
   });
 
-  it('draws only sprites the atlas actually has, props included', () => {
+  it('stands the art on the footprint, oversailing it on three sides', () => {
     const { state } = buildBarn(rich());
-    for (const name of Object.values(state.yard)) {
-      expect(atlas.byName[name], `${name} missing from the atlas`).toBeTruthy();
-    }
-    for (const name of BARN.props) {
-      expect(atlas.byName[name], `${name} missing from the atlas`).toBeTruthy();
-    }
+    const rect = barnArtRect(state);
+
+    // Bottom edges flush: the walls meet the ground on the last row it
+    // occupies, which is what makes it look planted rather than floating.
+    expect(rect.y + rect.h).toBe(state.barn.y1 + 1);
+
+    // Wider and taller than the 5x5 it blocks, centred left-to-right, so
+    // the roof oversails and the eaves are symmetrical.
+    expect(rect.w).toBeGreaterThan(BARN.cols);
+    expect(rect.h).toBeGreaterThan(BARN.rows);
+    expect(rect.x + rect.w / 2).toBe(state.barn.x0 + BARN.cols / 2);
+    expect(rect.x).toBeLessThan(state.barn.x0);
+  });
+
+  it('measures the art in tiles that match the PNG on disk', () => {
+    // The layout arithmetic is derived from BARN_ART, so if the file is
+    // ever re-traced at another size this is what catches the drift
+    // before the barn silently starts hovering.
+    const png = PNG.sync.read(
+      fs.readFileSync(new URL(`../atlas${BARN_ART.url}`, import.meta.url)));
+    expect(png.width).toBe(BARN_ART.w);
+    expect(png.height).toBe(BARN_ART.h);
+
+    // It is a building, not an atlas sprite — nothing under `barn r*`
+    // should have crept back into the shared sheet.
+    const slices = Object.keys(atlas.byName).filter((n) => n.startsWith('barn r'));
+    expect(slices).toEqual([]);
   });
 
   it('spoils a share of every hoard while the harvest is in the open', () => {

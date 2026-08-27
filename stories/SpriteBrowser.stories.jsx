@@ -9,7 +9,7 @@ export default {
     docs: {
       description: {
         component:
-          'Searchable catalogue of all 4,526 named sprites. Type to match on ' +
+          'Searchable catalogue of all 4,499 named sprites. Type to match on ' +
           'names *and* AI-generated tags, stack tag filters, then click a result ' +
           'for its atlas record plus ready-to-paste React / CSS / Phaser snippets. ' +
           'Double-click any cell to copy its name. This is also the reference ' +
