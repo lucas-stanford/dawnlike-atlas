@@ -153,6 +153,23 @@
   100% { transform: translate(-100%, 0); }
 }
 
+/* A 3x4 walk sheet is four DIRECTIONS of three frames, so one window
+   playing across it shows a character walking south, then west, then
+   east, then north — which is not an animation anyone wants to watch.
+   Four windows onto the same image instead, each held on its own row.
+   The keyframes above still drive the three frames sideways; these only
+   choose which row is showing. */
+.animation-grid-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dir-down .animated-sprite-img { transform: translateY(0); }
+.dir-left .animated-sprite-img { transform: translateY(-25%); }
+.dir-right .animated-sprite-img { transform: translateY(-50%); }
+.dir-up .animated-sprite-img { transform: translateY(-75%); }
+
 .prompt-modifier {
   padding: 15px;
   background: var(--dl-surface-2);

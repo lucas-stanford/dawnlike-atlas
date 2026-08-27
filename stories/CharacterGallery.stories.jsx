@@ -25,7 +25,7 @@ export const SageJRPG = {
     characterName: 'Old Sage (JRPG 3x4)',
     basePrompt: '"A wise old sage with a long white beard, wearing flowing blue robes and holding a wooden staff with a glowing blue crystal"',
     portraitUrl: 'char1_portrait.png',
-    walkModifier: 'walking animation sprite sheet, arranged in a strict 3x4 grid, 4 rows for directions (down, left, right, up) and 3 columns for animation frames, perfectly uniform spacing, traditional JRPG top-down perspective, clear pixel art, pure white background.',
+    walkModifier: 'walking animation sprite sheet, arranged in a strict 3x4 grid, 4 rows for directions (down, left, right, up) and 3 columns for animation frames. The columns MUST be: Left column has left foot forward, Middle column has feet neutral/standing, Right column has right foot forward. Perfectly uniform spacing, traditional JRPG top-down perspective, clear pixel art, pure white background.',
     walkUrl: 'char1_jrpg_walk.png',
     walkGridFormat: '3x4',
     actionModifier: 'attacking animation sprite sheet, strict 3x4 grid layout, 4 rows for directions and 3 columns for animation frames, weapon swinging in a clear arc, traditional JRPG perspective, pure white background.',
