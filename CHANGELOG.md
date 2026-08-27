@@ -8,6 +8,52 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **A farm-sim sprite sheet, starting with a barn** —
+  `scripts/generate-farm-sim.mjs` draws `barn r0c0` … `barn r4c4`, `hay bale`
+  and `pitchfork`. DawnLike draws a lot of the countryside but no farm
+  BUILDINGS, and a barn is the case that does not fit the pack's shape:
+  everything else is one cell because everything else is a thing you pick up,
+  stand on or fight, whereas a barn is a thing you walk around, and at sixteen
+  logical pixels a whole barn is a brown smudge. So it is drawn once at full
+  size on an 80×80 canvas and sliced into 16px tiles the way a tile map is cut.
+  Each slice is an ordinary atlas sprite placed by name, which is why it
+  composites with the rest of the map for free.
+  The slice is a plain row/column grid rather than an autotile family: a barn
+  has exactly one shape, there is nothing for a resolver to decide, and the
+  mapping from footprint to sprite stays one line of arithmetic.
+  `--from <png>` traces real art instead of drawing it — it keys out a magenta
+  background, measures the upscale factor from the runs of identical colour and
+  divides it out, then snaps every colour to the pack's wood ramp. Measuring
+  that factor is the whole trick: a screenshot of pixel art is pixel art blown
+  up by some integer, and resampling to 80×80 without undoing it lands sample
+  points inside blocks at irregular offsets and returns a mush of half-tones on
+  no palette at all.
+- **The barn is something you buy** — `buildBarn`, `canBuildBarn`, `isBarn`,
+  `isBarnSite` and `barnSprite` in `dawnlike-atlas/utils/farm`, with a
+  **Raise barn** control and <kbd>B</kbd> in the Farm example. 400g and six
+  stamina, on a yard reserved at map generation in the bottom-right corner,
+  one tile in from each edge so the farmer can always walk right around it.
+  It earns its price in RULES rather than in pixels. A building you buy purely
+  because it looks like a farm is a screenshot, so this one does the job a real
+  barn does: produce waiting to be sold sits in the open until the barn is up,
+  and a third of every heap spoils overnight. Before the barn the right move is
+  to sell every evening because holding costs you; after it you can stockpile a
+  season of corn and cash it in one go — the purchase turns selling from a
+  formality into a decision. The share is applied with `Math.floor` by design,
+  so a pile of one or two survives the night and a day's ordinary picking is
+  never punished; only a hoard rots. A rule that bit every crop would be a tax.
+  The site is fixed rather than player-placed because dragging a 5×5 ghost
+  around needs a placement mode — legality under the cursor, rotation, a
+  preview — which is a second game's worth of UI hanging off one purchase. It
+  comes back null on a map too small to hold a barn, and every caller reads that
+  as "this farm has nowhere to put one" rather than as an error.
+
+### Changed
+
+- The Farm HUD's **Barn** figure is now **Store**, and *Sell barn* is *Sell
+  store*. One word cannot mean both the building and what is inside it, and the
+  building is the one you can now walk into the side of.
+
 - **One-cell sailing boats** — `sloop n|e|s|w` and `black sloop n|e|s|w`, a
   fore-and-aft rigged sloop of the 1790s–1850s in working white and in a
   pirate's livery: a black mainsail with a bone-white crossbones on it. Both

@@ -45,10 +45,11 @@ import {
   resolveDawnLikeWallName,
 } from './utils/autotile';
 import {
-  CROPS, CROP_IDS, ENERGY_PER_DAY, CAN_CAPACITY, WILD,
+  CROPS, CROP_IDS, ENERGY_PER_DAY, CAN_CAPACITY, WILD, BARN,
   createFarm, tileAt, isPond, isPenWall, isWalkable, isAdjacent,
-  advanceDay, sellStock, act, actionFor,
+  advanceDay, sellStock, act, actionFor, buildBarn, canBuildBarn,
   soilFamily, cropSprite, orchardSprite, dayPhase, stockValue,
+  isBarn, isBarnSite, barnSprite,
 } from './utils/farm';
 import './Farm.css';
 
@@ -62,8 +63,20 @@ const TILE = 32;
  */
 const Z = {
   water: 0, shore: 1, meadow: 2, soil: 3, fence: 4,
-  scatter: 5, growth: 6, animal: 7, farmer: 8,
+  scatter: 5, growth: 6, animal: 7, farmer: 8, barn: 9,
 };
+
+/**
+ * The barn is drawn ABOVE the farmer, not below.
+ *
+ * Every other layer here stacks by what is physically on top of what,
+ * and on that reading a building the farmer walks in front of should sit
+ * under them. But the barn's five rows are mostly ROOF — a wall the
+ * farmer could never be in front of — and a sprite poking through the
+ * gable reads as a bug, not as depth. Since the footprint is solid the
+ * farmer can never actually be inside it, so drawing it last costs
+ * nothing and keeps the silhouette clean.
+ */
 
 /** Which way the farmer is facing, as a tile offset. */
 const FACING = {
@@ -173,6 +186,15 @@ export default function FarmExample({
     });
   }, [say]);
 
+  const raiseBarn = useCallback(() => {
+    setFarm((state) => {
+      if (!state) return state;
+      const result = buildBarn(state);
+      say(result.message, result.ok);
+      return result.state;
+    });
+  }, [say]);
+
   const move = useCallback((dir) => {
     const [dx, dy] = FACING[dir];
     setFarmer((f) => {
@@ -196,6 +218,7 @@ export default function FarmExample({
         return;
       }
       if (event.key === 'e' || event.key === 'E') { event.preventDefault(); endDay(); return; }
+      if (event.key === 'b' || event.key === 'B') { event.preventDefault(); raiseBarn(); return; }
       const index = Number(event.key) - 1;
       if (Number.isInteger(index) && index >= 0 && index < CROP_IDS.length) {
         setSelectedCrop(CROP_IDS[index]);
@@ -203,7 +226,7 @@ export default function FarmExample({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [move, doAct, endDay, farmer]);
+  }, [move, doAct, endDay, raiseBarn, farmer]);
 
   // ---- rendering ---------------------------------------------------
 
@@ -314,6 +337,13 @@ export default function FarmExample({
       layers.push({ name: farmerSpriteProp, z: Z.farmer, reason: 'You' });
     }
 
+    const slice = barnSprite(farm, x, y);
+    if (slice) {
+      layers.push({ name: slice, z: Z.barn, reason: 'Barn · sliced building' });
+    } else if (farm.barn && farm.yard[`${x},${y}`]) {
+      layers.push({ name: farm.yard[`${x},${y}`], z: Z.growth, reason: 'Barn yard' });
+    }
+
     return layers;
   }, [farm, atlas, phase, farmer, waterStyleProp, shoreStyleProp, fenceStyleProp, farmerSpriteProp]);
 
@@ -330,7 +360,10 @@ export default function FarmExample({
     return <div className="farm-layout"><div className="farm-panel">Loading…</div></div>;
   }
 
-  const barn = stockValue(farm);
+  // Renamed from "barn" the moment a barn became a thing you can build:
+  // one word cannot mean both the building and what is inside it.
+  const store = stockValue(farm);
+  const build = canBuildBarn(farm);
   const ready = Object.values(farm.tiles).filter((t) => t.stage === 'ready').length;
   const thirsty = Object.values(farm.tiles).filter((t) => t.crop && !t.watered && t.stage !== 'withered').length;
 
@@ -339,7 +372,14 @@ export default function FarmExample({
       <div className="farm-hud">
         <div className="farm-stat"><span>Day</span><strong>{farm.day}</strong></div>
         <div className="farm-stat"><span>Gold</span><strong>{farm.gold}g</strong></div>
-        <div className="farm-stat"><span>Barn</span><strong>{barn}g</strong></div>
+        <div
+          className="farm-stat"
+          title={farm.barn
+            ? 'Under a roof — nothing spoils'
+            : 'In the open — a third of every heap spoils overnight'}
+        >
+          <span>Store</span><strong>{store}g</strong>
+        </div>
         <div className="farm-stat"><span>Ready</span><strong>{ready}</strong></div>
         <div className="farm-stat"><span>Thirsty</span><strong>{thirsty}</strong></div>
         <div className="farm-stat" title="Refill at the pond">
@@ -424,7 +464,12 @@ export default function FarmExample({
           </ul>
 
           <div className="farm-buttons">
-            <button type="button" onClick={sell} disabled={!barn}>Sell barn ({barn}g)</button>
+            <button type="button" onClick={sell} disabled={!store}>Sell store ({store}g)</button>
+            {!farm.barn && farm.barnSite && (
+              <button type="button" onClick={raiseBarn} disabled={!build.ok} title={build.reason}>
+                Raise barn ({BARN.cost}g) (B)
+              </button>
+            )}
             <button type="button" className="primary" onClick={endDay}>End day (E)</button>
           </div>
 

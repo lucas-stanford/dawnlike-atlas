@@ -168,6 +168,41 @@ export const WITHER_AFTER_DRY_DAYS = 2;
 export const SOIL_DECAY_DAYS = 3;
 
 /**
+ * The barn: what it costs to raise, and what it is worth once raised.
+ *
+ * A building has to earn its price in RULES, not in pixels. A barn you
+ * buy purely because it looks like a farm is a screenshot, so this one
+ * does the job a real barn does — it keeps the harvest dry. Without
+ * one, produce waiting to be sold sits in the open and a share of every
+ * heap spoils overnight; with one, nothing spoils and you can hold a
+ * crop back for as long as you like.
+ *
+ * That turns selling from a formality into a decision. Before the barn
+ * the right move is to sell every evening, because holding costs you;
+ * after it, you can stockpile a season of corn and cash it in one go.
+ *
+ * `SPOIL_SHARE` is applied with `Math.floor`, which is the whole design
+ * of the rule: a pile of one or two survives the night, so a day's
+ * ordinary picking is never punished, and only a HOARD rots. A rule
+ * that took a bite out of every single crop would just be a tax.
+ */
+export const BARN = {
+  cols: 5,
+  rows: 5,
+  cost: 400,
+  energy: 6,
+  /**
+   * What appears in the yard when the barn goes up, flanking the doors.
+   *
+   * Purely cosmetic, and the point of it: a building dropped onto bare
+   * grass looks placed, and a building with clutter around its feet
+   * looks USED. Two sprites is the cheapest possible version of that.
+   */
+  props: ['hay bale', 'pitchfork'],
+};
+export const SPOIL_SHARE = 1 / 3;
+
+/**
  * Purely decorative scatter for untouched ground, and the props that
  * mark the yard. Tilling a tile clears whatever was scattered on it, so
  * the decor doubles as a "nobody has worked this" signal.
@@ -279,12 +314,27 @@ export function createFarm({ width = 22, height = 16, gold = 60, rng = Math.rand
     }
   }
 
+  // The barn's yard: reserved from day one, built later or never.
+  //
+  // The site is fixed rather than chosen by the player because placing a
+  // 5×5 building needs a placement mode — a ghost you drag, a rotation,
+  // a legality check under the cursor — and that is a second game's
+  // worth of UI hanging off one purchase. Reserving the corner keeps the
+  // decision the interesting one (is it worth 400g yet?) instead of the
+  // fiddly one (where exactly do the doors go?).
+  //
+  // It comes back null on a map too small to hold it, or one where the
+  // pond has eaten the corner, and every caller treats that as "this
+  // farm has nowhere to put a barn" rather than as an error.
+  const barnSite = reserveBarnSite({ width, height, pond, pen, plot, orchard });
+
   // Scatter, on wild ground only, well clear of the yard.
   const decor = {};
   for (const tile of Object.values(tiles)) {
     if (tile.ground !== WILD) continue;
     const k = key(tile.x, tile.y);
     if (pond.has(k) || orchard[k]) continue;
+    if (barnSite && inRect(barnSite, tile.x, tile.y)) continue;
     if (rng() > 0.09) continue;
     decor[k] = SCATTER[Math.floor(rng() * SCATTER.length)] ?? SCATTER[0];
   }
@@ -292,6 +342,12 @@ export function createFarm({ width = 22, height = 16, gold = 60, rng = Math.rand
   return {
     decor,
     plot,
+    barnSite,
+    // The barn once it is standing: the same rectangle as `barnSite`,
+    // or null while it is still a patch of grass. `yard` is the clutter
+    // that appears around it, keyed like `decor`.
+    barn: null,
+    yard: {},
     width,
     height,
     tiles,
@@ -309,6 +365,37 @@ export function createFarm({ width = 22, height = 16, gold = 60, rng = Math.rand
     stock: {},
     log: ['Day 1 — a fresh farm. Till some ground and sow a crop.'],
   };
+}
+
+/** True when (x, y) falls inside a {x0,y0,x1,y1} rectangle. */
+const inRect = (r, x, y) => x >= r.x0 && x <= r.x1 && y >= r.y0 && y <= r.y1;
+
+/** Do two rectangles overlap at all? */
+const overlaps = (a, b) => a.x0 <= b.x1 && a.x1 >= b.x0 && a.y0 <= b.y1 && a.y1 >= b.y0;
+
+/**
+ * Pick the barn's plot: the bottom-right corner, one tile in from each
+ * edge so the farmer can always walk right around it.
+ *
+ * A building you cannot walk behind is a wall, and a wall in the corner
+ * of a small map cuts the farm in two. The one-tile margin is the whole
+ * reason the site is computed rather than hard-coded.
+ */
+function reserveBarnSite({ width, height, pond, pen, plot, orchard }) {
+  const site = {
+    x0: width - BARN.cols - 1,
+    y0: height - BARN.rows - 1,
+    x1: width - 2,
+    y1: height - 2,
+  };
+  if (site.x0 < 1 || site.y0 < 1) return null;
+  if (overlaps(site, pen) || overlaps(site, plot)) return null;
+  for (let y = site.y0; y <= site.y1; y += 1) {
+    for (let x = site.x0; x <= site.x1; x += 1) {
+      if (pond.has(key(x, y)) || orchard[key(x, y)]) return null;
+    }
+  }
+  return site;
 }
 
 /** The tile at a coordinate, or null when off the map. */
@@ -331,12 +418,38 @@ export function isPenWall(state, x, y) {
   return onEdge && !(x === x0 && y === y1);
 }
 
+/** True when a standing barn covers this coordinate. */
+export function isBarn(state, x, y) {
+  return Boolean(state.barn) && inRect(state.barn, x, y);
+}
+
+/** True when this coordinate is inside the reserved yard, built or not. */
+export function isBarnSite(state, x, y) {
+  return Boolean(state.barnSite) && inRect(state.barnSite, x, y);
+}
+
+/**
+ * Which slice of the barn covers this tile.
+ *
+ * The building is drawn once at full size and cut into a plain grid, so
+ * the footprint maps to a sprite name by subtraction — no resolver, no
+ * neighbour read. A barn has exactly one shape; there is nothing to
+ * decide.
+ */
+export function barnSprite(state, x, y) {
+  if (!isBarn(state, x, y)) return null;
+  return `barn r${y - state.barn.y0}c${x - state.barn.x0}`;
+}
+
 /** True when the farmer can stand here. */
 export function isWalkable(state, x, y) {
   if (x < 0 || y < 0 || x >= state.width || y >= state.height) return false;
   if (isPond(state, x, y)) return false;
   if (isPenWall(state, x, y)) return false;
   if (state.orchard[key(x, y)]) return false;
+  // A barn is a building, not a floor. Walking through it would also
+  // put the farmer behind five rows of roof, where they cannot be seen.
+  if (isBarn(state, x, y)) return false;
   return true;
 }
 
@@ -400,6 +513,7 @@ export function till(state, x, y) {
   const tile = tileAt(state, x, y);
   if (!tile) return fail(state, 'Nothing there.');
   if (isPond(state, x, y)) return fail(state, "Can't till open water.");
+  if (isBarn(state, x, y)) return fail(state, 'The barn is standing there.');
   if (state.orchard[key(x, y)]) return fail(state, 'A fruit tree is growing there.');
   if (tile.ground !== WILD) return fail(state, 'Already tilled.');
   const tired = requireEnergy(state, 'till');
@@ -563,10 +677,87 @@ export function tend(state, animalId) {
   };
 }
 
-/** Sell everything in the barn. */
+/**
+ * Can the barn go up right now, and if not, why not?
+ *
+ * Split out from `buildBarn` so the button, its tooltip and the action
+ * itself all read the same answer — the same reason `actionFor` exists
+ * for the tile actions. A disabled button that cannot say why is the
+ * one UI bug this codebase keeps designing out.
+ *
+ * @returns {{ok: boolean, reason: string}}
+ */
+export function canBuildBarn(state) {
+  if (state.barn) return { ok: false, reason: 'The barn is already standing.' };
+  if (!state.barnSite) return { ok: false, reason: 'This farm has no room for a barn.' };
+  if (state.gold < BARN.cost) {
+    return { ok: false, reason: `A barn costs ${BARN.cost}g — you have ${state.gold}g.` };
+  }
+  if (state.energy < BARN.energy) {
+    return { ok: false, reason: 'Too tired to raise a barn — end the day to rest.' };
+  }
+  // Tilled ground under the site is fine; the build clears it. A CROP
+  // is not, because flattening somebody's corn without asking is the
+  // kind of thing a game should refuse rather than apologise for.
+  for (let y = state.barnSite.y0; y <= state.barnSite.y1; y += 1) {
+    for (let x = state.barnSite.x0; x <= state.barnSite.x1; x += 1) {
+      if (tileAt(state, x, y)?.crop) {
+        return { ok: false, reason: 'Clear the crops off the barn yard first.' };
+      }
+    }
+  }
+  return { ok: true, reason: `Raise the barn — ${BARN.cost}g.` };
+}
+
+/**
+ * Raise the barn: pay the gold, spend the day's labour, and flatten the
+ * yard back to grass under it.
+ */
+export function buildBarn(state) {
+  const { ok, reason } = canBuildBarn(state);
+  if (!ok) return fail(state, reason);
+
+  const site = state.barnSite;
+  const tiles = { ...state.tiles };
+  const decor = { ...state.decor };
+  for (let y = site.y0; y <= site.y1; y += 1) {
+    for (let x = site.x0; x <= site.x1; x += 1) {
+      const k = key(x, y);
+      if (tiles[k]) {
+        tiles[k] = { ...tiles[k], ground: WILD, crop: null, stage: null, idleDays: 0 };
+      }
+      delete decor[k];
+    }
+  }
+
+  // Clutter at the foot of the walls, on the walkable ground either side
+  // of the doors.
+  const yard = {};
+  const [left, right] = BARN.props;
+  if (site.x0 - 1 >= 0) yard[key(site.x0 - 1, site.y1)] = left;
+  if (site.x1 + 1 < state.width) yard[key(site.x1 + 1, site.y1)] = right;
+
+  const message = `Raised the barn for ${BARN.cost}g. The harvest keeps now.`;
+  return {
+    ok: true,
+    message,
+    state: {
+      ...state,
+      tiles,
+      decor,
+      yard,
+      barn: site,
+      gold: state.gold - BARN.cost,
+      energy: state.energy - BARN.energy,
+      log: [...state.log.slice(-40), message],
+    },
+  };
+}
+
+/** Sell everything waiting to be sold. */
 export function sellStock(state) {
   const entries = Object.entries(state.stock).filter(([, n]) => n > 0);
-  if (!entries.length) return fail(state, 'Nothing in the barn to sell.');
+  if (!entries.length) return fail(state, 'Nothing in store to sell.');
 
   let total = 0;
   const parts = [];
@@ -597,7 +788,7 @@ export function sellStock(state) {
  */
 export function advanceDay(state, rng = Math.random) {
   const tiles = {};
-  const report = { grown: 0, ready: 0, withered: 0, reclaimed: 0, fruited: 0 };
+  const report = { grown: 0, ready: 0, withered: 0, reclaimed: 0, fruited: 0, spoiled: 0 };
 
   for (const [k, tile] of Object.entries(state.tiles)) {
     let next = { ...tile, watered: false };
@@ -655,12 +846,27 @@ export function advanceDay(state, rng = Math.random) {
     return { ...a, tended: false, x: inside ? nx : a.x, y: inside ? ny : a.y };
   });
 
+  // Spoilage. This is the barn's entire reason to exist: produce left in
+  // the open goes off, produce under a roof does not. `Math.floor` means
+  // a heap of one or two survives, so a normal day's picking is safe and
+  // only a stockpile rots — see BARN.
+  const stock = { ...state.stock };
+  if (!state.barn) {
+    for (const [id, count] of Object.entries(stock)) {
+      const lost = Math.floor(count * SPOIL_SHARE);
+      if (!lost) continue;
+      stock[id] = count - lost;
+      report.spoiled += lost;
+    }
+  }
+
   const day = state.day + 1;
   const summary = [
     report.ready ? `${report.ready} ready to harvest` : null,
     report.withered ? `${report.withered} withered` : null,
     report.reclaimed ? `${report.reclaimed} plot${report.reclaimed > 1 ? 's' : ''} gone to weed` : null,
     report.fruited ? `${report.fruited} tree${report.fruited > 1 ? 's' : ''} bearing fruit` : null,
+    report.spoiled ? `${report.spoiled} spoiled for want of a barn` : null,
   ].filter(Boolean);
 
   return {
@@ -670,6 +876,7 @@ export function advanceDay(state, rng = Math.random) {
       tiles,
       orchard,
       animals,
+      stock,
       day,
       energy: ENERGY_PER_DAY,
       log: [
@@ -769,6 +976,7 @@ export function orchardSprite(state, x, y) {
  *   there is nothing to do here.
  */
 export function actionFor(state, x, y, selectedCrop = CROP_IDS[0]) {
+  if (isBarn(state, x, y)) return { action: 'none', label: 'The barn' };
   if (state.orchard[key(x, y)]) {
     const tree = state.orchard[key(x, y)];
     return tree.ripe

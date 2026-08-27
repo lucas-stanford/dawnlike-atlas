@@ -3,7 +3,7 @@ import { SpriteSheet } from '../src/components/SpriteSheet';
 
 /**
  * Stories for the Mega Atlas — every named sprite from DawnLike packed into
- * a single 2048×2272 PNG (4,499 sprites, 64×71 grid of 32×32 cells, nearest-
+ * a single 2048×2272 PNG (4,526 sprites, 64×71 grid of 32×32 cells, nearest-
  * neighbour 2× of the original 16×16 art).
  *
  * The underlying SpriteSheet component has three modes (Sprites / Library /
@@ -23,7 +23,7 @@ const baseProps = {
   metadataPath: '/DawnlikeAtlas.json',
   title: 'Dawnlike Mega-Atlas — every named sprite in a single 2048×2272 PNG',
   description:
-    'All 4,499 named sprites — Characters, Items, Objects and GUI from DawnLike, plus the ' +
+    'All 4,526 named sprites — Characters, Items, Objects and GUI from DawnLike, plus the ' +
     '342 coastline, watered-soil and vessel tiles this pack generates — bin-packed into ' +
     'one tightly-packed 64×71 grid. Each sprite occupies exactly one 32×32 cell (nearest- ' +
     'neighbour 2× upscale of the original 16×16 DawnLike art, so every pixel is preserved ' +

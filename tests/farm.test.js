@@ -18,6 +18,7 @@ import {
   createFarm, tileAt, till, plant, water, refill, harvest, clear, tend, sellStock,
   advanceDay, pickFruit, dayPhase, soilFamily, cropSprite, orchardSprite,
   actionFor, act, stockValue, isWalkable, isPond, hasWaterAccess,
+  BARN, SPOIL_SHARE, buildBarn, canBuildBarn, isBarn, isBarnSite, barnSprite,
 } from '../src/utils/farm.js';
 
 /** A deterministic RNG, so every farm in these tests is the same farm. */
@@ -584,5 +585,147 @@ describe('catalogue sanity', () => {
       expect(cost).toBeGreaterThan(0);
       expect(cost).toBeLessThanOrEqual(ENERGY_PER_DAY);
     }
+  });
+});
+
+describe('the barn', () => {
+  const rng = seededRng(7);
+  const rich = (over = {}) => ({ ...createFarm({ rng: seededRng(7) }), gold: BARN.cost + 50, ...over });
+
+  it('reserves a yard clear of the pond, the pen and the starter plot', () => {
+    const farm = createFarm({ rng });
+    expect(farm.barnSite).toBeTruthy();
+    expect(farm.barn).toBeNull();
+    for (let y = farm.barnSite.y0; y <= farm.barnSite.y1; y++) {
+      for (let x = farm.barnSite.x0; x <= farm.barnSite.x1; x++) {
+        expect(isPond(farm, x, y)).toBe(false);
+        expect(farm.orchard[`${x},${y}`]).toBeUndefined();
+        // Reserved ground stays walkable until something is built on it.
+        expect(isWalkable(farm, x, y)).toBe(true);
+      }
+    }
+  });
+
+  it('leaves a walkable margin all the way round the yard', () => {
+    const farm = createFarm({ rng: seededRng(3) });
+    const { x0, y0, x1, y1 } = farm.barnSite;
+    expect(x0).toBeGreaterThan(0);
+    expect(y0).toBeGreaterThan(0);
+    expect(x1).toBeLessThan(farm.width - 1);
+    expect(y1).toBeLessThan(farm.height - 1);
+  });
+
+  it('has no room for a barn on a map too small to hold one', () => {
+    const farm = createFarm({ width: 8, height: 7, rng: seededRng(2) });
+    expect(farm.barnSite).toBeNull();
+    expect(canBuildBarn(farm).ok).toBe(false);
+    expect(buildBarn(farm).ok).toBe(false);
+  });
+
+  it('refuses to build without the gold, and says the price', () => {
+    const farm = createFarm({ rng: seededRng(7), gold: 10 });
+    const { ok, reason } = canBuildBarn(farm);
+    expect(ok).toBe(false);
+    expect(reason).toContain(`${BARN.cost}g`);
+    expect(buildBarn(farm).state.barn).toBeNull();
+  });
+
+  it('refuses to flatten a growing crop', () => {
+    let farm = rich();
+    const { x0, y0 } = farm.barnSite;
+    farm = till(farm, x0 + 1, y0 + 1).state;
+    farm = plant(farm, x0 + 1, y0 + 1, CROP_IDS[0]).state;
+    expect(canBuildBarn(farm).reason).toMatch(/clear the crops/i);
+    // Bare tilled soil is fine — the build reclaims it.
+    const bare = till(rich(), x0 + 2, y0 + 2).state;
+    expect(canBuildBarn(bare).ok).toBe(true);
+  });
+
+  it('spends the gold, takes the yard and clears it', () => {
+    const before = rich();
+    const { ok, state } = buildBarn(before);
+    expect(ok).toBe(true);
+    expect(state.gold).toBe(before.gold - BARN.cost);
+    expect(state.energy).toBe(before.energy - BARN.energy);
+    expect(state.barn).toEqual(before.barnSite);
+    for (let y = state.barn.y0; y <= state.barn.y1; y++) {
+      for (let x = state.barn.x0; x <= state.barn.x1; x++) {
+        expect(state.decor[`${x},${y}`]).toBeUndefined();
+        expect(tileAt(state, x, y).ground).toBe(WILD);
+      }
+    }
+  });
+
+  it('only builds once', () => {
+    const { state } = buildBarn(rich());
+    const again = buildBarn({ ...state, gold: 9999 });
+    expect(again.ok).toBe(false);
+    expect(again.message).toMatch(/already standing/i);
+  });
+
+  it('is solid, and blocks the tile actions', () => {
+    const { state } = buildBarn(rich());
+    const { x0, y0 } = state.barn;
+    expect(isBarn(state, x0, y0)).toBe(true);
+    expect(isBarnSite(state, x0, y0)).toBe(true);
+    expect(isWalkable(state, x0, y0)).toBe(false);
+    expect(actionFor(state, x0, y0).action).toBe('none');
+    expect(till(state, x0, y0).ok).toBe(false);
+  });
+
+  it('names a real atlas sprite for every tile of its footprint', () => {
+    const { state } = buildBarn(rich());
+    const seen = new Set();
+    for (let y = state.barn.y0; y <= state.barn.y1; y++) {
+      for (let x = state.barn.x0; x <= state.barn.x1; x++) {
+        const name = barnSprite(state, x, y);
+        expect(name).toMatch(/^barn r\dc\d$/);
+        expect(atlas.byName[name], `${name} missing from the atlas`).toBeTruthy();
+        seen.add(name);
+      }
+    }
+    expect(seen.size).toBe(BARN.cols * BARN.rows);
+    expect(barnSprite(state, state.barn.x0 - 1, state.barn.y0)).toBeNull();
+  });
+
+  it('draws only sprites the atlas actually has, props included', () => {
+    const { state } = buildBarn(rich());
+    for (const name of Object.values(state.yard)) {
+      expect(atlas.byName[name], `${name} missing from the atlas`).toBeTruthy();
+    }
+    for (const name of BARN.props) {
+      expect(atlas.byName[name], `${name} missing from the atlas`).toBeTruthy();
+    }
+  });
+
+  it('spoils a share of every hoard while the harvest is in the open', () => {
+    const farm = { ...createFarm({ rng: seededRng(7) }), stock: { turnip: 9 } };
+    const { state, report } = advanceDay(farm, seededRng(1));
+    expect(report.spoiled).toBe(Math.floor(9 * SPOIL_SHARE));
+    expect(state.stock.turnip).toBe(9 - report.spoiled);
+    expect(state.log.at(-1)).toMatch(/spoiled/);
+  });
+
+  it('leaves small piles alone, so a day of picking is never punished', () => {
+    for (const count of [1, 2]) {
+      const farm = { ...createFarm({ rng: seededRng(7) }), stock: { turnip: count } };
+      const { state, report } = advanceDay(farm, seededRng(1));
+      expect(report.spoiled).toBe(0);
+      expect(state.stock.turnip).toBe(count);
+    }
+  });
+
+  it('keeps the whole harvest once the barn is up', () => {
+    const { state } = buildBarn(rich({ stock: { turnip: 30, corn: 12 } }));
+    const after = advanceDay(state, seededRng(1));
+    expect(after.report.spoiled).toBe(0);
+    expect(after.state.stock).toEqual({ turnip: 30, corn: 12 });
+  });
+
+  it('costs more than it can be recovered from in a single day', () => {
+    // The barn has to be a decision, not a formality: a day of tending
+    // every animal must not pay for it.
+    const bestDay = LIVESTOCK.reduce((sum, a) => sum + a.yield, 0);
+    expect(BARN.cost).toBeGreaterThan(bestDay * 2);
   });
 });
