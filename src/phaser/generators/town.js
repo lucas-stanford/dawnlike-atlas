@@ -55,6 +55,7 @@
  * @property {'human'|'elf'|'dwarf'|'gnome'|'halfling'} [race='human']
  *                                                        Dominant race for the town. Drives the NPC sprite palette per building type. Override sprites via `npc.palettes` if needed.
  * @property {number} [friendlyRaceChance=0.12]           Per-NPC probability that the sprite is swapped for one from a friendly race (so a 'human' town occasionally has an elf in the inn, a dwarf at the smithy, etc.). Set to 0 to keep the town mono-racial.
+ * @property {{enabled?:boolean, theme?:string}} [roofs]  Lay a roof over each building, hidden while the player is inside it. `theme` keys `ROOF_THEMES` in src/utils/roofs.js ('town'|'dwarf_hold'|'elf_glade'). Set `enabled:false` to see straight into every house.
  */
 
 import * as ROT from 'rot-js';
@@ -187,6 +188,7 @@ export const DEFAULT_TOWN_MANIFEST = Object.freeze({
   fountain: true,
   race: 'human',
   friendlyRaceChance: 0.12,
+  roofs: { enabled: true, theme: 'town' },
 });
 
 function weightedPick(weights) {
@@ -649,6 +651,11 @@ export function generateTown(manifest) {
     markers: { worldExit: { x: entryX, y: entryY } },
     walkable,
     manifest: m,
+    // Footprint rectangles, in placement order. Exposed so a renderer can
+    // lay roofs over them (see src/utils/roofs.js) — that needs the atlas's
+    // name lookup to autotile against, which the generators deliberately
+    // do not have, so it happens one layer up in the scene.
+    buildings: placed.map((b, id) => ({ id, x: b.x, y: b.y, w: b.w, h: b.h, type: b.type })),
   };
 }
 
@@ -686,6 +693,10 @@ export function normalizeTownManifest(input) {
     flowers: {
       ...DEFAULT_TOWN_MANIFEST.flowers,
       ...(m.flowers || {}),
+    },
+    roofs: {
+      ...DEFAULT_TOWN_MANIFEST.roofs,
+      ...(m.roofs || {}),
     },
   };
   if (merged.seed === undefined || merged.seed === null) {

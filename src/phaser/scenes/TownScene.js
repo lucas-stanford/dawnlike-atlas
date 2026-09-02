@@ -9,6 +9,7 @@ import { generateTown } from '../generators/town.js';
 import { generateWorld } from '../generators/world.js';
 import { renderTownTile } from '../autotileRender.js';
 import { seedFor } from '../save.js';
+import { stampRoofs } from '../../utils/roofs.js';
 
 const TOWN_STYLES = {
   grass:      'day grass floor',
@@ -29,7 +30,25 @@ export default class TownScene extends MapScene {
   }
 
   generate(save) {
-    return generateTown(this.buildManifest(save));
+    const map = generateTown(this.buildManifest(save));
+    // Roofs are stamped HERE rather than in the generator because
+    // autotiling them needs the atlas's name lookup, and the generators
+    // are deliberately atlas-free — they describe a town, they do not
+    // choose sprites for it.
+    const roofs = map.manifest?.roofs;
+    if (roofs?.enabled !== false) {
+      const atlas = this.registry.get('atlas');
+      stampRoofs(map.tiles, map.buildings, {
+        theme: roofs?.theme,
+        byName: atlas?.byName || {},
+      });
+    }
+    return map;
+  }
+
+  /** Terracotta over morning grass, unless the manifest says otherwise. */
+  roofTheme() {
+    return this.map?.manifest?.roofs?.theme;
   }
 
   renderTileLayers(tiles, x, y, byName) {
