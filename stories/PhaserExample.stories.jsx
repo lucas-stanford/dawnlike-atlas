@@ -102,6 +102,25 @@ export default {
       control: 'boolean',
       description: 'Drop a sign sprite in front of each building.',
     },
+    townRoofs: {
+      name: 'town.roofs.enabled',
+      table: { category: 'Town · Roofs' },
+      control: 'boolean',
+      description:
+        'Lay a roof over each building. The roof lifts while you are standing inside, ' +
+        'so a house reads as a house from the street instead of an open-topped box. ' +
+        'Turn it off to see every interior at once.',
+    },
+    townRoofTheme: {
+      name: 'town.roofs.theme',
+      table: { category: 'Town · Roofs' },
+      control: { type: 'select' },
+      options: ['town', 'dwarf_hold', 'elf_glade'],
+      description:
+        'Which roof palette to use. Each is picked for CONTRAST against the ground ' +
+        'the buildings stand on — a roof sharing a hue with the grass makes a town ' +
+        'read as coloured rectangles.',
+    },
     townFurnitureEnabled: {
       name: 'town.furniture.enabled',
       table: { category: 'Town' },
@@ -200,6 +219,8 @@ export default {
     townTreeDensity: 0.08,
     townFountain: true,
     townSigns: true,
+    townRoofs: true,
+    townRoofTheme: 'town',
     townFurnitureEnabled: true,
     townNpcChance: 0.8,
     townNpcMin: 1,
@@ -238,6 +259,7 @@ function buildManifests(args) {
       treeDensity: args.townTreeDensity,
       fountain: args.townFountain,
       signs: args.townSigns,
+      roofs: { enabled: args.townRoofs, theme: args.townRoofTheme },
       furniture: { enabled: args.townFurnitureEnabled },
       npc: {
         chance: args.townNpcChance,

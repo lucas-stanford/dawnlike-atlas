@@ -374,6 +374,72 @@ for the whole thing driving a game loop.
 
 ---
 
+## A roof you can walk under
+
+A top-down town has a problem no dungeon has. Draw a building as walls and a
+floor and you can see the whole inside of it from the street — every bed, every
+shopkeeper, every rug, before you have opened the door. The settlement reads as
+a row of open-topped boxes.
+
+`src/utils/roofs.js` draws a roof on top of each building, above the player and
+everything else, and hides that **one** building's roof while the player is
+standing in it. Walking through a doorway then does what it does in Zelda or
+Stardew: the lid comes off, and it goes back on behind you.
+
+```js
+import { stampRoofs, roofBuildingIdAt, isRoofVisible, roofTintForTheme, roofOffsetPx }
+  from '@lucas-stanford/dawnlike-atlas/utils/roofs';
+
+// Generation: two fields onto the tiles you already have.
+stampRoofs(map.tiles, map.buildings, { theme: 'town', byName: atlas.byName });
+
+// Render: one sprite per roofed tile, shifted half a tile down-right, tinted.
+sprite.setTint(roofTintForTheme('town'));
+sprite.setPosition(x * TILE + TILE / 2 + roofOffsetPx(TILE), /* …same for y */);
+
+// Every step: one comparison.
+const inside = roofBuildingIdAt(map.tiles, player.x, player.y);
+sprite.setVisible(isRoofVisible(tile, inside));
+```
+
+Three details are load-bearing, and each is the fix for something that looked
+wrong on screen:
+
+- **The roof is a `(w-1)×(h-1)` block drawn half a tile down-right**, not a
+  `w×h` block sitting square on the footprint. The half-tile shift lands the
+  roof's edges on the *middle* of the wall tiles, so it overhangs halfway onto
+  the wall and reads as sitting on top of it — with the outer half of the wall,
+  and the doorway, still showing. Square on the footprint, a building is a flat
+  coloured rectangle. The inset and the offset are a pair: change one and you
+  must change the other.
+- **`roofBuildingId` tags the whole footprint; `roofName` only the inset
+  block.** Walls and doorway are part of the building for the purposes of "am I
+  inside?" even though no roof is drawn on them. That is what lifts the roof on
+  the *threshold* rather than a tile later, standing in a room you cannot see.
+  It is also why `isRoofVisible` compares against `undefined` explicitly —
+  building id `0` is falsy, and the naive check strips the first building's roof
+  from anywhere on the map.
+- **The tint is chosen for contrast with the GROUND, not for prettiness.** Roof
+  and grass sharing a hue turns a town into coloured rectangles, and luminance
+  alone will not save it: the `town` terracotta is only 15 from its grass in
+  luminance but 119 in RGB distance, and reads perfectly. `elf_glade` was a
+  mossy green once — same hue *and* same value as the grass, 52 apart — and the
+  buildings vanished into the lawn. `ROOF_THEMES` records the measured distance
+  next to each colour.
+
+Three themes ship (`town`, `dwarf_hold`, `elf_glade`), each pairing a floor
+family to autotile from with its tint. Tints multiply, so they can only darken
+the base — pick colours on that understanding. `roofTintChannels()` and
+`roofTintCss()` hand the same colour to a canvas compositor or a DOM renderer,
+so nothing has to keep its own copy of the table.
+
+The Phaser town has this on by default; set `town.roofs.enabled` to `false` in
+the manifest to see straight into every house. Try it in
+[Phaser Roguelike](https://lucas-stanford.github.io/dawnlike-atlas/?path=/story/dawnlike-examples-phaser-roguelike--phaser-roguelike)
+— walk the knight into a doorway.
+
+---
+
 ## The chrome is on the palette too
 
 Every sprite in the pack is DawnBringer 16. The interface around the sprites was

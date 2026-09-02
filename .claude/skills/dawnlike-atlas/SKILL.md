@@ -1,6 +1,6 @@
 ---
 name: dawnlike-atlas
-description: Use the `dawnlike-atlas` repo — a bin-packed 32×32 mega-atlas of the DawnLike roguelike tileset with semantic name lookup, AI-generated tags, and 16-way autotile resolvers. Invoke when building 2D pixel-art / roguelike games (HTML/Canvas, React, Phaser 3/4) that need DawnLike sprites, animated 2-frame walks, or autotiled walls / floors / rivers / pools / forests / mountains.
+description: Use the `dawnlike-atlas` repo — a bin-packed 32×32 mega-atlas of the DawnLike roguelike tileset with semantic name lookup, AI-generated tags, and 16-way autotile resolvers. Invoke when building 2D pixel-art / roguelike games (HTML/Canvas, React, Phaser 3/4) that need DawnLike sprites, animated 2-frame walks, autotiled walls / floors / rivers / pools / forests / mountains, or town roofs that lift when the player walks inside.
 ---
 
 # dawnlike-atlas
@@ -11,6 +11,7 @@ A semantic mega-atlas for the [DawnLike](https://dragondeplatino.itch.io/dawnlik
 - Companion `DawnlikeAtlas1.png` provides the alt frame for the 1,493 animated sprites.
 - `DawnlikeAtlas.json` gives semantic name lookup + tags + a legacy index map.
 - Pure JS autotile resolvers for walls, floors, rivers, pools, forests, mountains.
+- Town roofs that hide a building's interior until the player steps inside it.
 
 Live demo / browser: <https://lucas-stanford.github.io/dawnlike-atlas/>
 
@@ -182,6 +183,45 @@ These conventions are baked into the atlas; trust the resolvers over hand-rolled
 - **`Objects/Map` open-path family** (rivers, roads, castle walls) — suffix tokens are ordered **up → down → left → right**. Corners and horizontal-bar T's are literal, but vertical-bar T's (`up down X`) are **E/W-inverted**: `"clear river up down left"` actually branches **right** (N+S+E). Use `resolveDawnLikeRiverName` / `resolveDawnLikeWallName`.
 - **Dungeon walls** (`resolveDawnLikeDungeonWallName`) need `(baseName, x, y, isWall, byName)` where `isWall(x,y)` returns boolean and OOB is treated as wall.
 - **Mountains** use a 10-sprite **blob** set (`n/s/e/w/ne/nw/se/sw/c/alone`), no T-junctions.
+
+## Roofs that lift when you walk in
+
+`src/utils/roofs.js` (export `dawnlike-atlas/utils/roofs`) solves the top-down-town
+problem: a building drawn as walls and a floor shows you its whole interior from
+the street. It lays a roof over each building, above everything else, and hides
+that one building's roof while the player stands in it.
+
+```js
+import { stampRoofs, roofBuildingIdAt, isRoofVisible, roofTintForTheme, roofOffsetPx }
+  from './src/utils/roofs.js';
+
+stampRoofs(map.tiles, buildings, { theme: 'town', byName: atlas.byName });
+// → writes tile.roofBuildingId (whole footprint) and tile.roofName (inset block)
+
+const inside = roofBuildingIdAt(map.tiles, player.x, player.y);
+roofSprite.setVisible(isRoofVisible(tile, inside));
+```
+
+Three rules, each of which is a bug if you get it wrong:
+
+- **Draw the roof at `+roofOffsetPx(TILE)` on BOTH axes** (half a tile, down and
+  right). The roof block is inset one tile per side, so the half-tile shift puts
+  its edge on the middle of the wall — the overhang is what makes a building
+  read as roofed rather than as a flat rectangle. Inset and offset are a pair.
+- **Roofs must draw above the player**, not below. In the Phaser scenes the
+  player is depth 50 and signs reach 55, so roofs sit at 60.
+- **`roofBuildingId` covers walls and the doorway too**, so the roof lifts on
+  the threshold. Test visibility with `isRoofVisible`, not `tile.roofBuildingId
+  !== occupied` — building id `0` is falsy and the naive check breaks the first
+  building.
+
+Themes (`ROOF_THEMES`): `town` (terracotta), `dwarf_hold` (slate), `elf_glade`
+(russet timber). Each pairs a floor family to autotile from with a tint chosen
+for **contrast against the ground the buildings stand on** — a roof sharing a
+hue with the grass makes a town read as coloured rectangles. Tints multiply, so
+they only darken. `roofTintChannels()` / `roofTintCss()` for non-Phaser
+renderers. Live demo: the **Phaser Roguelike** story, `town.roofs` in the
+manifest.
 
 ## When to use which sprite-lookup strategy
 

@@ -21,8 +21,16 @@
 import Phaser from 'phaser';
 import { HUD_HEIGHT } from './UIScene.js';
 import { save as persistSave } from '../save.js';
+import { roofOffsetPx, roofTintForTheme, isRoofVisible, roofBuildingIdAt } from '../../utils/roofs.js';
 
 const TILE = 32;
+
+/**
+ * Roofs draw above EVERYTHING in the world: the player is at depth 50 and
+ * hanging signs reach 55, and a roof that lost to either would show the
+ * player's head or a shop sign floating on top of a closed building.
+ */
+const ROOF_DEPTH = 60;
 
 export default class MapScene extends Phaser.Scene {
   constructor(key) {
@@ -42,6 +50,8 @@ export default class MapScene extends Phaser.Scene {
     this.moving = false;
     this.transitioning = false;
     this.previousTile = null;
+    this.roofSprites = [];
+    this.occupiedBuildingId = undefined;
   }
 
   create() {
@@ -95,6 +105,9 @@ export default class MapScene extends Phaser.Scene {
     // Camera bounds = map size.
     this.cameras.main.setBounds(0, 0, map.width * TILE, map.height * TILE);
 
+    // Roofs (towns only — nothing else stamps the fields this reads).
+    this.createRoofs(map, atlas);
+
     // --- Player ---
     const spawn = this.resolveSpawn(map);
     this.playerTile = { x: spawn.x, y: spawn.y };
@@ -105,6 +118,11 @@ export default class MapScene extends Phaser.Scene {
     ).setDepth(50);
     if (this.anims.exists('anim:knight')) this.player.play('anim:knight');
     this.cameras.main.startFollow(this.player, true, 0.15, 0.15);
+
+    // Spawning INSIDE a building (a saved position, or a door-side spawn)
+    // must arrive with that building's roof already off, not have it lift
+    // on the first step.
+    this.updateRoofs();
 
     // --- Input ---
     // Held keys move continuously (polled in update()); we still keep a
@@ -188,6 +206,10 @@ export default class MapScene extends Phaser.Scene {
       ease: 'Linear',
       onComplete: () => {
         this.moving = false;
+        // Lift or replace roofs the moment the step lands, not when it
+        // starts — dropping a roof at tween-start would put it back over
+        // a player who is still visually inside the house.
+        this.updateRoofs();
         const landed = this.map.tiles[ty]?.[tx];
         if (landed?.marker) {
           // Save the tile we came from (so reload/re-entry doesn't
@@ -375,10 +397,61 @@ export default class MapScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * Build the roof layer for a map whose tiles carry `roofName` /
+   * `roofBuildingId` (see src/utils/roofs.js). Maps that stamp neither —
+   * the overworld and the dungeons — get an empty list and pay nothing.
+   *
+   * Roof sprites are deliberately NOT part of the tile-layer loop above:
+   * they are drawn half a tile down-right of their own cell so they
+   * overhang the walls, they sit above the player rather than below, and
+   * they are the only sprites in the scene whose visibility changes as
+   * the player moves. Keeping them in their own list means the per-step
+   * update is a walk of a few dozen roofs, not of every tile on the map.
+   */
+  createRoofs(map, atlas) {
+    this.roofSprites = [];
+    const tint = roofTintForTheme(this.roofTheme());
+    const offset = roofOffsetPx(TILE);
+    for (let y = 0; y < map.height; y++) {
+      for (let x = 0; x < map.width; x++) {
+        const tile = map.tiles[y]?.[x];
+        const name = tile?.roofName;
+        if (!name || !atlas.byName[name]) continue;
+        const sprite = this.add.image(
+          x * TILE + TILE / 2 + offset,
+          y * TILE + TILE / 2 + offset,
+          'dawnlike0', name,
+        );
+        sprite.setDepth(ROOF_DEPTH);
+        sprite.setTint(tint);
+        this.roofSprites.push({ sprite, tile });
+      }
+    }
+  }
+
+  /**
+   * Show every roof except the one belonging to the building the player
+   * is standing in. Cheap enough to run on every step, and running it
+   * wholesale (rather than diffing) means a roof can never be left off
+   * after a transition, a spawn, or a tween that got cancelled.
+   */
+  updateRoofs() {
+    if (!this.roofSprites?.length || !this.playerTile) return;
+    const occupied = roofBuildingIdAt(this.map.tiles, this.playerTile.x, this.playerTile.y);
+    if (occupied === this.occupiedBuildingId) return;
+    this.occupiedBuildingId = occupied;
+    for (const { sprite, tile } of this.roofSprites) {
+      sprite.setVisible(isRoofVisible(tile, occupied));
+    }
+  }
+
   // ===== Subclass hooks =====
   generate(/* save */) { throw new Error('MapScene.generate() must be implemented'); }
   renderTileLayers(/* tiles, x, y, byName */) { throw new Error('MapScene.renderTileLayers() must be implemented'); }
   defaultSpawn(/* map */) { return { x: 1, y: 1 }; }
   handleMarker(/* marker, map */) { /* no-op by default */ }
   areaLabel() { return this.SCENE_KEY; }
+  /** Key into ROOF_THEMES; only matters on maps that stamp roofs. */
+  roofTheme() { return undefined; }
 }
